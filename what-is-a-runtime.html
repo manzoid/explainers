@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What is a runtime?</title>
+<style>
+  :root{
+    --ink:#23272e;
+    --muted:#6b7280;
+    --bg:#fbfaf7;
+    --card:#ffffff;
+    --line:#e9e7e1;
+    --accent:#2f7d75;
+    --accent-soft:#e7f1ef;
+    --code-bg:#f4f3ef;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 .6rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;color:var(--ink);margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+
+  section{margin-top:3.6rem;}
+  h2{
+    font-size:1.32rem;
+    line-height:1.3;
+    margin:0 0 1rem;
+    letter-spacing:-.01em;
+  }
+  h2 .num{
+    display:inline-block;
+    color:var(--accent);
+    font-weight:700;
+    margin-right:.5rem;
+  }
+  p{margin:0 0 1.1rem;}
+  .muted{color:var(--muted);}
+  strong{font-weight:650;}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:var(--code-bg);
+    padding:.12em .4em;
+    border-radius:5px;
+    font-size:.9em;
+  }
+  ul.tight{margin:.2rem 0 1.1rem;padding-left:1.2rem;}
+  ul.tight li{margin:.3rem 0;}
+
+  /* generic visual panel */
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:1.4rem 1.4rem;
+    margin:1.6rem 0;
+    box-shadow:0 1px 2px rgba(0,0,0,.03);
+  }
+  .panel .cap{
+    font-size:.92rem;
+    color:var(--muted);
+    margin:.9rem 0 0;
+    text-align:center;
+  }
+
+  /* representation mapping rows */
+  .maps{display:flex;flex-direction:column;gap:.55rem;}
+  .map{
+    display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+    font-size:1rem;
+  }
+  .map .thing{
+    background:var(--accent-soft);
+    color:#1f5b54;
+    border-radius:8px;
+    padding:.35rem .7rem;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .map .arrow{color:var(--muted);font-size:1.1rem;}
+  .map .repr{
+    background:var(--code-bg);
+    border-radius:8px;
+    padding:.35rem .7rem;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.92rem;
+  }
+
+  /* analogy cards (what is a layer) */
+  .analogy{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;}
+  .acard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem;}
+  .acard h3{margin:0 0 .7rem;font-size:1rem;}
+  .acard .k{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:.5rem;}
+  .acard .use{color:#1f5b54;font-weight:600;font-size:.95rem;}
+  .acard .hide{color:var(--ink);font-size:.95rem;}
+
+  /* interface hand-off */
+  .handoff{display:flex;flex-direction:column;}
+  .hstep{
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:.7rem .95rem;font-size:.98rem;
+  }
+  .hstep .lead{font-weight:650;}
+  .hstep.end{background:var(--accent-soft);border-color:#cfe6e1;text-align:center;font-weight:600;color:#1f5b54;}
+  .hconn{display:flex;flex-direction:column;align-items:center;color:var(--muted);font-size:.82rem;padding:.3rem 0;}
+  .hconn .a{font-size:1.15rem;color:var(--accent);line-height:1.1;}
+
+  /* interface rows */
+  .iface{display:flex;flex-direction:column;gap:.55rem;}
+  .irow{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;font-size:1rem;}
+  .irow .scene{min-width:130px;font-weight:600;}
+  .irow .eq{color:var(--muted);font-size:.9rem;}
+  .irow .ifo{background:var(--accent-soft);color:#1f5b54;font-weight:600;border-radius:8px;padding:.3rem .7rem;}
+  .api-note{font-size:.95rem;color:var(--muted);}
+
+  /* the layer stack */
+  .axis-label{text-align:center;font-size:.92rem;color:var(--muted);letter-spacing:.02em;}
+  .axis-label.top{margin-bottom:.5rem;}
+  .axis-label.bottom{margin-top:.5rem;}
+  .axis-arrow{text-align:center;color:var(--muted);font-size:1.2rem;line-height:1;margin:.1rem 0;}
+  .stack{display:flex;flex-direction:column;gap:5px;}
+  .band{
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;
+    padding:.7rem 1rem;border-radius:9px;font-weight:600;color:#2b2f36;
+  }
+  .band .desc{font-weight:400;font-size:.85rem;color:#5b5f49;opacity:.85;}
+  .band.b1{background:#f4d9b8;}
+  .band.b2{background:#f1d9bb;}
+  .band.b3{background:#ecdabd;}
+  .band.b4{background:#e6dcc1;}
+  .band.b5{background:#dedec6;}
+  .band.runtime{background:#ffffff;border:2px solid var(--accent);color:#1f5b54;}
+  .band.runtime .desc{color:var(--accent);opacity:1;font-weight:600;}
+  .band.b7{background:#d3e2db;}
+  .band.b8{background:#cce0e3;}
+  .band.b9{background:#c8dbe9;}
+  .stack-note{font-size:.92rem;color:var(--muted);text-align:center;margin-top:.9rem;}
+
+  /* tradeoff chips */
+  .chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:.3rem 0 0;}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:.32rem .85rem;font-size:.92rem;color:var(--ink);}
+
+  /* translator: three columns */
+  .translate{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.8rem;}
+  .col-title{font-size:.85rem;color:var(--muted);text-align:center;margin:0 0 .55rem;letter-spacing:.02em;}
+  .tokens{display:flex;flex-direction:column;gap:.4rem;}
+  .token{background:var(--code-bg);border-radius:7px;padding:.3rem .6rem;font-size:.92rem;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  .mid-box{background:var(--accent);color:#fff;border-radius:10px;padding:.9rem .7rem;text-align:center;font-weight:600;font-size:.95rem;line-height:1.3;}
+  .between{position:relative;}
+  .conn{color:var(--muted);text-align:center;font-size:1.3rem;}
+
+  /* compile vs interpret */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .mini{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1rem;text-align:center;}
+  .mini h3{margin:0 0 .8rem;font-size:1rem;}
+  .flow{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap;font-size:.92rem;}
+  .box{border-radius:8px;padding:.4rem .7rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88rem;background:var(--code-bg);}
+  .box.act{background:var(--accent-soft);color:#1f5b54;font-family:inherit;font-weight:600;}
+  .arr{color:var(--accent);font-size:1.2rem;}
+  .mini .note{margin:.8rem 0 0;font-size:.88rem;color:var(--muted);}
+
+  /* code block */
+  .code-block{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;overflow-x:auto;font-size:.92rem;line-height:1.55;margin:1.2rem 0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  .code-block code{background:none;padding:0;font-size:inherit;}
+
+  /* numbered steps */
+  .steps{list-style:none;padding:0;margin:0;counter-reset:s;display:flex;flex-direction:column;gap:.75rem;}
+  .steps li{display:flex;gap:.7rem;align-items:flex-start;font-size:.98rem;}
+  .steps li::before{counter-increment:s;content:counter(s);flex:0 0 auto;width:1.55rem;height:1.55rem;border-radius:50%;background:var(--accent);color:#fff;font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:.1rem;}
+
+  /* runtime parts grid */
+  .parts{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+  .part{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.65rem .85rem;}
+  .part .pn{font-weight:650;font-size:.95rem;display:block;}
+  .part .pd{color:var(--muted);font-size:.87rem;}
+
+  /* thick vs thin */
+  .thickthin{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .ministack{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem;}
+  .ministack .label{text-align:center;font-size:.9rem;color:var(--muted);margin-bottom:.7rem;}
+  .ministack .label b{color:var(--ink);}
+  .layer{border-radius:7px;padding:.45rem;text-align:center;font-size:.85rem;margin-bottom:5px;background:#eef0f2;}
+  .layer.rt-thick{background:var(--accent);color:#fff;font-weight:600;padding:1.5rem .45rem;}
+  .layer.rt-thin{background:var(--accent);color:#fff;font-weight:600;padding:.3rem .45rem;font-size:.78rem;}
+
+  /* nothing is magic rows */
+  .magic{display:flex;flex-direction:column;gap:.6rem;}
+  .mrow{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+  .mrow .what{background:var(--accent-soft);color:#1f5b54;font-weight:600;border-radius:8px;padding:.35rem .7rem;min-width:130px;text-align:center;}
+  .mrow .made{color:var(--ink);font-size:.97rem;}
+  .mrow .x{color:var(--muted);}
+
+  /* definition box */
+  .defs{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.4rem;}
+  .def{background:var(--accent-soft);border-radius:12px;padding:1.1rem 1.2rem;}
+  .def h4{margin:0 0 .4rem;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);}
+  .def p{margin:0;font-size:1.02rem;}
+
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+
+  @media (max-width:560px){
+    body{font-size:17px;}
+    header h1{font-size:1.7rem;}
+    .two,.thickthin,.defs,.analogy,.parts{grid-template-columns:1fr;}
+    .translate{grid-template-columns:1fr;}
+    .conn{transform:rotate(90deg);}
+    .band .desc{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>What is a runtime?</h1>
+    <p class="lede">A runtime is the layer that <span class="em">actually runs your program</span> — it takes the code you wrote and carries it out, <span class="em">step by step</span>.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">That sentence uses the word <em>layer</em>. Before it means anything, we need to build it up slowly. We will start with something simpler.</p>
+
+  <!-- 1. code is a representation -->
+  <section>
+    <h2><span class="num">1</span>Code is a representation</h2>
+    <p>Code is not the thing itself. Code is a <strong>representation</strong> of something else.</p>
+    <p>Morse code is not sound, and it is not the message. It is a way to represent letters as short and long signals. Writing is not speech. It is a way to represent speech with marks on a page. Source code works the same way: it is a way for a person to write down instructions, structure, data, and intent in a form they can read.</p>
+
+    <div class="panel">
+      <div class="maps">
+        <div class="map"><span class="thing">the message "SOS"</span><span class="arrow">becomes</span><span class="repr">··· ——— ···</span></div>
+        <div class="map"><span class="thing">speech</span><span class="arrow">becomes</span><span class="repr">writing on a page</span></div>
+        <div class="map"><span class="thing">your intent</span><span class="arrow">becomes</span><span class="repr">print("hello")</span></div>
+      </div>
+      <p class="cap">The thing on the left is real. The thing on the right only <em>stands for</em> it.</p>
+    </div>
+
+    <p>When you write <code>print("hello")</code>, the computer is not reading Python the way you read a sentence. That line is just one representation. To do anything real, it has to be turned into other representations first. Those steps are done by <strong>layers</strong> — so let us look at what a layer is.</p>
+  </section>
+
+  <!-- 2. what is a layer -->
+  <section>
+    <h2><span class="num">2</span>What is a layer?</h2>
+    <p>A layer is a way of working that <strong>hides the details below it</strong> and <strong>gives you a simpler set of things to work with</strong>.</p>
+    <p>You already use layers every day, without calling them that.</p>
+
+    <div class="panel">
+      <div class="analogy">
+        <div class="acard">
+          <h3>Driving a car</h3>
+          <span class="k">You use</span><span class="use">a wheel and pedals</span>
+          <span class="k">Hidden from you</span><span class="hide">the engine, fuel, timing</span>
+        </div>
+        <div class="acard">
+          <h3>Ordering food</h3>
+          <span class="k">You use</span><span class="use">the menu</span>
+          <span class="k">Hidden from you</span><span class="hide">the whole kitchen</span>
+        </div>
+        <div class="acard">
+          <h3>Writing code</h3>
+          <span class="k">You use</span><span class="use">print("hello")</span>
+          <span class="k">Hidden from you</span><span class="hide">how letters reach the screen</span>
+        </div>
+      </div>
+    </div>
+
+    <p>In each case you work with a small, simple set of controls, and someone else's machinery underneath does the hard part. You do not control the spark timing in the engine. You do not tell the kitchen how to cook. You do not write the code that turns letters into dots of light.</p>
+    <p>So every layer does two things:</p>
+    <ul class="tight">
+      <li>it <strong>hides</strong> the messy details below it, and</li>
+      <li>it gives the layer above a <strong>simpler set of words</strong> to work with.</li>
+    </ul>
+  </section>
+
+  <!-- 3. the interface -->
+  <section>
+    <h2><span class="num">3</span>How you use a layer: the interface</h2>
+    <p>If a layer hides what is below it, how do you actually use it?</p>
+    <p>You use its <strong>interface</strong>. An interface is the set of things a layer lets you ask for, plus a promise about what each one does. You use it without knowing what is behind it.</p>
+    <p>You have already seen three interfaces:</p>
+
+    <div class="panel">
+      <div class="iface">
+        <div class="irow"><span class="scene">Driving a car</span><span class="eq">interface =</span><span class="ifo">the pedals and wheel</span></div>
+        <div class="irow"><span class="scene">Ordering food</span><span class="eq">interface =</span><span class="ifo">the menu</span></div>
+        <div class="irow"><span class="scene">Writing code</span><span class="eq">interface =</span><span class="ifo">print("hello")</span></div>
+      </div>
+      <p class="cap">Each interface is a short list of requests you are allowed to make. Press the pedal and the car speeds up. Ask for an item and the kitchen makes it. Call <code>print</code> and the text appears.</p>
+    </div>
+
+    <p>Now stack the layers. Each layer has its own interface. A request made at the top is <strong>translated</strong> downward, from one layer's interface into the next, until something physical happens.</p>
+
+    <div class="panel">
+      <div class="handoff">
+        <div class="hstep"><span class="lead"><code>print("hello")</code></span> &nbsp;— you ask: "print this." You do not know how.</div>
+        <div class="hconn"><span class="a">↓</span><span>translated into…</span></div>
+        <div class="hstep"><span class="lead">the runtime</span> &nbsp;— asks the operating system: "write these bytes to the screen."</div>
+        <div class="hconn"><span class="a">↓</span><span>translated into…</span></div>
+        <div class="hstep"><span class="lead">operating system</span> &nbsp;— asks the hardware to do the physical work.</div>
+        <div class="hconn"><span class="a">↓</span></div>
+        <div class="hstep end">the letters appear on the screen</div>
+      </div>
+    </div>
+
+    <p>At each step, the upper layer asks in its own words, and the layer below translates the request into its own interface. Doing that translation is the real job of the layers in the middle — and the runtime is one of them.</p>
+    <p class="api-note">You already know one kind of interface: an <strong>API</strong> (Application Programming Interface) is just the interface one program offers to another. The wider point is that interfaces are not only between programs. The pedal, the menu, and <code>print</code> are interfaces too — the same idea at every layer.</p>
+  </section>
+
+  <!-- 4. the whole chain -->
+  <section>
+    <h2><span class="num">4</span>A program is a tall stack of layers</h2>
+    <p>You have now seen one layer and one interface. A whole program is many of them stacked up. At the top is a human purpose. At the bottom is a physical machine. Each layer is a representation of the one above it, in a form the layer below can use.</p>
+
+    <div class="panel">
+      <div class="axis-label top">what a person wants</div>
+      <div class="axis-arrow">↓</div>
+      <div class="stack">
+        <div class="band b1">human purpose <span class="desc">what a person wants</span></div>
+        <div class="band b2">requirements <span class="desc">what it must do</span></div>
+        <div class="band b3">product behavior <span class="desc">how it should act</span></div>
+        <div class="band b4">software design <span class="desc">the plan</span></div>
+        <div class="band b5">source code <span class="desc">what you write</span></div>
+        <div class="band runtime">runtime <span class="desc">runs your code ← this page</span></div>
+        <div class="band b7">operating system <span class="desc">manages the machine</span></div>
+        <div class="band b8">machine instructions <span class="desc">tiny basic steps</span></div>
+        <div class="band b9">hardware <span class="desc">the physical chip</span></div>
+      </div>
+      <div class="axis-arrow">↓</div>
+      <div class="axis-label bottom">the physical machine</div>
+      <p class="stack-note">And the hardware produces a real effect in the world — a message sent, a price shown, a door unlocked.</p>
+    </div>
+
+    <p>Read it from top to bottom. A person wants something. That want becomes requirements. The requirements become a description of how the product should behave. That becomes a design. The design becomes source code. The source code is turned into a form the runtime can run. Between each pair of layers is an interface, just like the ones you saw above.</p>
+  </section>
+
+  <!-- 5. where is the runtime -->
+  <section>
+    <h2><span class="num">5</span>So where is the runtime?</h2>
+    <p>The runtime is one of these layers. It sits in the lower-middle of the stack.</p>
+    <p>
+      It is <strong>not</strong> the source code you wrote.<br>
+      It is <strong>not</strong> the operating system.<br>
+      It is <strong>not</strong> the CPU.
+    </p>
+    <p>A runtime is the support environment that makes a program written in some language actually run. In the words we have been using:</p>
+    <div class="panel" style="text-align:center;font-size:1.15rem;font-weight:600;color:var(--accent);line-height:1.5;">
+      A runtime is the layer your program runs on. It gives your code the interface it uses, and translates each request down toward the machine.
+    </div>
+  </section>
+
+  <!-- 6. what the runtime does -->
+  <section>
+    <h2><span class="num">6</span>What the runtime actually does</h2>
+    <p>When you write Python, you use ideas like numbers, strings, lists, dicts, functions, classes, and errors. The CPU does not know any of these. The CPU only does very small, simple things. The runtime is the layer between these two worlds, and it translates from one to the other.</p>
+
+    <div class="panel">
+      <div class="translate">
+        <div>
+          <p class="col-title">You think in</p>
+          <div class="tokens">
+            <span class="token">list</span>
+            <span class="token">dict</span>
+            <span class="token">function</span>
+            <span class="token">exception</span>
+          </div>
+        </div>
+        <div class="between">
+          <div class="conn">→</div>
+          <div class="mid-box">the Python<br>runtime</div>
+          <div class="conn">→</div>
+        </div>
+        <div>
+          <p class="col-title">The CPU can only</p>
+          <div class="tokens">
+            <span class="token">load a value</span>
+            <span class="token">store a value</span>
+            <span class="token">add / compare</span>
+            <span class="token">jump</span>
+          </div>
+        </div>
+      </div>
+      <p class="cap">The runtime stands in the middle and makes the Python ideas real while the program runs.</p>
+    </div>
+
+    <p>How does it actually do that? Let us look more closely at one runtime in particular.</p>
+  </section>
+
+  <!-- 7. a closer look: the Python runtime -->
+  <section>
+    <h2><span class="num">7</span>A closer look: the Python runtime</h2>
+    <p>Let us make this concrete with a tiny program:</p>
+
+    <pre class="code-block"><code>nums = [1, 2, 3]
+print(sum(nums))</code></pre>
+
+    <p>When you run it, the Python runtime does roughly this:</p>
+
+    <div class="panel">
+      <ul class="steps">
+        <li><span class="t"><strong>Compile it.</strong> Your text is turned into <em>bytecode</em> — a short list of very simple instructions the runtime can step through.</span></li>
+        <li><span class="t"><strong>Run it, one step at a time.</strong> The runtime has a small loop (often called the virtual machine) that reads one bytecode instruction and does what it says, then moves to the next.</span></li>
+        <li><span class="t"><strong>Make the objects.</strong> <code>[1, 2, 3]</code> becomes a list object in memory. The name <code>nums</code> is set to point at it.</span></li>
+        <li><span class="t"><strong>Call the built-ins.</strong> <code>sum</code> and <code>print</code> are functions the runtime already provides. <code>sum</code> adds the numbers; <code>print</code> prepares the text.</span></li>
+        <li><span class="t"><strong>Reach the operating system.</strong> To show the text, <code>print</code> asks the operating system to write it to the screen.</span></li>
+        <li><span class="t"><strong>Clean up.</strong> When <code>nums</code> is no longer used, the runtime frees its memory. This is garbage collection.</span></li>
+      </ul>
+    </div>
+
+    <p>Steps 1 and 2 are worth separating, because people often mix them up. They are two different actions.</p>
+
+    <div class="two">
+      <div class="mini">
+        <h3>Compiling (step 1)</h3>
+        <div class="flow"><span class="box">source</span><span class="arr">→</span><span class="box">bytecode</span></div>
+        <p class="note">Changes the form. Representation to representation. Nothing runs yet.</p>
+      </div>
+      <div class="mini">
+        <h3>Interpreting (step 2)</h3>
+        <div class="flow"><span class="box">bytecode</span><span class="arr">→</span><span class="box act">does the work</span></div>
+        <p class="note">Reads a form and carries it out. Representation to action.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:1.4rem;">So Python <strong>compiles</strong> first, then <strong>interprets</strong>. People who say "Python is interpreted" are only describing the second half.</p>
+
+    <p>Put together, here is what the Python runtime hands you:</p>
+
+    <div class="panel">
+      <div class="parts">
+        <div class="part"><span class="pn">a compiler</span><span class="pd">turns your source into bytecode</span></div>
+        <div class="part"><span class="pn">a virtual machine</span><span class="pd">runs the bytecode, one step at a time</span></div>
+        <div class="part"><span class="pn">objects and types</span><span class="pd">what a list, dict, or number is in memory</span></div>
+        <div class="part"><span class="pn">memory management</span><span class="pd">creates objects and frees them (garbage collection)</span></div>
+        <div class="part"><span class="pn">names and scopes</span><span class="pd">tracks which name points to which object</span></div>
+        <div class="part"><span class="pn">the call stack</span><span class="pd">manages function calls and returns</span></div>
+        <div class="part"><span class="pn">exceptions</span><span class="pd">raising and catching errors</span></div>
+        <div class="part"><span class="pn">standard library</span><span class="pd">built-in tools and modules you can import</span></div>
+        <div class="part"><span class="pn">a door to the OS</span><span class="pd">files, network, time, the screen</span></div>
+      </div>
+    </div>
+
+    <p>Every one of these is something you would otherwise have to build yourself. The runtime provides them, so you can write <code>nums = [1, 2, 3]</code> and not think about any of it.</p>
+  </section>
+
+  <!-- 8. other runtimes -->
+  <section>
+    <h2><span class="num">8</span>Different languages, different runtimes</h2>
+    <p>Other languages follow the same idea with different machinery.</p>
+    <p>
+      <strong>Java:</strong> source → JVM bytecode → the JVM runs it (sometimes interpreting it, sometimes compiling it to machine code as it goes).<br>
+      <strong>JavaScript in a browser:</strong> an engine like V8, plus what the browser provides — the page (the DOM), events, timers, and network requests.<br>
+      <strong>Node.js:</strong> the same V8 engine, plus Node's own tools for files, networking, and processes.<br>
+      <strong>C:</strong> a much thinner runtime. A C program can compile straight to machine code, but it still needs startup code, a way to call functions, memory setup, a standard library, and a way to talk to the operating system.
+    </p>
+
+    <div class="thickthin">
+      <div class="ministack">
+        <div class="label"><b>Thick</b> runtime &nbsp;·&nbsp; Python, Java, JS</div>
+        <div class="layer">your code</div>
+        <div class="layer rt-thick">runtime</div>
+        <div class="layer">operating system</div>
+        <div class="layer">hardware</div>
+      </div>
+      <div class="ministack">
+        <div class="label"><b>Thin</b> runtime &nbsp;·&nbsp; C</div>
+        <div class="layer">your code</div>
+        <div class="layer rt-thin">runtime</div>
+        <div class="layer">operating system</div>
+        <div class="layer">hardware</div>
+      </div>
+    </div>
+
+    <p style="margin-top:1.4rem;">So a runtime is not always a big virtual machine. Some are thick, some are thin. But there is always some support layer present while the program runs.</p>
+  </section>
+
+  <!-- 9. nothing is magic -->
+  <section>
+    <h2><span class="num">9</span>None of the layers is magic</h2>
+    <p>This is the idea behind everything above: computing is built from layers, and each layer is built from the one below it. Nothing is magic — it only looks that way until you see the layer underneath.</p>
+
+    <div class="panel">
+      <div class="magic">
+        <div class="mrow"><span class="what">a Python list</span><span class="x">is made of</span><span class="made">lower-level code and memory.</span></div>
+        <div class="mrow"><span class="what">a function call</span><span class="x">is made of</span><span class="made">stack frames and a few simple rules.</span></div>
+        <div class="mrow"><span class="what">an error</span><span class="x">is made of</span><span class="made">rules for stopping and moving control somewhere else.</span></div>
+        <div class="mrow"><span class="what">a web request</span><span class="x">is made of</span><span class="made">libraries, the runtime, the OS, drivers, hardware, and real signals on a wire.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. wrap up: building with layers -->
+  <section>
+    <h2><span class="num">10</span>Programming is building with layers</h2>
+    <p>It is easy to picture programming as "writing code" — typing lines into a file. That is part of it. But most of the skill is something else: building a program out of layers, and using their interfaces well.</p>
+    <p>When you write Python, you are standing on the runtime's interface. The runtime stands on the operating system's interface. The operating system stands on the hardware. You are always working at one layer, using the interface of the layer below, and offering an interface to the layer above.</p>
+    <p>So on any task, a useful question is not only "what code do I write?" but also:</p>
+    <ul class="tight">
+      <li>Which layer am I working in?</li>
+      <li>What interface am I using, and what does it promise?</li>
+      <li>What is hidden below me that I can rely on — and when do I need to look one layer deeper?</li>
+    </ul>
+    <p>You do not need to understand every layer down to the physics. You can write a useful Python program without knowing how a transistor works. But the layer directly beneath you — the runtime — is worth understanding, because you stand on it every day. Knowing what it offers, and that none of it is magic, makes you better at the layer you actually work in.</p>
+
+    <div class="defs">
+      <div class="def">
+        <h4>Technical</h4>
+        <p>A runtime is the environment that supports and runs a program while it is running.</p>
+      </div>
+      <div class="def">
+        <h4>Plain</h4>
+        <p>A runtime is the layer your program stands on — it offers the interface you write against, and translates your requests down toward the machine.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    A short explainer. Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>
