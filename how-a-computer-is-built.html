@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a computer is built from switches</title>
+<style>
+  :root{
+    --ink:#23272e;
+    --muted:#6b7280;
+    --bg:#fbfaf7;
+    --card:#ffffff;
+    --line:#e9e7e1;
+    --accent:#2f7d75;
+    --accent-soft:#e7f1ef;
+    --code-bg:#f4f3ef;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 .6rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;color:var(--ink);margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+
+  section{margin-top:3.6rem;}
+  h2{font-size:1.32rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  .muted{color:var(--muted);}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code-bg);padding:.12em .4em;border-radius:5px;font-size:.9em;}
+  ul.tight{margin:.2rem 0 1.1rem;padding-left:1.2rem;}
+  ul.tight li{margin:.4rem 0;}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.4rem;margin:1.6rem 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .panel .cap{font-size:.92rem;color:var(--muted);margin:1rem 0 0;text-align:center;}
+
+  /* two-state wire */
+  .wire-states{display:flex;gap:1rem;flex-wrap:wrap;}
+  .wire{flex:1;min-width:200px;border:1px solid var(--line);border-radius:10px;padding:1.1rem;text-align:center;background:var(--card);}
+  .wire .bar{height:10px;border-radius:5px;margin:.7rem 0;background:#dad9d2;}
+  .wire.on .bar{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .wire .lab{font-weight:650;}
+  .wire .sub{color:var(--muted);font-size:.86rem;}
+
+  /* switch demo */
+  .switch-demo{display:flex;gap:1rem;flex-wrap:wrap;}
+  .sw{flex:1;min-width:220px;border:1px solid var(--line);border-radius:10px;padding:1.1rem;background:var(--card);text-align:center;}
+  .sw .ctrl{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;background:var(--code-bg);padding:.22rem .6rem;border-radius:6px;margin-bottom:.9rem;}
+  .sw .ctrl.on{background:var(--accent-soft);color:#1f5b54;font-weight:600;}
+  .sw .line{display:flex;align-items:center;justify-content:center;gap:.35rem;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;color:var(--muted);}
+  .sw .seg{height:4px;width:30px;border-radius:2px;background:#dad9d2;}
+  .sw.flow .seg{background:var(--accent);}
+  .sw .node{width:15px;height:15px;border-radius:50%;border:2px solid #bdbcb4;background:#fff;}
+  .sw.flow .node{border-color:var(--accent);background:var(--accent);}
+  .sw .res{margin-top:.9rem;font-size:.88rem;color:var(--muted);}
+
+  /* logic gates */
+  .gates{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;}
+  .gate{border:1px solid var(--line);border-radius:10px;padding:1rem;background:var(--card);}
+  .gate h3{margin:0 0 .35rem;font-size:1rem;}
+  .gate .d{margin:0 0 .8rem;font-size:.85rem;color:var(--muted);}
+  table.tt{border-collapse:collapse;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;margin:0 auto;}
+  .tt th,.tt td{border:1px solid var(--line);padding:.22rem .55rem;text-align:center;}
+  .tt th{background:var(--code-bg);font-weight:600;}
+  .tt td.one{color:var(--accent);font-weight:700;}
+
+  /* adder */
+  .adder{display:flex;align-items:center;justify-content:center;gap:.7rem;flex-wrap:wrap;margin-top:1.2rem;font-family:ui-monospace,Menlo,monospace;font-size:.9rem;}
+  .adder .io{display:flex;flex-direction:column;gap:.35rem;}
+  .adder .b{background:var(--code-bg);border-radius:6px;padding:.25rem .55rem;text-align:center;}
+  .adder .chip{background:var(--accent);color:#fff;border-radius:8px;padding:.7rem 1rem;font-weight:600;}
+  .adder .arr{color:var(--accent);font-size:1.2rem;}
+
+  /* the climb */
+  .axis-label{text-align:center;font-size:.92rem;color:var(--muted);}
+  .axis-arrow{text-align:center;color:var(--muted);font-size:1.2rem;line-height:1;margin:.15rem 0;}
+  .climb{display:flex;flex-direction:column;gap:5px;}
+  .rung{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1rem;border-radius:9px;font-weight:600;color:#2b2f36;}
+  .rung .desc{font-weight:400;font-size:.85rem;color:#46506a;opacity:.85;}
+  .rung.r-cpu{background:#fff;border:2px dashed var(--accent);color:#1f5b54;}
+  .rung.r-cpu .desc{color:var(--accent);opacity:1;font-weight:600;}
+  .rung.r1{background:#dfead3;}
+  .rung.r2{background:#d7e7d9;}
+  .rung.r3{background:#d2e4dd;}
+  .rung.r4{background:#d3e1e7;}
+  .rung.r5{background:#d8e2ea;}
+  .rung.r6{background:#eceef1;color:#7a808a;border:1px dashed #cdd0d5;}
+  .rung.r6 .desc{color:#9aa0a6;}
+
+  /* scale callout */
+  .scale{display:flex;align-items:center;justify-content:center;gap:1.2rem;flex-wrap:wrap;text-align:center;}
+  .scale .one{font-size:1rem;color:var(--muted);}
+  .scale .arrow{color:var(--accent);font-size:1.5rem;}
+  .scale .many{font-size:1.1rem;font-weight:650;color:var(--accent);}
+
+  .endnote{margin-top:3.6rem;padding-top:1.6rem;border-top:1px solid var(--line);}
+  .endnote h2{font-size:1.05rem;color:var(--muted);margin:0 0 .8rem;}
+  .endnote p{font-size:.96rem;color:#42474e;}
+
+  .video{position:relative;width:100%;aspect-ratio:16/9;margin:1.4rem 0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#000;}
+  .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+
+  footer{margin-top:3.2rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+
+  @media (max-width:560px){
+    body{font-size:17px;}
+    header h1{font-size:1.7rem;}
+    .gates{grid-template-columns:1fr;}
+    .rung .desc{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>How a computer is built from switches</h1>
+    <p class="lede">At the very bottom, a computer is <span class="em">just switches</span> turning each other on and off. Everything a computer <span class="em">does</span> is built from them by plain, understandable steps, no magic in the wiring, though the switch itself rests on some very deep physics.</p>
+  </header>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>A wire is on or off</h2>
+    <p>At the bottom, a computer is wires carrying electricity. Voltage is the electrical push that makes that electricity flow, like water pressure in a pipe. A wire is in one of two states: voltage is present, or it is not. We call these two states <strong>1</strong> and <strong>0</strong>.</p>
+
+    <div class="panel">
+      <div class="wire-states">
+        <div class="wire on">
+          <div class="bar"></div>
+          <div class="lab">1</div>
+          <div class="sub">voltage present (on)</div>
+        </div>
+        <div class="wire">
+          <div class="bar"></div>
+          <div class="lab">0</div>
+          <div class="sub">no voltage (off)</div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>A switch you can control</h2>
+    <p>Now we need something that can act on those 1s and 0s. That something is a <strong>switch</strong>.</p>
+    <p>You already know a switch: a light switch opens or closes a connection. A computer's switch, called a <strong>transistor</strong>, does the same thing, with one important difference. It is controlled by electricity, not by a finger.</p>
+    <p>A transistor has a control wire. When the control wire is 1, the switch closes and current flows through. When the control wire is 0, the switch opens and current stops.</p>
+
+    <div class="panel">
+      <div class="switch-demo">
+        <div class="sw">
+          <div class="ctrl">control = 0</div>
+          <div class="line"><span>in</span><span class="seg"></span><span class="node"></span><span class="seg"></span><span>out</span></div>
+          <div class="res">switch open, no current flows</div>
+        </div>
+        <div class="sw flow">
+          <div class="ctrl on">control = 1</div>
+          <div class="line"><span>in</span><span class="seg"></span><span class="node"></span><span class="seg"></span><span>out</span></div>
+          <div class="res">switch closed, current flows</div>
+        </div>
+      </div>
+    </div>
+
+    <p>That is the one fact everything else is built on: <strong>a switch that another wire can turn on and off.</strong></p>
+    <p>How a transistor physically does this, how a sliver of silicon can act as a switch at all, is a question of semiconductor physics, which itself rests on quantum mechanics. That is a layer below this one, and a deep one. We will not explain it here; we treat the switch as given.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>Wire switches into logic</h2>
+    <p>Now we wire switches together and watch when current can get through. Two arrangements matter. (Both use the controlled switch from section 2: <code>a = 1</code> means that switch's control is on, so the switch is closed.)</p>
+
+    <div class="panel">
+      <div style="text-align:center;font-weight:650;color:#1f5b54;margin-bottom:.2rem;">Two switches in series</div>
+      <svg viewBox="0 0 360 120" width="100%" style="max-width:340px;display:block;margin:.4rem auto 0;" role="img" aria-label="AND gate drawn as two switches in series, both closed, so the output is lit.">
+        <text x="30" y="52" font-size="13" fill="#6b7280" text-anchor="middle">1</text>
+        <text x="95" y="46" font-size="13" fill="#1f5b54" text-anchor="middle" font-weight="600">a = 1</text>
+        <text x="185" y="46" font-size="13" fill="#1f5b54" text-anchor="middle" font-weight="600">b = 1</text>
+        <g stroke="#2f7d75" stroke-width="3">
+          <line x1="30" y1="72" x2="70" y2="72"/>
+          <line x1="70" y1="72" x2="120" y2="72"/>
+          <line x1="120" y1="72" x2="160" y2="72"/>
+          <line x1="160" y1="72" x2="210" y2="72"/>
+          <line x1="210" y1="72" x2="286" y2="72"/>
+        </g>
+        <circle cx="30" cy="72" r="6" fill="#2f7d75"/>
+        <g fill="#fff" stroke="#2f7d75" stroke-width="2">
+          <circle cx="70" cy="72" r="4.5"/>
+          <circle cx="120" cy="72" r="4.5"/>
+          <circle cx="160" cy="72" r="4.5"/>
+          <circle cx="210" cy="72" r="4.5"/>
+        </g>
+        <circle cx="300" cy="72" r="12" fill="#2f7d75"/>
+        <text x="300" y="104" font-size="12" fill="#1f5b54" text-anchor="middle" font-weight="600">out = 1</text>
+      </svg>
+      <p class="cap">Current reaches the output only when <strong>both</strong> switches are closed.</p>
+    </div>
+
+    <div class="panel">
+      <div style="text-align:center;font-weight:650;color:#1f5b54;margin-bottom:.2rem;">Two switches in parallel</div>
+      <svg viewBox="0 0 360 150" width="100%" style="max-width:340px;display:block;margin:.4rem auto 0;" role="img" aria-label="OR gate drawn as two switches in parallel; the top switch is closed and the bottom is open, so the output is lit.">
+        <text x="14" y="79" font-size="13" fill="#6b7280" text-anchor="middle">1</text>
+        <text x="120" y="30" font-size="13" fill="#1f5b54" text-anchor="middle" font-weight="600">a = 1</text>
+        <text x="120" y="130" font-size="13" fill="#6b7280" text-anchor="middle" font-weight="600">b = 0</text>
+        <g stroke="#b9bcc2" stroke-width="3" fill="none">
+          <line x1="70" y1="75" x2="70" y2="105"/>
+          <line x1="70" y1="105" x2="95" y2="105"/>
+          <line x1="95" y1="105" x2="125" y2="90"/>
+          <line x1="145" y1="105" x2="250" y2="105"/>
+          <line x1="250" y1="105" x2="250" y2="75"/>
+        </g>
+        <g stroke="#2f7d75" stroke-width="3" fill="none">
+          <line x1="30" y1="75" x2="70" y2="75"/>
+          <line x1="70" y1="75" x2="70" y2="45"/>
+          <line x1="70" y1="45" x2="95" y2="45"/>
+          <line x1="95" y1="45" x2="145" y2="45"/>
+          <line x1="145" y1="45" x2="250" y2="45"/>
+          <line x1="250" y1="45" x2="250" y2="75"/>
+          <line x1="250" y1="75" x2="288" y2="75"/>
+        </g>
+        <circle cx="30" cy="75" r="6" fill="#2f7d75"/>
+        <circle cx="70" cy="75" r="4" fill="#2f7d75"/>
+        <circle cx="250" cy="75" r="4" fill="#2f7d75"/>
+        <g fill="#fff" stroke="#2f7d75" stroke-width="2">
+          <circle cx="95" cy="45" r="4.5"/>
+          <circle cx="145" cy="45" r="4.5"/>
+        </g>
+        <g fill="#fff" stroke="#b9bcc2" stroke-width="2">
+          <circle cx="95" cy="105" r="4.5"/>
+          <circle cx="145" cy="105" r="4.5"/>
+        </g>
+        <circle cx="300" cy="75" r="12" fill="#2f7d75"/>
+        <text x="300" y="107" font-size="12" fill="#1f5b54" text-anchor="middle" font-weight="600">out = 1</text>
+      </svg>
+      <p class="cap">Current reaches the output when <strong>either</strong> switch is closed, here, <code>a</code> alone is enough.</p>
+    </div>
+
+    <p>Read a closed switch as an input of <code>1</code>. Then those two arrangements are two simple rules: current gets through only when <strong>both</strong> inputs are 1, or when <strong>either</strong> input is 1. Rules like these are useful enough that we name them. "Both" is called <strong>AND</strong>. "Either" is called <strong>OR</strong>. A third basic rule, <strong>NOT</strong>, simply flips its input: 1 becomes 0, and 0 becomes 1.</p>
+
+    <p>To describe a rule completely, we list every possible input and the output it gives. That small table is called a <strong>truth table</strong>:</p>
+
+    <div class="panel">
+      <div class="gates">
+        <div class="gate">
+          <h3>NOT</h3>
+          <p class="d">Flips the input.</p>
+          <table class="tt">
+            <tr><th>in</th><th>out</th></tr>
+            <tr><td>0</td><td class="one">1</td></tr>
+            <tr><td>1</td><td>0</td></tr>
+          </table>
+        </div>
+        <div class="gate">
+          <h3>AND</h3>
+          <p class="d">Output is 1 only if both inputs are 1.</p>
+          <table class="tt">
+            <tr><th>a</th><th>b</th><th>out</th></tr>
+            <tr><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>0</td><td>1</td><td>0</td></tr>
+            <tr><td>1</td><td>0</td><td>0</td></tr>
+            <tr><td>1</td><td>1</td><td class="one">1</td></tr>
+          </table>
+        </div>
+        <div class="gate">
+          <h3>OR</h3>
+          <p class="d">Output is 1 if either input is 1.</p>
+          <table class="tt">
+            <tr><th>a</th><th>b</th><th>out</th></tr>
+            <tr><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>0</td><td>1</td><td class="one">1</td></tr>
+            <tr><td>1</td><td>0</td><td class="one">1</td></tr>
+            <tr><td>1</td><td>1</td><td class="one">1</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <p>These named rules (AND, OR, NOT) are the <strong>logic gates</strong>. They are the first level built on top of the bare switch, and the point where the physical world meets pure logic: a gate is electricity, while AND, OR, and NOT are ideas from logic. From here up, we can stop thinking about wires and current, and think in terms of these rules.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>From logic, build arithmetic</h2>
+    <p>The same 1s and 0s can also stand for numbers, 0 and 1 are the two digits of binary. Adding two of them is just another input-to-output rule, exactly like AND and OR, so the same kind of gate can do it. Start with the smallest case: adding two single bits.</p>
+
+    <div class="panel">
+      <table class="tt" style="margin:0 auto;font-size:.92rem;">
+        <tr><th>a</th><th>b</th><th>sum</th><th>carry</th></tr>
+        <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>0</td><td>1</td><td class="one">1</td><td>0</td></tr>
+        <tr><td>1</td><td>0</td><td class="one">1</td><td>0</td></tr>
+        <tr><td>1</td><td>1</td><td>0</td><td class="one">1</td></tr>
+      </table>
+      <p class="cap">Two bits in; a sum bit and a carry bit out.</p>
+    </div>
+
+    <p>Three of these are easy: <code>0+0</code>, <code>0+1</code>, <code>1+0</code>. The interesting one is the last row. In a world of 1s and 0s, <code>1+1</code> is 2, and 2 is written as <code>10</code>. So the result has a 0 in this column and a 1 <strong>carried</strong> into the next column, exactly like carrying when you add 7 + 5 by hand.</p>
+
+    <p>Two gates produce exactly that table:</p>
+    <ul class="tight">
+      <li>The <strong>carry</strong> is 1 only when both inputs are 1, which is just an <strong>AND</strong>.</li>
+      <li>The <strong>sum</strong> is 1 when the two inputs are different (a 0 and a 1). That "1 when they differ" rule is common enough to have its own name: <strong>XOR</strong> (exclusive or). XOR is itself built from AND, OR, and NOT, so we are still using only the basic gates.</li>
+    </ul>
+
+    <div class="panel">
+      <svg viewBox="0 0 360 170" width="100%" style="max-width:340px;display:block;margin:0 auto;" role="img" aria-label="A half-adder: an XOR gate produces the sum and an AND gate produces the carry, both reading inputs a and b.">
+        <rect x="150" y="30" width="80" height="42" rx="6" fill="#fff" stroke="#2f7d75" stroke-width="2"/>
+        <text x="190" y="56" font-size="13" fill="#1f5b54" text-anchor="middle" font-weight="600">XOR</text>
+        <rect x="150" y="100" width="80" height="42" rx="6" fill="#fff" stroke="#2f7d75" stroke-width="2"/>
+        <text x="190" y="126" font-size="13" fill="#1f5b54" text-anchor="middle" font-weight="600">AND</text>
+        <g stroke="#5b6066" stroke-width="2" fill="none">
+          <line x1="40" y1="42" x2="100" y2="42"/>
+          <line x1="100" y1="42" x2="100" y2="112"/>
+          <line x1="100" y1="42" x2="150" y2="42"/>
+          <line x1="100" y1="112" x2="150" y2="112"/>
+          <line x1="40" y1="130" x2="75" y2="130"/>
+          <line x1="75" y1="130" x2="75" y2="58"/>
+          <line x1="75" y1="58" x2="150" y2="58"/>
+          <line x1="75" y1="130" x2="150" y2="130"/>
+          <line x1="230" y1="51" x2="305" y2="51"/>
+          <line x1="230" y1="121" x2="305" y2="121"/>
+        </g>
+        <circle cx="100" cy="42" r="3" fill="#5b6066"/>
+        <circle cx="75" cy="130" r="3" fill="#5b6066"/>
+        <text x="32" y="46" font-size="13" fill="#5b6066" text-anchor="end" font-weight="600">a</text>
+        <text x="32" y="134" font-size="13" fill="#5b6066" text-anchor="end" font-weight="600">b</text>
+        <text x="312" y="55" font-size="13" fill="#1f5b54" font-weight="700">sum</text>
+        <text x="312" y="125" font-size="13" fill="#1f5b54" font-weight="700">carry</text>
+      </svg>
+      <p class="cap">An XOR gate gives the sum; an AND gate gives the carry. Both read the same two inputs, <code>a</code> and <code>b</code>.</p>
+    </div>
+
+    <p>A circuit like this is called a <strong>half-adder</strong>. To add longer numbers, you use one circuit per column and pass each column's carry into the next. (Every column after the first also has to take in a carry, so it uses a slightly bigger version called a <strong>full adder</strong>: same idea, one extra input.) So "a computer does math" is not magic. It is gates, which are switches.</p>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>From logic, build memory</h2>
+    <p>Gates can also remember. Here is how, built up in a few steps.</p>
+    <p>First, one more gate. A <strong>NOR</strong> gate is an OR followed by a NOT: its output is 1 only when both inputs are 0, and 0 if either input is 1.</p>
+    <p>Now take two NOR gates and feed each one's output back into an input of the other. Give each gate one spare input from the outside, called <strong>S</strong> (set) and <strong>R</strong> (reset). This loop is called an <strong>S-R latch</strong>.</p>
+
+    <div class="panel">
+      <svg viewBox="0 0 380 180" width="100%" style="max-width:360px;display:block;margin:0 auto;" role="img" aria-label="An S-R latch: two NOR gates, each output fed back into an input of the other. S sets the stored bit to 1, R resets it to 0.">
+        <rect x="150" y="34" width="85" height="36" rx="6" fill="#fff" stroke="#2f7d75" stroke-width="2"/>
+        <text x="192" y="57" font-size="13" fill="#1f5b54" text-anchor="middle" font-weight="600">NOR</text>
+        <rect x="150" y="110" width="85" height="36" rx="6" fill="#fff" stroke="#2f7d75" stroke-width="2"/>
+        <text x="192" y="133" font-size="13" fill="#1f5b54" text-anchor="middle" font-weight="600">NOR</text>
+        <g stroke="#5b6066" stroke-width="2" fill="none">
+          <line x1="132" y1="46" x2="150" y2="46"/>
+          <line x1="132" y1="134" x2="150" y2="134"/>
+          <line x1="235" y1="52" x2="330" y2="52"/>
+          <line x1="235" y1="128" x2="330" y2="128"/>
+        </g>
+        <text x="126" y="50" font-size="13" fill="#5b6066" text-anchor="end" font-weight="600">R</text>
+        <text x="126" y="138" font-size="13" fill="#5b6066" text-anchor="end" font-weight="600">S</text>
+        <text x="338" y="56" font-size="13" fill="#1f5b54" font-weight="700">Q</text>
+        <text x="338" y="132" font-size="12" fill="#9aa0a6">NOT Q</text>
+        <g stroke="#2f7d75" stroke-width="2" fill="none">
+          <path d="M270 52 L270 18 L120 18 L120 120 L150 120"/>
+          <path d="M285 128 L285 162 L108 162 L108 60 L150 60"/>
+        </g>
+        <polygon points="150,120 142,116 142,124" fill="#2f7d75"/>
+        <polygon points="150,60 142,56 142,64" fill="#2f7d75"/>
+        <circle cx="270" cy="52" r="3" fill="#2f7d75"/>
+        <circle cx="285" cy="128" r="3" fill="#2f7d75"/>
+      </svg>
+      <p class="cap">Two NOR gates, each output feeding back into the other (the green wires).</p>
+    </div>
+
+    <p>Watch it hold a bit:</p>
+    <ul class="tight">
+      <li>Put a 1 on <strong>S</strong> (with R at 0): the output <code>Q</code> becomes 1.</li>
+      <li>Put a 1 on <strong>R</strong> (with S at 0): <code>Q</code> becomes 0.</li>
+      <li>Set both S and R back to 0: the latch keeps the value it last had. Each gate feeds the other, so the two hold each other steady. That held value is the stored bit.</li>
+    </ul>
+
+    <p>So memory is not hand-waving. It is two gates wired in a loop: S writes a 1, R writes a 0, and with both off the loop simply holds. (The second output, <code>NOT Q</code>, is always the opposite of <code>Q</code>; we can ignore it.)</p>
+    <p>To see one built and flipped by hand, watch Ben Eater make an S-R latch on a breadboard:</p>
+    <div class="video">
+      <iframe src="https://www.youtube.com/embed/KM0DdEaY5sY" title="Ben Eater, building an S-R latch" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+
+    <p>That is one bit. A loop like this is how the fast memory nearest the processor, its registers and caches, holds bits, though real cells use a more refined version of the circuit, not this exact one. A computer's main memory works differently again: it stores each bit as a tiny charge that leaks away and has to be topped up. Those are topics for later. The idea to keep from here is the general one: a circuit can hold a value by feeding its output back into its input.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>The clock breaks time into steps</h2>
+    <p>A circuit is not instant. When its inputs change, the new voltages spread through the wires, close to the speed of light, but not quite, and the circuit settles into a new state. It is an analog process: loosely, like water flooding through a network of pipes until it comes to rest. Signals along different paths settle at slightly different moments, so for a brief stretch after any change, the values are still racing around and have not yet resolved.</p>
+    <p>That unsettled stretch is a problem for a circuit that feeds back on itself, like the latch. If the parts react to each other while the values are still moving, the whole thing can land in the wrong state, or never settle at all. So we want the parts to change only at set moments, after the values have settled, not the instant a stray signal arrives.</p>
+    <p>So we add one shared signal that pulses steadily: on, off, on, off. Every part is built to change only on the pulse. Between pulses nothing changes, and the signals have time to settle. On the next pulse, every part takes one step at once. That shared pulse is the <strong>clock</strong>.</p>
+    <p>Now two things come in clean, separate pieces instead of a continuous flow: values, where a wire is either 1 or 0, and time, which is either a tick or the gap between ticks. Breaking time into steps is what lets a circuit do one thing, then the next, in order, instead of everything happening at once.</p>
+    <p>The pulse itself comes from a quartz crystal, which vibrates at a fixed rate when current runs through it. The circuit counts those vibrations to keep time. So even the steady tick has an analog effect underneath it.</p>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2><span class="num">7</span>The parts of a CPU</h2>
+    <p>We now have the basic parts a CPU is built from: gates and adders that do logic and arithmetic, memory cells that hold bits, and a clock to step everything in order. Bundle the small parts into bigger ones:</p>
+    <ul class="tight">
+      <li>Many adding circuits together make an <strong>arithmetic unit</strong>, a block that can add, compare, and do other operations on numbers.</li>
+      <li>Many memory cells together make <strong>registers</strong>, small, fast places to hold the numbers being worked on.</li>
+      <li>A <strong>control part</strong> decides, on each clock tick, which operation to do and where the numbers come from.</li>
+    </ul>
+    <p>But having the parts is not having a CPU. A CPU is these parts wired together in a particular way, connected so they can pass numbers to each other, and controlled so that each tick carries out one step of an instruction. Turning this pile of parts into a machine that runs a program is the next page.</p>
+
+    <div class="panel">
+      <div class="axis-label">toward a CPU</div>
+      <div class="axis-arrow">↑</div>
+      <div class="climb">
+        <div class="rung r-cpu">CPU <span class="desc">wired together on the next page</span></div>
+        <div class="rung r1">arithmetic unit + registers <span class="desc">does operations, holds values</span></div>
+        <div class="rung r2">adders + memory cells <span class="desc">add numbers, hold bits</span></div>
+        <div class="rung r3">logic gates <span class="desc">AND, OR, NOT</span></div>
+        <div class="rung r4">a controlled switch <span class="desc">flipped by another wire</span></div>
+        <div class="rung r5">a wire <span class="desc">on or off (1 or 0)</span></div>
+        <div class="rung r6">electrons in silicon <span class="desc">the physics below, given</span></div>
+      </div>
+      <div class="axis-arrow">↑</div>
+      <div class="axis-label">built up from the physical floor</div>
+    </div>
+
+    <p>We have now reached the bottom of the <a href="what-is-a-runtime.html#stack-bottom">runtime page's</a> stack, but from below. Everything above this, machine instructions, the operating system, the runtime, your code, is built on top of these parts.</p>
+  </section>
+
+  <!-- 8 -->
+  <section>
+    <h2><span class="num">8</span>The power of layers of abstraction</h2>
+    <p>Step back and look at the climb. The important thing about it is not any single level, but that each level let us stop thinking about the one below.</p>
+    <p>Once we had a switch, we stopped thinking about electrons. Once we had a logic gate, we stopped thinking about switches. Once we had an adder, we stopped thinking about gates. Each level hides the one below and gives us a simpler thing to work with. This hiding is called <strong>abstraction</strong>, and it is the only reason a person can build something out of billions of parts.</p>
+
+    <div class="panel">
+      <div class="scale">
+        <span class="one">1 switch</span>
+        <span class="arrow">→</span>
+        <span class="many">billions of switches on one chip</span>
+      </div>
+    </div>
+
+    <p>A modern chip really does have billions of switches. No person could hold all of that in mind at once, and we never have to. Each part is simple, and each layer lets us ignore everything beneath it. The complexity is in the <strong>number</strong> of parts and the <strong>way they are arranged</strong>, not in any single piece.</p>
+    <p>The clean picture does leak. At very high speeds and very small sizes, the messy analog reality (noise, heat, timing) comes back, and handling it is a large part of why designing chips is hard. And there is still a layer beneath this one: the physics of how a single switch works (semiconductor physics, resting on quantum mechanics), which we treated as given. So if you are looking for something magical here, it is not in the wiring we built. It is down in that bottom layer, the physics we stood on without explaining. Every layer rests on another.</p>
+    <p>That is the same lesson as the rest of this series, seen from the floor: we manage overwhelming complexity by building it in layers, where each layer hides the one below.</p>
+  </section>
+
+  <section>
+    <h2>See it built for real</h2>
+    <p>Everything here was built in the abstract: switches, logic gates, an adder, a memory cell, a CPU. Ben Eater builds the same thing in the real world, a working computer wired by hand on breadboards, one chip at a time. To watch the physical version of this whole climb, start his series.</p>
+    <div class="video">
+      <iframe src="https://www.youtube.com/embed/videoseries?list=PLowKtXNTBypGqImE405J2565dvjafglHU" title="Ben Eater, building a computer on breadboards" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+    <p class="muted" style="font-size:.9rem;"><a href="https://www.youtube.com/playlist?list=PLowKtXNTBypGqImE405J2565dvjafglHU">Ben Eater's breadboard-computer series on YouTube</a></p>
+  </section>
+
+  <section class="endnote">
+    <h2>Endnote: 0 and 1 are a choice</h2>
+    <p>Back in section 1, we said a wire is either 1 or 0. That was a simplification.</p>
+    <p>Real electricity is not that tidy. The voltage on a wire is a messy, continuous thing. We choose two ranges, call them "low" and "high", and agree to treat every wire as either 0 or 1. Snapping a messy signal to two clean states is what makes computers reliable: small amounts of noise stop mattering. And that choice is the first abstraction of all: it hides the messy analog reality so every level above can work in clean 0s and 1s.</p>
+  </section>
+
+  <footer>
+    Part of a short series on how computing works. Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>
