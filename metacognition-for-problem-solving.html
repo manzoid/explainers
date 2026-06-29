@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metacognition for problem-solving</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--code-bg:#f4f3ef;--maxw:720px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 .6rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3.4rem;}
+  h2{font-size:1.3rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  .muted{color:var(--muted);}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.3rem 1.4rem;margin:1.6rem 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .panel .cap{font-size:.92rem;color:var(--muted);margin:1rem 0 0;}
+  .panel .lead{font-weight:650;margin:0 0 .7rem;}
+
+  .frames{display:flex;flex-direction:column;gap:.5rem;}
+  .frame{background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;padding:.5rem .8rem;font-size:.98rem;}
+
+  .checks{list-style:none;padding:0;margin:0;}
+  .checks li{position:relative;padding-left:1.5rem;margin:.55rem 0;font-size:1rem;}
+  .checks li::before{content:"?";position:absolute;left:0;top:0;color:var(--accent);font-weight:700;}
+
+  .compare{border-collapse:collapse;width:100%;font-size:.97rem;}
+  .compare th{background:var(--code-bg);padding:.5rem .75rem;text-align:left;font-weight:600;width:50%;}
+  .compare td{border:1px solid var(--line);padding:.6rem .75rem;vertical-align:top;width:50%;}
+  .compare td.s{background:var(--accent-soft);color:#1f5b54;}
+
+  .refs{padding-left:1.2rem;margin:.6rem 0 0;}
+  .refs li{margin:.5rem 0;}
+
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}.compare,.compare tbody,.compare tr,.compare td,.compare th{display:block;width:100%;}.compare th{border:1px solid var(--line);}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Metacognition for problem-solving</h1>
+    <p class="lede">When a hard problem stalls you, the usual advice is to <span class="em">think harder</span>. But the people who are best at hard problems are rarely thinking the hardest. They are <span class="em">managing their own thinking</span>, with better tools.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">Problems are hard for several different reasons. One is <strong>unknowns</strong>: not just a technique you have not learned, but information you do not have, parts of the situation hidden from view, uncertainty about what is true, and things you do not even know to look for.</p>
+
+  <p>Another is <strong>scale</strong>: there are simply a lot of parts to deal with, and they depend on one another, so you cannot take them one at a time.</p>
+
+  <p>A third is <strong>change</strong>: the parts, and the situation around them, do not stay fixed. They shift as you work, and going down one path reveals parts and dependencies you could not have listed at the start. Some things you thought were important turn out not to be, and new ones appear.</p>
+
+  <p>A fourth is <strong>framing</strong>. You are rarely handed the problem in a clear, finished form. It comes to you as someone's description, and that description can be unclear, inconsistent, or simply wrong, with parts left out. Ask two people and you may get two different problems, with no single correct version to check against. So a lot of the early work is putting those versions together into a clear problem worth solving. And beyond all four, intelligence, knowledge, and plain luck still matter.</p>
+
+  <p>A moving, branching structure that nobody has even stated cleanly is more than the mind can hold all at once. So even a problem you could solve gets harder than it should: you lose track of how the parts fit together, you decide too early what the problem is, and you pay attention to whatever stands out instead of what matters.</p>
+
+  <p>Part of the difficulty is then self-inflicted: the way you handle the problem, without help, makes it harder than it needs to be. That part has little to do with how smart you are, and a lot to do with whether you manage your thinking with better tools than memory alone.</p>
+
+  <p><strong>Metacognition</strong> means thinking about your own thinking: watching not just the problem but how you are going at it. Am I understanding this, or guessing? Am I tracking what matters? Is the frame I started with still fitting the evidence? It will not make the problem smaller or fill in what you do not know. What it does is keep you from forgetting that structure, help you build a clearer version of the problem than the one you were handed, and let whatever knowledge and ability you bring actually reach the problem. That is the skill this page is about.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>Working memory is limited</h2>
+    <p>Working memory, the handful of things you can hold in mind at once, is small. The mental effort of holding a problem's parts in mind is called <strong>cognitive load</strong>, and when a problem pushes that load past what working memory can take, your thinking becomes unreliable.</p>
+    <p>You forget details, mix up which part does what, skip steps, and rely too much on whatever you saw most recently.</p>
+    <p>Raw mental capacity does help, and some people start with more of it. But you cannot add much to what you were born with. What you can change is how much you get out of it, by practicing problem-solving strategies. They do not remove the hardness, but they give the problem enough structure that a limited mind can hold it and make sense of it. The rest of this page is those strategies, in order, each building on the one before.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>Chunking</h2>
+    <p>The first way around that limit is chunking: grouping many small details into one larger, meaningful unit, so it takes one place in working memory instead of many.</p>
+    <p>Much of the jargon in a field is exactly this. Take <em>churn</em>: one word that stands for the rate at which customers stop using a product, and the cluster of concerns that come with it. Without the word, you would have to spell all of that out, and hold the parts in mind, every time it came up.</p>
+    <p>Once the word is grounded in enough examples and structure, the whole idea can become a single unit. You can hold it in mind as one thing, weigh it against other things, and raise it with a colleague in a word instead of describing it from the ground up each time.</p>
+    <p>The word does not erase the details. At first it may only point back to them. But with enough experience, it can bundle them, so there are fewer separate things to hold in mind at once. That is the whole point of chunking.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>Abstraction</h2>
+    <p>Abstraction is closely related to chunking, but it does something more specific. Instead of only bundling details, abstraction lets you choose a higher level of description and temporarily ignore the detail beneath it. (Encapsulation is the matching idea: draw a boundary around a set of details so they can be handled as one unit.) These are cognitive tools, not only technical ones.</p>
+    <p>"Customer onboarding" is an abstraction. It might contain ads, landing pages, sign-up flows, emails, support tickets, and retention behavior, but often what you need is the single higher-level label: the onboarding system is failing.</p>
+    <p>That label gives the mind something steady to work with. It does not replace the details; it organizes them.</p>
+    <p>A good abstraction also lets you change levels whenever you need to. You can step back to "onboarding is failing," look closer at "people drop out during account setup," and look closer again at "the form asks for information they do not have yet." Much of good problem-solving is moving up and down those levels without losing track of which one you are on.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>Schemas</h2>
+    <p>A schema is an abstraction of experience: a reusable pattern you have built from many past cases and stored. Once you have seen enough cases of a kind, you recognize the kind right away instead of building it up from the parts each time. Every serious field has its own schemas.</p>
+    <p>A doctor does not see a case as a loose list of symptoms; a lawyer does not see a contract as a random pile of clauses; an engineer does not see a system as a random collection of parts and failures.</p>
+    <p>Their schemas organize what they see, telling them what usually matters, what can be set aside for now, what would be abnormal, and what hidden cause might explain the visible facts.</p>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>Frames</h2>
+    <p>A frame is a schema put to work on the specific situation in front of you: the general pattern, applied to this case and checked against the evidence. It is the structure you are currently using to make sense of what is going on.</p>
+    <p>A frame answers questions like: what kind of situation is this, what matters here, what does this evidence suggest, and what would confirm or weaken my current understanding of it. The same facts can mean very different things under different frames.</p>
+
+    <div class="panel">
+      <p class="lead">One fact: a team keeps missing deadlines. Five frames:</p>
+      <div class="frames">
+        <div class="frame">The team is not working hard enough.</div>
+        <div class="frame">The work was under-scoped.</div>
+        <div class="frame">The dependencies are unstable.</div>
+        <div class="frame">The team is solving the wrong problem.</div>
+        <div class="frame">The process hides risk until it is too late.</div>
+      </div>
+      <p class="cap">Each frame points attention somewhere different and suggests different evidence to go check.</p>
+    </div>
+
+    <p>The facts matter, but facts do not explain themselves; the frame decides what they mean.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>Representations, on paper and in the head</h2>
+    <p>A frame is hard to judge while it stays in your head, where thoughts shift, blur, and feel clearer than they really are. Put it on paper, as a sketch, a table, a diagram, or a list, and you can organize it, see it whole, and check it.</p>
+    <p>We do this with symbols. Words, diagrams, tables, maps, and models are all symbols. A forecast stands for a business in numbers; an org chart, for who reports to whom; a funnel, for how people move through a product.</p>
+    <p>None of these is the full reality. They are simplified structures that keep the relationships that matter and leave out the rest. A good representation removes what does not matter; a bad one hides the very thing you needed to see.</p>
+    <p>So choosing what to write down, what to name, what to draw, and at what level of detail, is itself a metacognitive act.</p>
+    <p>Laid out this way, the frame can be checked, and its flaws become visible. You can see that two claims contradict each other, that an assumption is unsupported, that a term is vague, that a step is missing: the omissions, inconsistencies, and inaccuracies that are otherwise easy to carry without noticing.</p>
+    <p>This is why people who are good at hard problems use whiteboards, notes, sketches, and models. Not because they cannot think without them, but because these tools make the thinking better and the mistakes easier to see.</p>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2><span class="num">7</span>Sensemaking</h2>
+    <p>Sensemaking is the loop that runs on all of this. You hold the frame against the evidence, use a representation to find the gaps and contradictions, and revise the frame, or drop it and look for a better one. When your frame cannot explain what you see, it is the frame that has to change, not the facts.</p>
+    <p>It is the work of figuring out what is going on, as opposed to carrying out a procedure you already know. When the situation is clear, you can just execute. When it is not, this loop is the job.</p>
+    <p>This is not a rare event. A production incident starts as scattered symptoms. A customer complaint arrives as partial information. A strategy question opens with uncertain signals; a design question, with competing constraints.</p>
+    <p>In each, the first job is not to act mechanically, but to build a useful understanding of the situation.</p>
+  </section>
+
+  <!-- 8 -->
+  <section>
+    <h2><span class="num">8</span>The danger of premature recognition</h2>
+    <p>This is the failure mode of the whole chain: locking a schema in as your frame too early, before sensemaking has tested it. A schema is powerful, and for that reason also dangerous: it helps when it organizes reality and hurts when it replaces looking at reality.</p>
+    <p>Sometimes you glance at a situation and your mind says "I know what this is." That recognition might be right. It might also be premature: you force the situation into a familiar shape, ignore the evidence that does not fit, and reuse a standard answer without checking that this case is really the same.</p>
+    <p>This is a common mistake for people who are past the beginner stage. Beginners often have no schema to over-apply. Experts have many schemas, but they do not trust any one of them too much.</p>
+    <p>For an expert, a schema is not a conclusion; it is a working frame, something to guide attention while staying open to being wrong.</p>
+  </section>
+
+  <!-- 9 -->
+  <section>
+    <h2><span class="num">9</span>Metacognitive checks</h2>
+    <p>In practice, metacognition is monitoring the quality of your own understanding with a few honest questions:</p>
+
+    <div class="panel">
+      <ul class="checks">
+        <li>What do I believe is happening, and why?</li>
+        <li>What evidence supports this frame, and what evidence does not fit?</li>
+        <li>What am I assuming, and what am I ignoring?</li>
+        <li>What level of detail am I working at?</li>
+        <li>Am I solving the real problem, or the easiest version to describe?</li>
+        <li>Am I leaning on a familiar schema because it fits, or because I want it to fit?</li>
+        <li>What would change my mind?</li>
+      </ul>
+    </div>
+
+    <p>These questions cost a little time at the start and save a great deal of wasted effort. Mostly, they separate real understanding from the feeling of understanding.</p>
+  </section>
+
+  <!-- 10 -->
+  <section>
+    <h2><span class="num">10</span>What improvement looks like</h2>
+    <p>You can hear the skill in how people describe their own struggles. The weaker version names a feeling. The stronger version names the specific thing that went wrong, which is the part you can fix. Here is the same set, from an engineer trying to find why a system keeps failing.</p>
+
+    <table class="compare">
+      <tr><th>Weaker version</th><th>Stronger version</th></tr>
+      <tr><td>"I got confused."</td><td class="s">"I tried to hold the whole system in my head and lost track of which service calls which."</td></tr>
+      <tr><td>"I thought I knew what was wrong."</td><td class="s">"The errors looked like last week's database problem, so I fixed that and stopped, before checking it was really the same."</td></tr>
+      <tr><td>"I need to be smarter."</td><td class="s">"I needed the path a request takes through the system written out in front of me, not kept in my head."</td></tr>
+      <tr><td>"I made a careless mistake."</td><td class="s">"I restarted the wrong service, because I never wrote down what had changed just before the failure."</td></tr>
+    </table>
+
+    <p>The stronger version is more useful for one plain reason: it points at something you can change.</p>
+  </section>
+
+  <!-- 11 -->
+  <section>
+    <h2><span class="num">11</span>The goal</h2>
+    <p>The aim is not to become someone who never feels confused. Experts feel confused all the time. The difference is that they have better ways to work with confusion.</p>
+    <p>They notice it sooner. They put it on paper. They weigh one frame against another, test those frames against evidence, and change frames when the current one stops working. They use names, schemas, examples, diagrams, invariants, and other representations to keep cognitive load low.</p>
+    <p>They are not thinking harder than everyone else. They are thinking with better tools.</p>
+  </section>
+
+  <section>
+    <h2>References</h2>
+    <p>The closest single source is the Commoncog essay <a href="https://commoncog.com/how-experts-sensemake/">How Experts Sensemake</a>. For the broader picture:</p>
+    <ul class="refs">
+      <li>Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011), which covers much of this: intuition as fast recognition, the pull to settle on a familiar answer too early, framing effects, and the strain of holding too much in mind.</li>
+      <li>Gary Klein, Brian Moon, and Robert Hoffman, "Making Sense of Sensemaking" (2006), on frames and Data-Frame Theory.</li>
+      <li>K. Anders Ericsson and Robert Pool, <em>Peak</em> (2016), on how experts build mental representations and come to see structure where a beginner sees separate parts.</li>
+      <li>John Sweller, Paul Ayres, and Slava Kalyuga, <em>Cognitive Load Theory</em> (2011), on cognitive load.</li>
+      <li>Andy Clark, <em>Supersizing the Mind</em> (2008), on thinking with external tools and representations.</li>
+    </ul>
+  </section>
+
+  <footer>
+    Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>
