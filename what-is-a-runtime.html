@@ -146,6 +146,7 @@
   .band.b8{background:#cce0e3;}
   .band.b9{background:#c8dbe9;}
   .stack-note{font-size:.92rem;color:var(--muted);text-align:center;margin-top:.9rem;}
+  .band:target{outline:3px solid var(--accent);outline-offset:2px;}
 
   /* tradeoff chips */
   .chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:.3rem 0 0;}
@@ -224,7 +225,7 @@
 
   <header>
     <h1>What is a runtime?</h1>
-    <p class="lede">A runtime is the layer that <span class="em">actually runs your program</span> — it takes the code you wrote and carries it out, <span class="em">step by step</span>.</p>
+    <p class="lede">A runtime is the layer that <span class="em">actually runs your program</span>, it takes the code you wrote and carries it out, <span class="em">step by step</span>.</p>
   </header>
 
   <p style="margin-top:1.6rem;">That sentence uses the word <em>layer</em>. Before it means anything, we need to build it up slowly. We will start with something simpler.</p>
@@ -235,16 +236,7 @@
     <p>Code is not the thing itself. Code is a <strong>representation</strong> of something else.</p>
     <p>Morse code is not sound, and it is not the message. It is a way to represent letters as short and long signals. Writing is not speech. It is a way to represent speech with marks on a page. Source code works the same way: it is a way for a person to write down instructions, structure, data, and intent in a form they can read.</p>
 
-    <div class="panel">
-      <div class="maps">
-        <div class="map"><span class="thing">the message "SOS"</span><span class="arrow">becomes</span><span class="repr">··· ——— ···</span></div>
-        <div class="map"><span class="thing">speech</span><span class="arrow">becomes</span><span class="repr">writing on a page</span></div>
-        <div class="map"><span class="thing">your intent</span><span class="arrow">becomes</span><span class="repr">print("hello")</span></div>
-      </div>
-      <p class="cap">The thing on the left is real. The thing on the right only <em>stands for</em> it.</p>
-    </div>
-
-    <p>When you write <code>print("hello")</code>, the computer is not reading Python the way you read a sentence. That line is just one representation. To do anything real, it has to be turned into other representations first. Those steps are done by <strong>layers</strong> — so let us look at what a layer is.</p>
+    <p>When you write <code>print("hello")</code>, the computer is not reading Python the way you read a sentence. That line is just one representation. To do anything real, it has to be turned into other representations first. Those steps are done by <strong>layers</strong>, so let us look at what a layer is.</p>
   </section>
 
   <!-- 2. what is a layer -->
@@ -301,18 +293,18 @@
 
     <div class="panel">
       <div class="handoff">
-        <div class="hstep"><span class="lead"><code>print("hello")</code></span> &nbsp;— you ask: "print this." You do not know how.</div>
+        <div class="hstep"><span class="lead"><code>print("hello")</code></span>, you ask: "print this." You do not know how.</div>
         <div class="hconn"><span class="a">↓</span><span>translated into…</span></div>
-        <div class="hstep"><span class="lead">the runtime</span> &nbsp;— asks the operating system: "write these bytes to the screen."</div>
+        <div class="hstep"><span class="lead">the runtime</span> asks the operating system: "write these bytes to the screen."</div>
         <div class="hconn"><span class="a">↓</span><span>translated into…</span></div>
-        <div class="hstep"><span class="lead">operating system</span> &nbsp;— asks the hardware to do the physical work.</div>
+        <div class="hstep"><span class="lead">operating system</span> asks the hardware to do the physical work.</div>
         <div class="hconn"><span class="a">↓</span></div>
         <div class="hstep end">the letters appear on the screen</div>
       </div>
     </div>
 
-    <p>At each step, the upper layer asks in its own words, and the layer below translates the request into its own interface. Doing that translation is the real job of the layers in the middle — and the runtime is one of them.</p>
-    <p class="api-note">You already know one kind of interface: an <strong>API</strong> (Application Programming Interface) is just the interface one program offers to another. The wider point is that interfaces are not only between programs. The pedal, the menu, and <code>print</code> are interfaces too — the same idea at every layer.</p>
+    <p>At each step, the upper layer asks in its own words, and the layer below translates the request into its own interface. Doing that translation is the real job of the layers in the middle, and the runtime is one of them.</p>
+    <p class="api-note">You already know one kind of interface: an <strong>API</strong> (Application Programming Interface) is just the interface one program offers to another. The wider point is that interfaces are not only between programs. The pedal, the menu, and <code>print</code> are interfaces too, the same idea at every layer.</p>
   </section>
 
   <!-- 4. the whole chain -->
@@ -332,11 +324,11 @@
         <div class="band runtime">runtime <span class="desc">runs your code ← this page</span></div>
         <div class="band b7">operating system <span class="desc">manages the machine</span></div>
         <div class="band b8">machine instructions <span class="desc">tiny basic steps</span></div>
-        <div class="band b9">hardware <span class="desc">the physical chip</span></div>
+        <div class="band b9" id="stack-bottom">hardware <span class="desc">the physical chip</span></div>
       </div>
       <div class="axis-arrow">↓</div>
       <div class="axis-label bottom">the physical machine</div>
-      <p class="stack-note">And the hardware produces a real effect in the world — a message sent, a price shown, a door unlocked.</p>
+      <p class="stack-note">And the hardware produces a real effect in the world, a message sent, a price shown, a door unlocked.</p>
     </div>
 
     <p>Read it from top to bottom. A person wants something. That want becomes requirements. The requirements become a description of how the product should behave. That becomes a design. The design becomes source code. The source code is turned into a form the runtime can run. Between each pair of layers is an interface, just like the ones you saw above.</p>
@@ -406,7 +398,7 @@ print(sum(nums))</code></pre>
 
     <div class="panel">
       <ul class="steps">
-        <li><span class="t"><strong>Compile it.</strong> Your text is turned into <em>bytecode</em> — a short list of very simple instructions the runtime can step through.</span></li>
+        <li><span class="t"><strong>Compile it.</strong> Your text is turned into <em>bytecode</em>, a short list of very simple instructions the runtime can step through.</span></li>
         <li><span class="t"><strong>Run it, one step at a time.</strong> The runtime has a small loop (often called the virtual machine) that reads one bytecode instruction and does what it says, then moves to the next.</span></li>
         <li><span class="t"><strong>Make the objects.</strong> <code>[1, 2, 3]</code> becomes a list object in memory. The name <code>nums</code> is set to point at it.</span></li>
         <li><span class="t"><strong>Call the built-ins.</strong> <code>sum</code> and <code>print</code> are functions the runtime already provides. <code>sum</code> adds the numbers; <code>print</code> prepares the text.</span></li>
@@ -457,7 +449,7 @@ print(sum(nums))</code></pre>
     <p>Other languages follow the same idea with different machinery.</p>
     <p>
       <strong>Java:</strong> source → JVM bytecode → the JVM runs it (sometimes interpreting it, sometimes compiling it to machine code as it goes).<br>
-      <strong>JavaScript in a browser:</strong> an engine like V8, plus what the browser provides — the page (the DOM), events, timers, and network requests.<br>
+      <strong>JavaScript in a browser:</strong> an engine like V8, plus what the browser provides, the page (the DOM), events, timers, and network requests.<br>
       <strong>Node.js:</strong> the same V8 engine, plus Node's own tools for files, networking, and processes.<br>
       <strong>C:</strong> a much thinner runtime. A C program can compile straight to machine code, but it still needs startup code, a way to call functions, memory setup, a standard library, and a way to talk to the operating system.
     </p>
@@ -485,7 +477,7 @@ print(sum(nums))</code></pre>
   <!-- 9. nothing is magic -->
   <section>
     <h2><span class="num">9</span>None of the layers is magic</h2>
-    <p>This is the idea behind everything above: computing is built from layers, and each layer is built from the one below it. Nothing is magic — it only looks that way until you see the layer underneath.</p>
+    <p>This is the idea behind everything above: computing is built from layers, and each layer is built from the one below it. Nothing is magic, it only looks that way until you see the layer underneath.</p>
 
     <div class="panel">
       <div class="magic">
@@ -500,26 +492,15 @@ print(sum(nums))</code></pre>
   <!-- 10. wrap up: building with layers -->
   <section>
     <h2><span class="num">10</span>Programming is building with layers</h2>
-    <p>It is easy to picture programming as "writing code" — typing lines into a file. That is part of it. But most of the skill is something else: building a program out of layers, and using their interfaces well.</p>
+    <p>It is easy to picture programming as "writing code", typing lines into a file. That is part of it. But most of the skill is something else: building a program out of layers, and using their interfaces well.</p>
     <p>When you write Python, you are standing on the runtime's interface. The runtime stands on the operating system's interface. The operating system stands on the hardware. You are always working at one layer, using the interface of the layer below, and offering an interface to the layer above.</p>
     <p>So on any task, a useful question is not only "what code do I write?" but also:</p>
     <ul class="tight">
       <li>Which layer am I working in?</li>
       <li>What interface am I using, and what does it promise?</li>
-      <li>What is hidden below me that I can rely on — and when do I need to look one layer deeper?</li>
+      <li>What is hidden below me that I can rely on, and when do I need to look one layer deeper?</li>
     </ul>
-    <p>You do not need to understand every layer down to the physics. You can write a useful Python program without knowing how a transistor works. But the layer directly beneath you — the runtime — is worth understanding, because you stand on it every day. Knowing what it offers, and that none of it is magic, makes you better at the layer you actually work in.</p>
-
-    <div class="defs">
-      <div class="def">
-        <h4>Technical</h4>
-        <p>A runtime is the environment that supports and runs a program while it is running.</p>
-      </div>
-      <div class="def">
-        <h4>Plain</h4>
-        <p>A runtime is the layer your program stands on — it offers the interface you write against, and translates your requests down toward the machine.</p>
-      </div>
-    </div>
+    <p>You do not need to understand every layer down to the physics. You can write a useful Python program without knowing how a transistor works. But the layer directly beneath you, the runtime, is worth understanding, because you stand on it every day. Knowing what it offers, and that none of it is magic, makes you better at the layer you actually work in.</p>
   </section>
 
   <footer>
