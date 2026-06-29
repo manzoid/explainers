@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a CPU runs a program</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--code-bg:#f4f3ef;--maxw:760px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 .6rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;color:var(--ink);margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3.6rem;}
+  h2{font-size:1.32rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  .muted{color:var(--muted);}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code-bg);padding:.12em .4em;border-radius:5px;font-size:.9em;}
+  ul.tight{margin:.2rem 0 1.1rem;padding-left:1.2rem;}
+  ul.tight li{margin:.4rem 0;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.4rem;margin:1.6rem 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .panel .cap{font-size:.92rem;color:var(--muted);margin:1rem 0 0;text-align:center;}
+
+  /* memory strip */
+  .mem{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;}
+  .slot{display:flex;flex-direction:column;align-items:center;font-family:ui-monospace,Menlo,monospace;}
+  .slot .addr{color:var(--muted);font-size:.72rem;margin-bottom:3px;}
+  .slot .val{width:48px;height:36px;border:1px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;background:var(--card);font-size:.9rem;}
+  .slot.pc .val{border:2px solid var(--accent);background:var(--accent-soft);color:#1f5b54;font-weight:700;}
+  .slot .tag{font-size:.7rem;color:var(--accent);font-weight:700;margin-top:3px;height:.9rem;}
+
+  .video{position:relative;width:100%;aspect-ratio:16/9;margin:1.4rem 0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#000;}
+  .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+
+  .ticks{border-collapse:collapse;width:100%;font-size:.9rem;}
+  .ticks th,.ticks td{border:1px solid var(--line);padding:.45rem .6rem;text-align:left;vertical-align:top;}
+  .ticks th{background:var(--code-bg);font-weight:600;}
+  .ticks td.tk{text-align:center;color:var(--muted);width:2.4rem;font-family:ui-monospace,Menlo,monospace;}
+  .ticks td.ph{font-weight:600;white-space:nowrap;}
+  .ticks tr.rf td{background:#faf3ea;}
+  .ticks tr.rd td{background:#eef1f4;}
+  .ticks tr.re td{background:#edf4ef;}
+
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>How a CPU runs a program</h1>
+    <p class="lede">A CPU runs a program by repeating <span class="em">one simple loop</span>, very fast: <strong>fetch</strong> the next instruction, <strong>decode</strong> it (work out what it means), then <strong>execute</strong> it (carry it out). That is the whole job, the same three steps over and over.</p>
+  </header>
+
+  <p class="lede" style="margin-top:1.1rem;">On the <a href="how-a-computer-is-built.html">last page</a> we gathered some of the key parts: logic gates, an arithmetic unit for the math, a clock to keep everything in step, and registers. This page puts them together into something that runs a program.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>An instruction is a number</h2>
+    <p>A program is a list of <strong>instructions</strong>. An instruction is a single step: one command that tells the CPU to do one specific thing. Carry out the steps in order and you have run the program.</p>
+    <p>The actions a CPU can take are simple:</p>
+    <ul class="tight">
+      <li>load a number from memory into a register,</li>
+      <li>add two registers,</li>
+      <li>store a register back into memory,</li>
+      <li>jump to a different instruction.</li>
+    </ul>
+    <p>Each instruction is stored in memory as a number, like the data the program works on. Part of the number says which action to take; the rest says what to act on, which registers, which memory slot.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>Memory and the program counter</h2>
+    <p>To the CPU, memory is one long line of slots, each holding a number. (Physically the slots sit in a grid, but the addressing hides that, so the CPU just sees the line.) Each slot has an <strong>address</strong>: its position in the line, counting 0, 1, 2, and so on. The address is how the CPU points at a slot. It is not the number stored inside.</p>
+
+    <div class="panel">
+      <div class="mem">
+        <div class="slot"><span class="addr">0</span><span class="val">19</span><span class="tag"></span></div>
+        <div class="slot"><span class="addr">1</span><span class="val">34</span><span class="tag"></span></div>
+        <div class="slot pc"><span class="addr">2</span><span class="val">08</span><span class="tag">PC</span></div>
+        <div class="slot"><span class="addr">3</span><span class="val">21</span><span class="tag"></span></div>
+        <div class="slot"><span class="addr">4</span><span class="val">00</span><span class="tag"></span></div>
+        <div class="slot"><span class="addr">5</span><span class="val">12</span><span class="tag"></span></div>
+      </div>
+      <p class="cap">Each slot has an address (on top) and holds a number. The program counter points at the next instruction, here address 2.</p>
+    </div>
+
+    <p>Both the program's instructions and the data it works on live in memory. At this level they look the same, just numbers in slots. What makes a number an instruction is that the CPU reads it as one.</p>
+    <p>Memory is large, and it sits a short way from the processor. The CPU also has a few small, fast places of its own to hold numbers, called <strong>registers</strong> (we built these on the last page). There are only a handful, and the CPU keeps the numbers it is working on in them, because reaching a register is much quicker than reaching out to memory.</p>
+    <p>To run a program in order, the CPU has to track which instruction is next. It keeps that in a register of its own, the <strong>program counter</strong>, which holds the address of the next instruction.</p>
+    <p>The instructions of a program sit in consecutive addresses, in the order they should run. So "the next instruction" just means the next address: after finishing one, the CPU adds 1 to the program counter. The CPU never tells instructions apart from data; it reads whatever number is at the program counter and treats it as an instruction. The order comes from how the instructions are laid out, not from the CPU being clever about it. (Some instructions set the program counter somewhere else instead, which is how loops and branches work. More on that soon.)</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>The bus</h2>
+    <p>The parts have to pass numbers to each other: an instruction from memory into the CPU, a value from a register into the arithmetic unit, a result back to memory. Wiring every part straight to every other part would be a tangle.</p>
+    <p>So the parts share one set of wires, the <strong>bus</strong>. The name comes from "omnibus," Latin for "for all": every part connects to the one shared line.</p>
+
+    <div class="panel">
+      <svg viewBox="0 0 460 210" width="100%" style="max-width:460px;display:block;margin:0 auto;" role="img" aria-label="Six parts, memory, program counter, instruction register, data registers, arithmetic unit, control, all connected to one shared bus.">
+        <line x1="30" y1="105" x2="430" y2="105" stroke="#2f7d75" stroke-width="4"/>
+        <text x="157" y="99" font-size="12" fill="#2f7d75" text-anchor="middle" font-weight="600">the bus</text>
+        <g fill="#fff" stroke="#2f7d75" stroke-width="2">
+          <rect x="30" y="20" width="110" height="36" rx="6"/>
+          <rect x="175" y="20" width="110" height="36" rx="6"/>
+          <rect x="320" y="20" width="110" height="36" rx="6"/>
+          <rect x="30" y="154" width="110" height="36" rx="6"/>
+          <rect x="175" y="154" width="110" height="36" rx="6"/>
+          <rect x="320" y="154" width="110" height="36" rx="6"/>
+        </g>
+        <g font-size="12" fill="#1f5b54" text-anchor="middle">
+          <text x="85" y="42">Memory</text>
+          <text x="230" y="42">Program counter</text>
+          <text x="375" y="42">Instruction reg.</text>
+          <text x="85" y="176">Data registers</text>
+          <text x="230" y="176">Arithmetic unit</text>
+          <text x="375" y="176">Control</text>
+        </g>
+        <g stroke="#5b6066" stroke-width="2">
+          <line x1="85" y1="56" x2="85" y2="105"/>
+          <line x1="230" y1="56" x2="230" y2="105"/>
+          <line x1="375" y1="56" x2="375" y2="105"/>
+          <line x1="85" y1="154" x2="85" y2="105"/>
+          <line x1="230" y1="154" x2="230" y2="105"/>
+          <line x1="375" y1="154" x2="375" y2="105"/>
+        </g>
+        <g fill="#2f7d75">
+          <circle cx="85" cy="105" r="3.5"/>
+          <circle cx="230" cy="105" r="3.5"/>
+          <circle cx="375" cy="105" r="3.5"/>
+        </g>
+      </svg>
+      <p class="cap">Six parts on one shared bus. The program counter and instruction register are themselves registers, each set apart for its one special job; the data registers hold the numbers being worked on.</p>
+    </div>
+
+    <p>The rule is simple: at each step, one part <strong>drives</strong> the bus, puts its number on the wires, and any part that needs that number reads it off. Only one part can drive at a time, or the numbers would collide.</p>
+    <p>Who drives and who reads is decided by the control part, on each clock tick (the clock from the previous page). One tick, one transfer.</p>
+    <p>With a bus in place, moving the next instruction from memory into the CPU is just a bus transfer, which is exactly what "fetch" is.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>The loop: fetch, decode, execute</h2>
+    <p>Now the parts can run a program. The CPU repeats one loop, made of three steps.</p>
+
+    <div class="panel">
+      <svg viewBox="0 0 440 150" width="100%" style="max-width:440px;display:block;margin:0 auto;" role="img" aria-label="The fetch, decode, execute loop: three steps in a cycle that repeats.">
+        <g fill="#fff" stroke="#2f7d75" stroke-width="2">
+          <rect x="20" y="32" width="110" height="46" rx="8"/>
+          <rect x="165" y="32" width="110" height="46" rx="8"/>
+          <rect x="310" y="32" width="110" height="46" rx="8"/>
+        </g>
+        <g font-size="15" fill="#1f5b54" text-anchor="middle" font-weight="600">
+          <text x="75" y="61">Fetch</text>
+          <text x="220" y="61">Decode</text>
+          <text x="365" y="61">Execute</text>
+        </g>
+        <g stroke="#2f7d75" stroke-width="2" fill="none">
+          <line x1="130" y1="55" x2="160" y2="55"/>
+          <line x1="275" y1="55" x2="305" y2="55"/>
+          <path d="M365 78 L365 120 L75 120 L75 84"/>
+        </g>
+        <polygon points="160,50 168,55 160,60" fill="#2f7d75"/>
+        <polygon points="305,50 313,55 305,60" fill="#2f7d75"/>
+        <polygon points="70,84 75,75 80,84" fill="#2f7d75"/>
+        <text x="220" y="114" font-size="12" fill="#2f7d75" text-anchor="middle">fetch the next instruction</text>
+      </svg>
+      <p class="cap">The three steps, repeated.</p>
+    </div>
+
+    <p>What each step does:</p>
+    <ul class="tight">
+      <li><strong>Fetch:</strong> bring the next instruction from memory into the CPU.</li>
+      <li><strong>Decode:</strong> the control part works out which action the instruction is.</li>
+      <li><strong>Execute:</strong> the control part carries that action out.</li>
+    </ul>
+
+    <p>Each step is one or more transfers over the bus, and each transfer takes one tick of the clock (the clock from the last page): one part drives the bus, another reads. Here is a whole instruction, tick by tick, using "add two registers" as the example.</p>
+
+    <div class="panel">
+      <table class="ticks">
+        <tr><th>tick</th><th>phase</th><th>what happens on the bus</th></tr>
+        <tr class="rf"><td class="tk">1</td><td class="ph">fetch</td><td>the program counter puts the address on the bus; memory reads it</td></tr>
+        <tr class="rf"><td class="tk">2</td><td class="ph">fetch</td><td>memory puts the instruction on the bus; the instruction register reads it</td></tr>
+        <tr class="rd"><td class="tk">3</td><td class="ph">decode</td><td>the control part reads the instruction; nothing moves on the bus</td></tr>
+        <tr class="re"><td class="tk">4</td><td class="ph">execute</td><td>register 1 puts its number on the bus; the arithmetic unit reads it</td></tr>
+        <tr class="re"><td class="tk">5</td><td class="ph">execute</td><td>register 2 puts its number on the bus; the arithmetic unit reads it and adds</td></tr>
+        <tr class="re"><td class="tk">6</td><td class="ph">execute</td><td>the arithmetic unit puts the sum on the bus; a register reads it</td></tr>
+      </table>
+      <p class="cap">One instruction (add two registers), one transfer per clock tick. Real CPUs compress and overlap these steps, but the idea holds.</p>
+    </div>
+
+    <p>Then the CPU is back at fetch, the program counter pointing at the next instruction. Fetch, decode, execute, over and over, billions of times a second. That repetition is a running program.</p>
+  </section>
+
+</div>
+</body>
+</html>
