@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to solve a single-function problem</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--code-bg:#f4f3ef;--maxw:720px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 1rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3rem;}
+  h2{font-size:1.3rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+
+  .rule{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.6rem 0;color:#1f5b54;font-size:1.05rem;}
+
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;overflow-x:auto;margin:1.4rem 0;}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;line-height:1.55;}
+  pre code{color:#2c3038;}
+
+  .ex{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.3rem 1.4rem;margin:1.6rem 0;}
+  .ex .step{font-weight:650;color:var(--accent);}
+  .ex figure{margin:1.4rem 0;}
+  .ex svg{display:block;width:100%;height:auto;}
+  .ex figcaption{font-size:.9rem;color:var(--muted);margin-top:.6rem;}
+
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  .refs{padding-left:1.2rem;margin:.6rem 0 0;}
+  .refs li{margin:.5rem 0;}
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>How to solve a single-function problem</h1>
+    <p class="lede">A single-function problem is a programming interview problem you can <span class="em">solve with one function</span>. They have names like <em>rotate an N by N matrix</em> or <em>best time to buy and sell stock</em>.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">What makes these hard is doing them live: in front of an interviewer, thinking out loud, with the clock running.</p>
+
+  <p>A structured approach is what keeps you steady under that pressure, and the one here is built around a single rule:</p>
+
+  <div class="rule">Do not write code until you can state the method in plain words and predict what it will produce.</div>
+
+  <p>This is not a new idea. It is the oldest advice in the field, and it is what the <a href="what-is-practical-intelligence.html">practical intelligence</a> and <a href="metacognition-for-problem-solving.html">metacognition</a> pages describe in the abstract: build a frame, then predict, then act. The five steps make it concrete.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>Understand it</h2>
+    <p>Restate the problem in your own words. Pin down three things: what comes in (the type and shape of the input, and its limits), what goes out (the exact form of the answer), and what makes an answer correct.</p>
+    <p>Then ask about the cases the statement leaves unsaid. For "is this string a palindrome," does upper and lower case matter? Do spaces and punctuation count? Is the empty string a palindrome? You cannot solve a problem until you know all of its conditions and constraints, the ones stated and the ones you have to ask about.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>Write the cases</h2>
+    <p>Work a few small inputs by hand, on paper, and produce the answers yourself: a normal case, and the awkward ones, the empty input, a single element, the largest case allowed.</p>
+    <p>Then write each one down as an input and its expected output. These are your test cases. The moment the function exists you run them as basic unit tests; until then they are the targets you are coding toward. If you cannot produce an answer by hand, you do not understand the problem yet, and no code will fix that.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>Write the method as a comment skeleton</h2>
+    <p>Say how you would do it, in precise English, written as comments in the code, each comment small enough to become a line or two of code. Start with the simplest correct method, even if it is slow.</p>
+    <p>This is the step most people skip, and the one that does the most work. It turns the rough idea in your head into an explicit, ordered plan, and it leaves you a scaffold: the comments stay, and you fill code in beneath them.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>Implement against the skeleton</h2>
+    <p>Fill in the code under each comment, one comment at a time. Each comment is a small, clear task, so you are never holding the whole problem in your head, only the one line you are turning into code.</p>
+    <p>If a comment is too vague to code directly, it is too vague. Break it into smaller comments until each one is obvious.</p>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>Run the cases; predict, then check</h2>
+    <p>Run the cases you wrote in step 2. Before each run, say what you expect the answer to be. Then compare.</p>
+    <p>If the result matches your prediction, you understand your own code. If it does not, the gap between expected and actual is the bug, and the comment above the offending code tells you roughly where to look. A run with no prediction teaches you almost nothing; a run against a prediction is a test. The edges are already covered, because you wrote them as cases.</p>
+  </section>
+
+  <section>
+    <h2>A worked example</h2>
+    <p>The problem: given a string, return whether it reads the same forwards and backwards.</p>
+
+    <div class="ex">
+      <p><span class="step">Understand it.</span> Input: a string. Output: true or false. We decide that characters are compared exactly (case matters, spaces count), and that the empty string counts as a palindrome.</p>
+
+      <p><span class="step">Write the cases.</span> A normal case and the awkward ones, written as input and expected output:</p>
+      <pre><code>is_palindrome("racecar") -> true
+is_palindrome("hello")   -> false
+is_palindrome("")        -> true
+is_palindrome("a")       -> true</code></pre>
+
+      <p><span class="step">Write the method as a comment skeleton.</span> Walk in from both ends at once, written as comments with no code yet:</p>
+      <pre><code>function is_palindrome(s):
+    # start one pointer at the left end, one at the right end
+    # while the pointers have not met:
+    #   if the two characters differ, return false
+    #   step both pointers inward
+    # the pointers met with no mismatch, so return true</code></pre>
+
+      <figure>
+        <svg viewBox="0 0 520 120" role="img" aria-label="The string r a c e c a r shown in seven boxes, with a left pointer under the first letter and a right pointer under the last letter.">
+          <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="24" fill="#2c3038" text-anchor="middle">
+            <rect x="20"  y="16" width="64" height="52" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="52"  y="50">r</text>
+            <rect x="88"  y="16" width="64" height="52" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="120" y="50">a</text>
+            <rect x="156" y="16" width="64" height="52" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="188" y="50">c</text>
+            <rect x="224" y="16" width="64" height="52" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="256" y="50">e</text>
+            <rect x="292" y="16" width="64" height="52" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="324" y="50">c</text>
+            <rect x="360" y="16" width="64" height="52" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="392" y="50">a</text>
+            <rect x="428" y="16" width="64" height="52" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="460" y="50">r</text>
+          </g>
+          <path d="M52,80 L46,90 L58,90 Z" fill="#2f7d75"/>
+          <path d="M460,80 L454,90 L466,90 Z" fill="#2f7d75"/>
+          <g font-family="-apple-system, sans-serif" font-size="13" fill="#2f7d75" text-anchor="middle" font-weight="600">
+            <text x="52"  y="106">left</text>
+            <text x="460" y="106">right</text>
+          </g>
+        </svg>
+        <figcaption>Compare the outer pair, then step both pointers inward, until they meet.</figcaption>
+      </figure>
+
+      <p><span class="step">Implement against the skeleton.</span> Fill in the code under each comment; the comments stay as a guide:</p>
+      <pre><code>function is_palindrome(s):
+    # start one pointer at the left end, one at the right end
+    left  = 0
+    right = length(s) - 1
+    # while the pointers have not met:
+    while left &lt; right:
+        # if the two characters differ, return false
+        if s[left] != s[right]:
+            return false
+        # step both pointers inward
+        left  = left + 1
+        right = right - 1
+    # the pointers met with no mismatch, so return true
+    return true</code></pre>
+
+      <p><span class="step">Run the cases; predict, then check.</span> On "racecar" I expect true: every pair matches until the pointers meet. On "hello" I expect false: the first pair, h and o, differs. On "" and "a" I expect true: the pointers start already met, so the loop never runs. Running the four cases gives exactly those. Done.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>When the basic method runs out</h2>
+    <p>This is enough for most single-function problems. Harder ones add more: writing the function's signature and a one-line purpose before anything else; letting the shape of the data drive the shape of the code; matching the problem to a pattern you have solved before; choosing a data structure on purpose; reasoning about why the code is correct rather than only testing it; and, when you are stuck, stepping away from the keyboard so the back of your mind can work.</p>
+    <p>Those build on the five steps here. They do not replace them.</p>
+  </section>
+
+  <section>
+    <h2>References</h2>
+    <p>The five steps are the common core of a long heritage of problem-solving advice.</p>
+    <ul class="refs">
+      <li>George Polya, <em>How to Solve It</em> (1945): understand, plan, carry out, look back.</li>
+      <li>Matthias Felleisen and others, <a href="https://htdp.org/">How to Design Programs</a>: the design recipe, examples and a template you fill in, with the examples turned into tests.</li>
+      <li>Niklaus Wirth, "Program Development by Stepwise Refinement" (1971): grow code by refining a sketch into detail, which is the comment skeleton.</li>
+      <li>Leslie Lamport, "Thinking Above the Code": write the method down before you code.</li>
+      <li>Jon Bentley, <em>Programming Pearls</em>: getting the problem definition right matters as much as the algorithm.</li>
+      <li>Named interview variants that teach the same core: REACTO (Codesmith and others), <a href="https://guides.codepath.org/compsci/UMPIRE-Interview-Strategy">UMPIRE</a> (CodePath).</li>
+    </ul>
+  </section>
+
+  <footer>
+    Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>
