@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How professionals recognize situations... and each other</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--maxw:720px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 1rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3.2rem;}
+  h2{font-size:1.3rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+
+
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>How professionals recognize situations... and each other</h1>
+    <p class="lede">Give a beginner and a veteran the same hard problem, and they are not looking at the same thing. The beginner sees a pile of details; the veteran sees <span class="em">a shape they recognize</span>, and already has a rough idea what to do with it. That kind of recognition is an important part of what expertise is, and it is also how veterans recognize one another.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">That shape is a frame, the same idea from the <a href="metacognition-for-problem-solving.html">metacognition page</a>: a stored pattern laid over a situation so its important parts stand out and the rest falls away. Industry veterans share a large library of these frames, and the habits for using them well.</p>
+
+  <p>It is also what lets veterans work together as peers. Facing a hard problem, they frame it in similar ways, communicate more efficiently, and build on each other's thinking instead of starting over.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>The beginner sees a jumble, the veteran sees a frame</h2>
+    <p>Put a failing system in front of a junior engineer and they see a wall of logs, metrics, and error messages: a jumble of facts with no order, and some of the facts that matter they do not even notice. Put the same failure in front of a senior and it takes on a shape: they connect the symptoms to a few likely causes, and know which to check first.</p>
+    <p>Up close, this is <a href="what-is-practical-intelligence.html">practical intelligence</a> at work: recognizing the situation and predicting what it will do. And it runs on experience, not a bigger brain. The senior has seen this shape many times, so a stored pattern snaps onto the mess and sorts it: what matters, what to ignore, what would be surprising, what usually causes it. A mechanic does the same with an engine sound the rest of us hear as noise. The jumble becomes a frame.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>The frames are shared, and that is what makes peers</h2>
+    <p>Professional frames are built up and shared across the industry.</p>
+    <p>When two engineers look at the same incident, they frame it in compatible ways, so a few words from one are enough for the other to follow. They can pass the problem back and forth, each filling in a part, because they are filling in the same kind of structure.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>They fill the frame steadily</h2>
+    <p>A frame is not the answer. It is a set of questions worth chasing, and what lets a veteran work through them steadily is that each frame comes stocked with recipes: rules of thumb, things to try, things to check, likely causes to rule out in order.</p>
+    <p>So where a junior freezes at the blank page, the senior runs a procedure. "Leak suspected" pulls up a checklist: which allocations grow, is it one request path or all of them, did it start with a deploy. The checklist is not a script to follow blindly; it is what keeps you from staring at the problem with no idea where to start. Much of what we call experience is exactly this: the frame arrives with its checklist already attached.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>Disagreeing on evidence, not whim</h2>
+    <p>Experts draw on a shared library of frames, but of course that does not make people automatically agree. For the same problem, two of them might pick different frames, or pick the same one and still want opposite things. What makes them peers is not agreement. It is that each is working from a real frame, and argues from it with reasons instead of taste.</p>
+    <p>A weak argument is "this is how I did it before." A strong one gives reasons: here is the course I would take, here is why it fits the evidence, and here are the alternatives I considered and set aside, and why. A good doctor argues the same way, naming not just the diagnosis but the ones they ruled out and how. Showing the alternatives and the data is what turns a personal preference into a case a peer can weigh, accept, or push back on.</p>
+    <p>That is what keeps disagreement productive instead of a standoff. Because each position rests on a frame, a reasonable one for the domain, and not on personal taste, both people can see exactly where and why they differ.</p>
+    <p>In an interview, you can set this tone on purpose: treat it as examining the problem together with the interviewer, not performing for a judge. You still do the heavy lifting, but taking their hints and pushback the way you would a colleague's is what makes it feel like working with a peer instead of being tested by one.</p>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>The first frame is a guess</h2>
+    <p>Fast recognition is powerful, but it has a failure mode. When the shape arrives too early, it starts hiding the evidence that does not fit, and you force the problem into a pattern that was never right. The <a href="metacognition-for-problem-solving.html">metacognition page</a> calls this premature recognition.</p>
+    <p>So strong professionals treat the first frame as a guess, not a verdict. They ask what it predicts, look for the evidence that would confirm it and, just as hard, the evidence that would break it. When a frame makes the problem harder to explain instead of easier, they drop it and try another.</p>
+    <p>This is the difference between experience and mere familiarity. A familiar person says "I have seen this before." A strong one says "this looks like something I have seen before, here is what it predicts, and here is what would make me change my mind."</p>
+    <p>For a junior in an interview, this is the part worth practicing most. Naming the approach you are trying, saying what would tell you it is wrong, and switching cleanly when it does is one of the most convincing things you can do in the room.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>What an interview is really checking</h2>
+    <p>In a software interview, the algorithm is the surface. Underneath, a good interviewer is checking whether you would be a peer.</p>
+    <p>The way to show it is to make your thinking visible. Work the problem out loud, <a href="how-to-solve-a-single-function-problem.html">from understanding it to a plan to the code</a>, so the interviewer can watch you reason and collaborate the way a capable member of the profession does.</p>
+  </section>
+
+  <section>
+    <h2>You do not have to be a veteran yet to apply this</h2>
+    <p>You do not need to match your interviewer's experience, or carry a frame for everything that happens in their systems. You need to show that you work the way a professional does, the kind of person other professionals would want to work with.</p>
+    <p>That is what those small, unrealistic problems are really for. No one solves them at work, but each is a tiny work-world of its own, and it surfaces how you approach a problem: the knowledge you draw on, the way you reason and plan, how you communicate, and how you collaborate with the person at the whiteboard. The problem is artificial; the process you show solving it is not.</p>
+    <p>And that tiny world is small enough to get good at without decades of experience. Real work holds far more domains of expertise than anyone could test in forty-five minutes, which is exactly why an interview does not try; it looks at how you think and work instead. That you can prepare for, and it is what these pages are here to show you, so you can practice it under the pressure of the room.</p>
+  </section>
+
+  <footer>
+    Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>
