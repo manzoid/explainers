@@ -55,7 +55,7 @@
 
   <header>
     <h1>State machines</h1>
-    <p class="lede">A state machine is a short list of named states with arrows between them, and <span class="em">any arrow you did not draw simply cannot happen</span>.</p>
+    <p class="lede">Some parts of a program can only be in a few sensible situations, and many bugs are just code that lets an impossible one happen. A state machine is a short list of named states with arrows between them, so <span class="em">any arrow you did not draw simply cannot happen</span>. Take a network request: model it as three separate true-or-false flags and nothing stops loading and failed from both being true at once; name the states instead and that nonsense has nowhere to live.</p>
   </header>
 
   <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> showed that every running program is already a state machine whether you planned it or not: at each step it sits in one whole arrangement and moves to the next. This page is about the deliberate version: choosing on purpose to model a small piece of your program as a handful of named states you write down yourself. That choice is one of the cheapest ways to make a whole class of bugs impossible to write.</p>

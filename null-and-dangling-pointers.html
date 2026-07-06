@@ -54,7 +54,7 @@
 
   <header>
     <h1>Null and dangling pointers</h1>
-    <p class="lede">A pointer is supposed to point at something. Two ways it lets you down: it points at <span class="em">nothing</span>, or it points at something that is <span class="em">gone</span>. You can hold either one and pass it around safely. The trouble starts when you <span class="em">follow</span> it to read what is there. Null is honest and tells you it is empty. The second kind is sneakier: it may hand you garbage without crashing at all.</p>
+    <p class="lede">A pointer is supposed to point at something, and the confusing bugs come when you follow one to a thing that is not there. Take the everyday case: you look up a user, get back an empty value, then read a field off it and the program crashes. That empty value is a <span class="em">null</span> pointer. The sneakier kind is a <span class="em">dangling</span> pointer, which points at a real address whose data is already gone and can hand you garbage without crashing at all.</p>
   </header>
 
   <p style="margin-top:1.6rem;">The <a href="what-is-a-pointer.html">pointer page</a> showed the basic idea: a pointer is a value that holds the address of some other data, so you can reach that data by following the pointer. This page is about the two most common ways that goes wrong. The first, <strong>null</strong>, you meet every day in every language, and it is one of the most frequent crashes in real software.</p>

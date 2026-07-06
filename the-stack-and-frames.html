@@ -43,10 +43,10 @@
 
   <header>
     <h1>The stack and frames</h1>
-    <p class="lede">When a function runs, its own working state has to live somewhere. Each call gets a <span class="em">frame</span>: a small chunk of memory holding that call's parameters, its local variables, and where to go back when it finishes.</p>
+    <p class="lede">When a function runs, its variables have to live somewhere: each call gets its own small chunk of memory, a <span class="em">frame</span>. Once you can see frames stack up, two everyday puzzles clear up. Take a common one: a counter you keep in a local variable resets to zero on every call instead of counting up.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">You have surely written a function that resets a counter to zero on every call, or stared at a crash traceback with no idea which line actually broke. Both come down to one well-organized part of memory: the part that holds a function's local variables while it runs and throws them away the instant it returns. (The <a href="memory-bytes-and-addresses.html">memory page</a> covered where values sit; this is one tidy region of that memory.) That part is a stack of frames. Once you see it, recursion stops being magic and a traceback turns into something you can read line by line.</p>
+  <p style="margin-top:1.6rem;">That reset, and the crash traceback you cannot make sense of, both come down to one well-organized part of memory: the part that holds a function's local variables while it runs and throws them away the instant it returns. (The <a href="memory-bytes-and-addresses.html">memory page</a> covered where values sit; this is one tidy region of that memory.) That part is a stack of frames. Once you see it, recursion stops being magic and a traceback turns into something you can read line by line.</p>
 
   <!-- 1 -->
   <section>

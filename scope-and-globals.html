@@ -45,7 +45,7 @@
 
   <header>
     <h1>Scope and globals</h1>
-    <p class="lede">A value in your program is wrong. You go looking for where it gets set and find four places, across three files, any of which could have run, with nothing to say which one is at fault. That is a <span class="em">scope</span> problem. Scope is the region of code where a name can be used, and so the list of code allowed to change it. Lose it and every value has too many suspects.</p>
+    <p class="lede">A name in your program can only be changed from certain places, and that region is its <span class="em">scope</span>; lose track of it and a wrong value has too many suspects. Take a common case: a value is wrong, you go looking for where it gets set, and find four places across three files, any of which could have run, with nothing to say which one is at fault.</p>
   </header>
 
   <p style="margin-top:1.6rem;">Once you have some state, this page answers one question about it: who is allowed to touch it? Get that right and a wrong value has a short list of suspects. Get it wrong, with a global, and the list is the whole program.</p>

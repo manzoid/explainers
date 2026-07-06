@@ -42,7 +42,7 @@
 
   <header>
     <h1>Copy vs share</h1>
-    <p class="lede">You write <code>b = a</code>, or you pass a value into a function. One of two things happens. Either <span class="em">b gets its own separate copy</span>, or <span class="em">b becomes a second name for the very same value</span>. Which one it is decides whether changing b also changes a.</p>
+    <p class="lede">When you assign a value or pass it to a function, the language either makes a separate copy or lets two names share one value, and which one it does decides whether changing one name also changes the other. Take the plainest case: you write <code>b = a</code>, and either <span class="em">b gets its own separate copy</span>, or <span class="em">b becomes a second name for the very same value</span>.</p>
   </header>
 
   <p style="margin-top:1.6rem;">The setup in one sentence: a number lives right inside your variable, but a list or an object lives elsewhere and your variable holds its address, and that address is the kind of value that gets shared. (For the mechanics of that, see <a href="variables-values-and-addresses.html">variables, values, and addresses</a>.)</p>

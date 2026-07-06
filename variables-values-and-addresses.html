@@ -45,7 +45,7 @@
 
   <header>
     <h1>Variables, values, and addresses</h1>
-    <p class="lede">You wrote <code>total</code>, not <span class="em">address 4096</span>. A variable is a name for a place in memory, and the value is whatever sits in that place right now. Keep the name, the place, and the value apart, and one confusing mechanism becomes plain, the one mechanism behind two bugs you have surely hit.</p>
+    <p class="lede">A variable is really three things held apart: the name you wrote, the place in memory it stands for, and the value sitting there right now. Take the line you just typed: you wrote <code>total</code>, not <span class="em">address 4096</span>. Keep the name, the place, and the value separate, and one confusing mechanism becomes plain, the one behind two bugs you have surely hit.</p>
   </header>
 
   <p style="margin-top:1.6rem;">The two bugs: <strong>aliasing</strong>, where two names quietly share one object, so editing through one changes the other; and <strong>unexpected mutation</strong>, where a function changes data you never handed it to change. They feel like separate mysteries. This page shows they are the same thing seen from two angles, and that the fix falls out once you split every line into a name, a place, and a value. It is also standard interview ground: when an interviewer asks whether Python passes by value or by reference, or why editing a copy also edited the original, they are checking that you hold these three apart.</p>

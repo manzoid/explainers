@@ -41,7 +41,7 @@
 
   <header>
     <h1>Memory: bytes at addresses</h1>
-    <p class="lede">Memory is one long row of numbered cells. Each cell holds one <span class="em">byte</span>, a small number. Each cell has a number of its own, its <span class="em">address</span>. Everything a program holds lives here, as bytes in cells.</p>
+    <p class="lede">Your program's data is not floating in the abstract; it sits somewhere you can point at, and knowing where lets you reason about confusing bugs. Here is the picture: memory is one long row of numbered cells, each cell holds one <span class="em">byte</span> (a small number), and each cell has a number of its own, its <span class="em">address</span>.</p>
   </header>
 
   <p style="margin-top:1.6rem;">You have already met this row without knowing its name. Run <code>id(x)</code> in a Python notebook and you get back a plain integer. Ask numpy for an <code>int32</code> array instead of <code>int64</code> and it takes half the memory for the exact same numbers. Hit a bug and a debugger shows your variable as <code>0x7ffe...</code> instead of its name, or a crash prints an address of <code>0x0</code>. All four are the same fact showing through: your program's data lives in memory, and memory is nothing but numbered cells holding bytes.</p>

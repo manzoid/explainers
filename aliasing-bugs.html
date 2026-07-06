@@ -52,7 +52,7 @@
 
   <header>
     <h1>Aliasing bugs</h1>
-    <p class="lede">When two or more names point at the same piece of state, changing it through one name changes it for all of them. That sharing is called <span class="em">aliasing</span>, and when you forget it is there, you get some of the most confusing bugs in everyday programming.</p>
+    <p class="lede"><span class="em">Aliasing</span> is when two or more names point at the same piece of state, so changing it through one name changes it for all of them. Take a common case: <code>a</code> and <code>b</code> both hold the same list, you append to it through <code>a</code>, and now <code>b</code> has changed too, though you never touched <code>b</code>. Forget the sharing is there and you get some of the most confusing bugs in everyday programming.</p>
   </header>
 
   <p style="margin-top:1.6rem;">A variable that holds a list or a dict does not hold the list itself. It holds a reference, a pointer to one object sitting in memory. Assign that variable to a second name and you copy the pointer, not the object, so both names now reach the same list. Change it through one, and the other sees the change.</p>

@@ -46,7 +46,7 @@
 
   <header>
     <h1>What a pointer is: indirection</h1>
-    <p class="lede">A pointer is a value that holds an <span class="em">address</span>: not a thing, but where a thing is. It says "the thing is over there," and reading it is one hop to the real value. That extra hop has a name: <span class="em">indirection</span>.</p>
+    <p class="lede">A pointer is a value that holds an <span class="em">address</span>: where a thing lives, not the thing itself. Reading it is one hop to the real value, a hop called <span class="em">indirection</span>, and most confusing pointer bugs are moments when you forget the hop is there. Take a common one: you copy a variable into another, change the copy, and the original quietly changes too.</p>
   </header>
 
   <p style="margin-top:1.6rem;">You may write Python or JavaScript and never type the word pointer. You lean on pointers in every line anyway. Here is the bug that shows it:</p>
