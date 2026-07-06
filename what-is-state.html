@@ -46,8 +46,6 @@
 
   <p style="margin-top:1.6rem;">State is the information a program is holding right now: the values worked out so far, and where it is in the job. Running a program means changing that state, step by step, from the input toward the answer. Almost every hard bug is a moment like the one above, where the state stopped matching what you believed about it. That is why state is worth understanding on its own, and it is one of the first things an interviewer probes when they ask you to trace a piece of code.</p>
 
-  <p>This page is about that held information: what it is, how it changes, and why it causes most of the trouble in programs.</p>
-
   <!-- 1 -->
   <section>
     <h2><span class="num">1</span>State is the information a program holds right now</h2>
@@ -166,13 +164,9 @@ print(a)       # [1, 2, 3], not [1, 2]</code></pre>
 print(add_item(1))   # [1]
 print(add_item(2))   # [1, 2]   -- you expected [2]</code></pre>
 
-    <p>You expected a fresh list on every call. But the default list is made once, when the function is defined, and every call that leaves out <code>bucket</code> shares that one list. The state you forgot existed is the default itself. Same lesson as the stale total, different hiding place: the trouble was a belief about the state that did not match what was really there. Debugging is largely the work of finding where your belief about the state and the real state came apart.</p>
-  </section>
+    <p>You expected a fresh list on every call. But the default list is made once, when the function is defined, and every call that leaves out <code>bucket</code> shares that one list. The state you forgot existed is the default itself. Same lesson as the stale total, different hiding place: a belief about the state that did not match what was really there.</p>
 
-  <!-- 7 -->
-  <section>
-    <h2><span class="num">7</span>The point</h2>
-    <p>State is just the information a program is holding right now. It changes every step, and a program is the sequence of those changes. Almost every hard bug is the same story: the state moved, and your picture of it did not. Get in the habit of asking "what is the state right now, and what did that step change it into", and most mysterious bugs stop being mysterious.</p>
+    <p>So make it a habit. Whenever something misbehaves, ask what the state is right now and what the last step changed it into. Most mysterious bugs stop being mysterious the moment you do.</p>
   </section>
 
   <footer>
