@@ -45,7 +45,7 @@
     <p class="lede">When a function runs, its own working state has to live somewhere. Each call gets a <span class="em">frame</span>: a small chunk of memory holding that call's parameters, its local variables, and where to go back when it finishes.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said a running program holds information as it works, and the <a href="memory-bytes-and-addresses.html">memory page</a> said that information sits in numbered memory. This page is about one well-organized part of that memory: the part that answers "where do a function's locals live, and why are they gone the moment it returns?" Once you see it, recursion stops being magic and a whole class of bugs starts to make sense. It sits next to <a href="scope-and-globals.html">scope and globals</a>, which is about who can see a variable; this page is about how long it lives.</p>
+  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said a running program holds information as it works, and the <a href="memory-bytes-and-addresses.html">memory page</a> said that information sits in numbered memory. This page is about one well-organized part of that memory: the part that answers "where do a function's locals live, and why are they gone the moment it returns?" Once you see it, recursion stops being magic and a whole class of bugs starts to make sense.</p>
 
   <!-- 1 -->
   <section>
@@ -110,7 +110,7 @@
           <text x="426" y="114">pop chop</text>
         </g>
       </svg>
-      <figcaption>Frames go on top as calls nest and come off the top as calls return. The top frame is always the one running now; everything below it is paused, waiting. (We draw the stack growing upward for readability; in real memory a stack often grows toward lower addresses instead. The direction does not change the last-in, first-out rule.)</figcaption>
+      <figcaption>Frames go on top as calls nest and come off the top as calls return. The top frame is always the one running now; everything below it is paused, waiting.</figcaption>
     </figure>
 
     <p>The word "stack" is not a loose picture. It is the same last-in, first-out shape you get stacking plates: you add and remove only at the top. That simple rule is what lets the machine track a deep chain of calls with almost no bookkeeping.</p>
@@ -123,15 +123,17 @@
 
     <div class="rule">A local variable lives exactly as long as its frame. It appears when the call starts and disappears when the call returns. That is why each fresh call starts with fresh locals, and why a value you want to keep has to be returned, not left behind in the frame.</div>
 
-    <p>In a language with raw pointers, like C or the unsafe parts of Swift, this bites in a sharp way: you can take the address of a local and hand it back, but the memory it points at is already freed the instant the call returns.</p>
+    <p>In Python, Java, Go, C#, Swift, and other managed languages you never trip on this directly. You hand back the value, and the runtime keeps whatever it points at alive for you. The surprise that does still show up everywhere is the plain one: a local does not persist to the next call, so a value you want to keep has to be returned.</p>
 
-    <pre><code><span class="cmt"># C, roughly:</span>
+    <p>The snippet below is C, the sharper version of the same rule. You can skip the syntax and still get the point: <code>int*</code> means "the address of an int", and <code>&amp;n</code> means "the address of <code>n</code>". C lets you hand that address back, but the memory it points at is freed the instant the call returns.</p>
+
+    <pre><code><span class="cmt">// C</span>
 int* make() {
     int n = 42;      <span class="cmt">// n lives in make's frame</span>
     return &amp;n;       <span class="cmt">// hands back the address of n</span>
 }                    <span class="cmt">// frame gone; that address now points at freed memory</span></code></pre>
 
-    <p>Python and other managed languages do not let you do this: you hand back the value, and the runtime keeps whatever it points at alive for you. So you cannot trip on a freed frame the way C does. But the lifetime rule is the same underneath, which is why the plain "the local does not persist to the next call" surprise shows up everywhere.</p>
+    <p>The managed languages listed above simply do not let you write this bug: they hold the value alive as long as something still refers to it. The lifetime rule underneath is identical; C is just where it can cut you.</p>
   </section>
 
   <!-- 5 -->
@@ -154,14 +156,27 @@ factorial(3)                   <span class="cmt"># 3 frames stack up: (3), then 
   <section>
     <h2><span class="num">6</span>The stack has a size limit: overflow</h2>
     <p>The stack is a fixed region of memory, not endless. Every frame takes up some space, so a very deep chain of calls can fill it. When the machine tries to add one more frame past the limit, you get a <strong>stack overflow</strong>, and the program stops.</p>
-    <p>The usual cause is a recursion that never stops, a missing or wrong base case, so it calls itself forever, piling on frames until the stack runs out. In Python this shows up as a <code>RecursionError</code>, raised once you pass its default limit of about 1000 nested calls; many other languages crash with a message that literally says stack overflow. Either way the cause is the same: the pile of frames hit the ceiling. Very deep but correct recursion can overflow too, which is one reason some problems are rewritten as loops instead.</p>
+    <p>The usual cause is a recursion that never stops, a missing or wrong base case (the condition that stops the recursion), so it calls itself forever, piling on frames until the stack runs out. In Python this shows up as a <code>RecursionError</code>, raised once you pass its default limit of about 1000 nested calls; many other languages crash with a message that literally says stack overflow. Either way the cause is the same: the pile of frames hit the ceiling.</p>
+    <p>Very deep but correct recursion can overflow too. Some languages avoid this with <strong>tail-call optimization</strong>: when the recursive call is the last thing a function does, the compiler reuses the current frame instead of adding a new one, so the depth stays flat. Scheme and most functional languages do this; most JavaScript engines and CPython do not, which is why a recursion that runs fine in one language can overflow in another. When you cannot rely on it, deep recursion is often rewritten as a loop.</p>
   </section>
 
   <!-- 7 -->
   <section>
     <h2><span class="num">7</span>Reading the stack</h2>
-    <p>Keep the two ideas apart. The frame explains <strong>lifetime</strong>: how long a local lives, and why it vanishes the moment the call returns. <strong>Visibility</strong>, who is allowed to see a name in the first place, is a separate rule the language enforces, and that is the subject of <a href="scope-and-globals.html">scope and globals</a>.</p>
-    <p>When you next see a crash trace, that list of function names is a snapshot of the stack at the moment things went wrong: the frames that were live, top to bottom, the exact chain of who-called-whom. Reading it is reading the state, which is what <a href="what-is-state.html">this whole series</a> is about.</p>
+    <p>A crash trace is the stack made visible. When a program dies, it prints the frames that were live at that instant, the exact chain of who called whom, from the outermost call down to the one that broke. Here is a short Python traceback:</p>
+
+    <pre><code>Traceback (most recent call last):
+  File "app.py", line 20, in &lt;module&gt;
+    checkout(cart)
+  File "app.py", line 12, in checkout
+    total = apply_discount(price, count)
+  File "app.py", line 6, in apply_discount
+    return price / count
+ZeroDivisionError: division by zero</code></pre>
+
+    <p>Read it from the bottom. The last line is the error itself. Just above it is the frame where the crash happened: <code>apply_discount</code>, at line 6, dividing by a <code>count</code> that was zero. That is where the bug lives. Above that, each block is one paused frame, older as you go up: <code>apply_discount</code> was called by <code>checkout</code> at line 12, and <code>checkout</code> was called at line 20 at the top level. Python labels this "most recent call last", so the deepest, most recent frame is always at the bottom, right next to the error. Some languages print the same list in the opposite order, newest first; either way, the frame next to the error message is where things actually went wrong.</p>
+
+    <p>One more thing to keep straight, because the two are easy to blur. A frame explains <strong>lifetime</strong>: how long a local lives, and why it vanishes the moment the call returns. <strong>Visibility</strong>, who is allowed to see a name in the first place, is a separate rule the language enforces, and that is the subject of <a href="scope-and-globals.html">scope and globals</a>. Lifetime is this page; visibility is that one.</p>
   </section>
 
   <footer>

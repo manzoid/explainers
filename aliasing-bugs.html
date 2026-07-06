@@ -51,9 +51,9 @@
     <p class="lede">When two or more names point at the same piece of state, changing it through one name changes it for all of them. That sharing is called <span class="em">aliasing</span>, and when you forget it is there, you get some of the most confusing bugs in everyday programming.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">This is the payoff page for a simple idea from earlier in the series. The <a href="what-is-a-pointer.html">pointer page</a> showed that a variable can hold the address of a value instead of the value itself, and the <a href="copy-vs-share.html">copy vs share page</a> showed what changes when two variables hold the same address. Here we spend that idea on real bugs: five surprises you will meet at work, each with its fix. The fix is almost always one of two things: <strong>make a real copy, or do not share the mutable object</strong>. You will see both, again and again.</p>
+  <p style="margin-top:1.6rem;">In languages like Python, JavaScript, Java, and C#, a variable that holds an object holds a reference to it, not a copy. So two variables can end up pointing at one object without your noticing, and then a change through one name shows up through the other. The fix is almost always one of two things: <strong>make a real copy, or do not share the mutable object.</strong></p>
 
-  <p>The bugs below use Python, because it shares by default and makes the trap easy to hit. Most of them happen the same way in JavaScript, Java, C#, Ruby, and Go: any language where a variable can hold a reference to an object. One of the five is Python-only, and it is labeled where it appears.</p>
+  <p>The examples below use Python, because it shares by default and makes the trap easy to hit. The same bug lives in JavaScript, Java, C#, Ruby, and Go, any language where a variable can hold a reference to an object, and a few snippets show it in those too. Swift is the exception worth naming: its arrays and dictionaries are value types that copy on assignment, the opposite of Python, so these sharing bugs mostly do not reach them. What follows is five sharing bugs you will meet at work, each with its fix, then one habit that catches all five. One bug is Python-only, and it is labeled where it appears. (The <a href="what-is-a-pointer.html">pointer</a> and <a href="copy-vs-share.html">copy vs share</a> pages explain the underlying model.)</p>
 
   <!-- 1 -->
   <section>
@@ -116,14 +116,40 @@ settings = defaults           <span class="cmt"># not a copy, a second name</spa
 settings["theme"] = "light"
 <span class="cmt"># defaults["theme"] is now <span class="bad">"light"</span> as well</span></code></pre>
 
-    <p>Assignment copies the pointer, not the object. This is safe as long as nobody mutates the shared object, which is why it can hide for a long time: everything works until the day someone writes through one of the names. Then a change over here shows up over there, far from where you were looking. Every other bug on this page is this same base case in a disguise.</p>
+    <p>Assignment copies the pointer, not the object. This is safe until someone mutates the shared object, which is why it can hide for a long time: everything works until the day someone writes through one of the names. Then a change over here shows up over there, far from where you were looking.</p>
+
+    <p>The same trap lives outside Python. In Go, a map is a reference, so assigning one makes a second name for the same map:</p>
+
+    <pre><code>a := map[string]int{"x": 1}
+b := a                <span class="cmt">// not a copy, a second name</span>
+b["x"] = 99           <span class="cmt">// a["x"] is now <span class="bad">99</span> too</span></code></pre>
+
+    <p>In Java it is the same story: <code>List&lt;String&gt; b = a;</code> gives two names for one list, not two lists. Any language with reference types has this bug.</p>
 
     <p><span class="good">Fix:</span> copy when you mean a separate thing. <code>settings = dict(defaults)</code>, or a deep copy if it nests.</p>
   </section>
 
   <!-- 3 -->
   <section>
-    <h2><span class="num">3</span>Appending to a list you thought was private</h2>
+    <h2><span class="num">3</span>Changing a collection while looping over it</h2>
+    <p>This one passes your tests and fails in production, which is the worst kind. You loop over a list and remove items as you go. On some inputs it drops the right items; on others it silently skips one, and which inputs fail depends on where the matches sit in the list.</p>
+
+    <pre><code>nums = [1, 2, 4, 5]
+for n in nums:
+    if n % 2 == 0:
+        nums.remove(n)        <span class="cmt"># editing the list we are walking</span>
+<span class="cmt"># nums is <span class="bad">[1, 4, 5]</span>: 4 is even, so it should be gone, but it survived</span></code></pre>
+
+    <p>The loop tracks its position by index. It reads position 1 (<code>2</code>) and removes it; everything after shifts left by one, so <code>4</code> slides into a slot the loop already passed, and the loop never looks at it. Any time two items to remove sit next to each other, the second one slips through. (Run the same code on <code>[1, 2, 3, 4, 5, 6]</code> and you get <code>[1, 3, 5]</code>, which looks correct, so the test passes and the bug ships.)</p>
+
+    <p><span class="good">Fix:</span> loop over one thing and build a separate result, so the thing you read and the thing you change are not the same object.</p>
+
+    <pre><code>nums = [n for n in nums if n % 2 != 0]   <span class="cmt"># new list, old one untouched</span></code></pre>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>Appending to a list you thought was private</h2>
     <p>You pass a list into a function or store it on an object, expecting the function to have its own copy. It does not. It has the same list, and when it appends, your list grows.</p>
 
     <pre><code>def build_tags(base):
@@ -134,7 +160,7 @@ user_tags = ["python", "web"]
 build_tags(user_tags)
 <span class="cmt"># user_tags is now <span class="bad">["python", "web", "draft"]</span></span></code></pre>
 
-    <p>Passing a list to a function does not copy the list. It copies the pointer, so the parameter <code>base</code> and your <code>user_tags</code> are two names for one list. This is the same idea as the <a href="scope-and-globals.html">scope page</a>: a name being local does not make the object it points at local.</p>
+    <p>Passing a list to a function does not copy the list. It copies the pointer, so the parameter <code>base</code> and your <code>user_tags</code> are two names for one list. A name being local to the function does not make the object it points at local.</p>
 
     <p><span class="good">Fix:</span> make a real copy at the boundary, right where the list comes in.</p>
 
@@ -144,9 +170,9 @@ build_tags(user_tags)
     return base               <span class="cmt"># caller's list is untouched</span></code></pre>
   </section>
 
-  <!-- 4 -->
+  <!-- 5 -->
   <section>
-    <h2><span class="num">4</span>The shared mutable default argument</h2>
+    <h2><span class="num">5</span>The shared mutable default argument</h2>
     <p>This one is Python-specific. It catches almost everyone once. You give a function a list parameter with a default of the empty list, so callers can leave it out:</p>
 
     <pre><code>def add_item(item, bucket=[]):     <span class="cmt"># looks harmless</span>
@@ -169,9 +195,9 @@ add_item("b")   <span class="cmt"># <span class="bad">['a', 'b']</span>  ... whe
     return bucket</code></pre>
   </section>
 
-  <!-- 5 -->
+  <!-- 6 -->
   <section>
-    <h2><span class="num">5</span>The shallow copy that still shares</h2>
+    <h2><span class="num">6</span>The shallow copy that still shares</h2>
     <p>So you learned to copy. But a plain copy of a container copies only the top layer. If the container holds other containers, the copy still points at the same inner ones.</p>
 
     <pre><code>original = {"name": "cart", "items": ["apple"]}
@@ -187,28 +213,11 @@ clone["items"].append("pear")
     <pre><code>import copy
 clone = copy.deepcopy(original)   <span class="cmt"># inner list is copied too</span></code></pre>
 
-    <p>A deep copy costs more, so reach for it only when you know the contents are shared and mutable. Often the cheaper answer is to not share at all, or to treat the data as read-only and never mutate it.</p>
-  </section>
+    <p>A deep copy costs more, so reach for it only when you know the contents are shared and mutable. Often the cheaper answer is to not share at all, or to treat the data as read-only and never mutate it. That read-only habit is the whole idea behind immutable updates in front-end code: in a React reducer you write <code>{...state, key: val}</code> to build a new top-level object instead of changing the old one, so nothing else holding the old object gets surprised.</p>
 
-  <!-- 6 -->
-  <section>
-    <h2><span class="num">6</span>Changing a collection while looping over it</h2>
-    <p>This is aliasing between your loop and your edit. The loop walks the collection while you remove from that same collection, so the loop loses its place and skips items.</p>
+    <p>Data folks meet the same thing as view versus copy: <code>df['col']</code> on a pandas DataFrame can hand back a view onto the original, so mutating it sometimes changes the source and sometimes does not, depending on how you sliced. When in doubt, take an explicit <code>.copy()</code>.</p>
 
-    <pre><code>nums = [1, 2, 4, 5]
-for n in nums:
-    if n % 2 == 0:
-        nums.remove(n)        <span class="cmt"># editing the list we are walking</span>
-<span class="cmt"># nums is <span class="bad">[1, 4, 5]</span> here. 4 is even, so it should be gone,
-# but it survived.</span></code></pre>
-
-    <p>The loop tracks a position by index. It reads position 0 (<code>1</code>), then position 1 (<code>2</code>) and removes it. Now everything after shifts left by one, so <code>4</code> slides into position 1, the slot the loop already passed. The loop reads position 2 next, which is now <code>5</code>, and never looks at <code>4</code> at all. Any time two items to remove sit next to each other, the second one slips through.</p>
-
-    <p>On <code>[1, 2, 3, 4, 5, 6]</code> the evens are spread out, so the same bug happens to give <code>[1, 3, 5]</code>, which looks correct. That is the dangerous part: it passes on your test data and drops the wrong items in production. Some languages throw an error instead; Python's list quietly gives wrong output, which is worse.</p>
-
-    <p><span class="good">Fix:</span> loop over one thing and build a separate result, so the thing you read and the thing you change are not the same object.</p>
-
-    <pre><code>nums = [n for n in nums if n % 2 != 0]   <span class="cmt"># new list, old one untouched</span></code></pre>
+    <p>C and C++ add a sharper version, worth knowing if you work there. The compiler assumes two pointers of different types do not point at the same memory, the strict aliasing rule, and it optimizes on that assumption. If they do point at the same memory, you can get silently wrong output rather than a mere shared-mutation surprise. Different mechanism from the sharing above, same core question: do two names reach the same bytes?</p>
   </section>
 
   <!-- 7 -->
@@ -224,7 +233,7 @@ for n in nums:
       <li><span class="s">A default list or dict argument</span> (Python). The default is one shared object. Fix: default to <code>None</code>, build a fresh one inside.</li>
     </ul>
 
-    <p>In every one, a plain assignment or pass makes a second name, not a second object. Then run the two questions from the top of the page: is it mutable, and will more than one name write to it? If both are yes, copy it, or arrange that only one name ever writes.</p>
+    <p>In every one, a plain assignment or pass makes a second name, not a second object. When you spot one, run the two questions from the box at the top.</p>
 
     <p>Aliasing turns the <a href="what-is-a-pointer.html">pointer</a> and <a href="copy-vs-share.html">copy vs share</a> model into a skill you use every week. The same reference thinking explains the failures on the <a href="null-and-dangling-pointers.html">null and dangling pointers page</a>: a name that points at nothing, or at something already gone. Names and the state they point at are where most hard bugs live, and now you can see one whole class of them coming.</p>
   </section>

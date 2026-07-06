@@ -30,6 +30,9 @@
   figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;}
   figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem;}
   code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;background:var(--code-bg);padding:.05rem .3rem;border-radius:4px;}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;overflow-x:auto;font-size:.85rem;line-height:1.55;margin:1.2rem 0;}
+  pre code{background:none;padding:0;}
+  .label{font-size:.85rem;color:var(--muted);margin:1.2rem 0 -.4rem;}
   footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
   @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
 </style>
@@ -54,8 +57,9 @@
   <!-- 2 -->
   <section>
     <h2><span class="num">2</span>Scopes nest, and inner can see outer</h2>
-    <p>Scopes sit inside each other like boxes. A function has an outer scope; a loop or an <code>if</code> inside it has a smaller scope of its own. Code in an inner box can reach the names of the boxes around it, but code outside cannot reach in. In most modern statically-typed languages a name declared deep inside a loop does not exist once the loop ends. (Some languages are looser here: Python has no block scope, so a loop variable outlives its loop, and older JavaScript with <code>var</code> did the same.)</p>
+    <p>Scopes sit inside each other like boxes. A function has an outer scope; a loop or an <code>if</code> inside it has a smaller scope of its own. Code in an inner box can reach the names of the boxes around it, but code outside cannot reach in. In most languages a name declared deep inside a loop does not exist once the loop ends.</p>
     <p>So most names have a short life and a small audience. That is the point of them: a <code>total</code> local to one function is state that only that function can touch, which means only that function's code can be at fault when it goes wrong.</p>
+    <p>A few languages are looser about the loop-and-<code>if</code> layer. Python has no block scope, so a loop variable outlives its loop. The function boundary, the part that matters most here, holds everywhere.</p>
   </section>
 
   <!-- 3 -->
@@ -88,20 +92,21 @@
         <text x="530" y="155" fill="#b5524a" font-size="15" text-anchor="middle" font-family="SF Mono, ui-monospace, Menlo, monospace">config</text>
 
         <g font-family="-apple-system, sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">
-          <rect x="330" y="52" width="66" height="34" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="363" y="73">f()</text>
-          <rect x="330" y="133" width="66" height="34" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="363" y="154">g()</text>
-          <rect x="330" y="214" width="66" height="34" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="363" y="235">h()</text>
+          <rect x="326" y="44" width="66" height="34" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="359" y="65">f()</text>
+          <rect x="326" y="133" width="66" height="34" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="359" y="154">g()</text>
+          <rect x="326" y="222" width="66" height="34" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="359" y="243">h()</text>
         </g>
 
         <!-- double-headed arrows: each function both reads and writes the global -->
         <g stroke="#b5524a" stroke-width="1.6" fill="none" marker-start="url(#ah)" marker-end="url(#ah)">
-          <line x1="400" y1="72" x2="466" y2="132"/>
-          <line x1="400" y1="150" x2="466" y2="150"/>
-          <line x1="400" y1="228" x2="466" y2="168"/>
+          <line x1="396" y1="61" x2="466" y2="128"/>
+          <line x1="396" y1="150" x2="466" y2="150"/>
+          <line x1="396" y1="239" x2="466" y2="172"/>
         </g>
-        <text x="433" y="120" fill="#b5524a" font-size="11.5" text-anchor="middle" font-family="-apple-system, sans-serif">read / write</text>
+        <rect x="401" y="139" width="60" height="22" rx="4" fill="#ffffff"/>
+        <text x="431" y="154" fill="#b5524a" font-size="11.5" text-anchor="middle" font-family="-apple-system, sans-serif">read / write</text>
       </svg>
-      <figcaption>Left: a local name sits in the narrowest box, and only code inside that box can touch it. Right: a global sits in no box, so functions from all over the program connect to it, each one both reading and writing (the arrows run both ways).</figcaption>
+      <figcaption>Left: a local name sits in the narrowest box, and only code inside that box can touch it. Right: a global sits in no box, so f, g, and h all reach it, each one reading and writing. The cost shows up when <code>config</code> holds a wrong value: any of the three could be to blame, and nothing in the code tells you which.</figcaption>
     </figure>
 
     <p>That sounds convenient. You define it once and reach it from anywhere, no passing it around. The cost is hidden, and it shows up later.</p>
@@ -118,24 +123,34 @@
   <section>
     <h2><span class="num">5</span>Hidden coupling and order-dependence</h2>
     <p>Two functions that both touch the same global are joined together, even if nothing in their code says so. One writes it, the other reads it, and now they depend on each other through a channel you cannot see by reading either one. That is <strong>hidden coupling</strong>: a connection with no line drawn between the parts.</p>
-    <p>It gets worse with order. If <code>setup()</code> has to run before <code>process()</code> because it fills in a global that <code>process()</code> reads, then the two must run in that order, and nothing forces it. Call them the other way, or add a third caller later, and it breaks in a way that looks like nothing changed. (This is the exact problem when you run notebook cells out of order: a later cell reads a value that an earlier cell was supposed to set, and if you skipped that cell, you get a stale value or an error.) This is <strong>order-dependence</strong>: correctness that leans on an unwritten schedule.</p>
+    <p>It gets worse with order. Say <code>setup()</code> fills in a global that <code>process()</code> reads. Now the two must run in that order, but nothing in the code says so. Call them the other way, or add a third caller a month later that runs <code>process()</code> first, and you get a stale value or a crash on a path that used to work, with no change nearby to explain it. This is <strong>order-dependence</strong>: correctness that leans on an unwritten schedule.</p>
   </section>
 
   <!-- 6 -->
   <section>
     <h2><span class="num">6</span>Tests fight each other</h2>
-    <p>A good test sets up a small world, runs one thing, and checks the result. A global breaks that, because it is one shared value that outlives any single test. One test writes it, the next test reads what the first left behind, and now the second passes or fails depending on which ran first.</p>
-    <p>So tests that should be independent start interfering, and you get failures that appear and vanish depending on order. This is the same order-dependence from the last section, showing up where it hurts most: the code you were trusting to catch bugs.</p>
-    <p>Put the three failure modes together, cannot tell who changed it, hidden coupling, tests that fight, and you have why the phrase "globals considered harmful" stuck. The harm is not the keyword. It is the loss of containment: a global is scope removed, everything can reach in, and uncontained changing state is exactly the thing this whole series is about.</p>
+    <p>A good test sets up a small world, runs one thing, and checks the result. A global breaks that, because it is one shared value that outlives any single test. Here order-dependence lands on the code you were trusting to catch bugs.</p>
+    <p>Picture a class with a static field, or any global config. One test sets it and forgets to reset it. The next test reads what the first left behind, and now it passes or fails depending on which ran first. Run the whole file and it is green; run that one test alone, or in a different order, and it is red. The test did not change. The shared value it inherited did.</p>
+    <p>That loss of containment is the harm behind the old phrase "globals considered harmful": a global is scope thrown away, so nothing limits who can change the value. That is the same trouble this series keeps returning to, now with no boundary left to hold it.</p>
   </section>
 
   <!-- 7 -->
   <section>
     <h2><span class="num">7</span>What to do instead</h2>
     <p>Two habits, and they are the same habit seen twice.</p>
-    <p><strong>Pass state in explicitly.</strong> If a function needs a value, give it as an argument and return what it produces. Now the connection between caller and function is written down in the call itself. You can read who supplies the value and who receives it, and a wrong value has a short trail to follow.</p>
+    <p><strong>Pass state in explicitly.</strong> If a function needs a value, give it as an argument and return what it produces. Now the connection between caller and function is written down in the call itself. Compare the two shapes:</p>
+    <p class="label">Before: the function reaches out to a shared global.</p>
+    <pre><code>total = 0
+
+def add(n):
+    global total
+    total = total + n   # who else writes total? anyone, anywhere</code></pre>
+    <p class="label">After: the function takes what it needs and hands back the result.</p>
+    <pre><code>def add(total, n):
+    return total + n     # the caller owns total; the trail is right here</code></pre>
+    <p>Same arithmetic, but the second version has no shared state. You can read who supplies the value and who receives it, and a wrong result has a short trail to follow.</p>
     <p><strong>Keep every name in the narrowest scope that works.</strong> Declare it inside the loop if the loop is all that uses it; inside the function if only that function uses it. Widen the scope only when a real need forces you to, and no further. The smaller the scope, the shorter the list of code that can be at fault.</p>
-    <p>Passing values in has a close cousin to watch for: once you hand the same object to two places, both can change it through their own name, a problem called <strong>aliasing</strong>. That is its own trap, covered on the <a href="aliasing-bugs.html">aliasing page</a>.</p>
+    <p>Passing values in fixes the global problem, but it opens a smaller one when the value is an object rather than a plain number. Hand the same list or object to two functions and each holds its own name for it, yet both names point at one thing, so a change made through one name shows up through the other. That is <strong>aliasing</strong>, a quieter trap with its own page: <a href="aliasing-bugs.html">aliasing bugs</a>.</p>
   </section>
 
   <footer>

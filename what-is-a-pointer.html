@@ -42,7 +42,7 @@
 
   <header>
     <h1>What a pointer is: indirection</h1>
-    <p class="lede">A pointer is a value whose content is an <span class="em">address</span>: a box that holds a location, not a thing. It says "the thing is over there," and following it is one hop to the real value.</p>
+    <p class="lede">A pointer is a value whose content is an <span class="em">address</span>: a box that holds a location, not a thing. It says "the thing is over there," and following it is one hop to the real value. That extra hop has a name: <span class="em">indirection</span>.</p>
   </header>
 
   <p style="margin-top:1.6rem;">The <a href="memory-bytes-and-addresses.html">bytes and addresses page</a> showed that memory is a long row of numbered cells, each with an address. The <a href="variables-values-and-addresses.html">variables page</a> showed a name standing for a value at one of those addresses. A pointer is the next step: a value that <em>is</em> an address.</p>
@@ -53,7 +53,7 @@
 let b = a;      <span class="cm">// b now points at the same object as a</span>
 b.x = 99;       <span class="cm">// a.x is 99 too, though you never touched a</span></code></pre>
 
-  <p>A shaky picture of pointers is what makes that surprise, and a whole family of bugs like it, feel like magic. This page draws the picture so they stop.</p>
+  <p>A shaky picture of pointers is what makes that surprise, and a whole family of bugs like it, hard to see coming. This page draws the picture so they stop.</p>
 
   <!-- 1 -->
   <section>
@@ -91,10 +91,16 @@ b.x = 99;       <span class="cm">// a.x is 99 too, though you never touched a</s
         <path d="M410,80 L424,86 L410,92 Z" fill="#2f7d75"/>
         <text x="297" y="76" font-family="-apple-system, sans-serif" font-size="12" fill="#2f7d75" text-anchor="middle">dereference: go there</text>
       </svg>
-      <figcaption>An arrow is all a pointer is. The picture also hints at the failure it cannot draw: point <code>p</code> at a number that is not a live value, and the same one hop lands on garbage, or crashes. Section 6 is about that case.</figcaption>
+      <figcaption>An arrow is all a pointer is. The picture also hints at the failure it cannot draw: point <code>p</code> at a number that is not a live value, and the same one hop lands on garbage, or crashes. The page on <a href="null-and-dangling-pointers.html">null and dangling pointers</a> covers that case.</figcaption>
     </figure>
 
-    <p>Drawn this way, a pointer is just an arrow from one cell to another. That picture is the whole idea.</p>
+    <p>Some languages make you write both steps by hand. In Go, the arrow above looks like this:</p>
+
+    <pre><code>count := 7
+p := &amp;count       <span class="cm">// p holds the address of count</span>
+fmt.Println(*p)    <span class="cm">// *p follows the address: prints 7</span></code></pre>
+
+    <p>JavaScript, Python, Ruby, and Java do the same hop, but hidden. You never type the <code>&amp;</code> or the <code>*</code>; when you write <code>user.name</code>, the language quietly follows the reference to the object, then reads the field. The arrow is there either way, on the screen or under it.</p>
   </section>
 
   <!-- 3 -->
@@ -102,39 +108,34 @@ b.x = 99;       <span class="cm">// a.x is 99 too, though you never touched a</s
     <h2><span class="num">3</span>Why go through an address at all</h2>
     <p>Holding a location instead of the thing sounds like extra work. It buys three things a plain copy cannot.</p>
     <p>You can <strong>let two places share one thing</strong>. Two pointers holding the same address both reach the same value, so a change through one shows up through the other. One thing, two ways in.</p>
-    <p>You can <strong>refer to something big without copying it</strong>. Passing an address is cheap; passing the thing means copying every byte. A single small address can stand in for a huge table.</p>
-    <p>You can <strong>handle a thing whose size you did not know up front</strong>. A pointer stays small and fixed no matter how big the thing at the other end is.</p>
-    <p>And because the pointer is itself just a value in a cell, you can overwrite it. Here is where pointer code most often goes wrong, because two acts that look alike are not:</p>
+    <p>You can <strong>pass something big without copying it</strong>. Hand a function a 10,000-item array by value and you copy all 10,000 entries; hand it the address and you copy one small number. The function reaches the same array through that address.</p>
+    <p>You can <strong>hold a thing that grows at runtime</strong>. Keep appending to a list and it gets bigger, but the pointer to it stays the same small, fixed size. You hold the address; the thing at the other end is free to change size.</p>
+    <p>That same flexibility is where bugs come in. Because the pointer is itself just a value in a cell, you can overwrite it, and two acts that look alike are not:</p>
 
     <pre><code>let a = { x: 1 };
 let b = a;        <span class="cm">// a and b point at one object</span>
 b.x = 99;         <span class="cm">// change the thing:  a.x is now 99 too</span>
 b = { x: 0 };     <span class="cm">// repoint b:  a is untouched, still { x: 99 }</span></code></pre>
 
-    <p>The line <code>b.x = 99</code> reaches through the arrow and edits the shared object. The line <code>b = { x: 0 }</code> only bends <code>b</code>'s arrow at a new object; nothing at the old address moved. Repointing the arrow is not the same as changing what is at the end of it, and confusing the two is a classic bug.</p>
+    <p>The line <code>b.x = 99</code> reaches through the arrow and edits the shared object. The line <code>b = { x: 0 }</code> only bends <code>b</code>'s arrow at a new object; nothing at the old address moved. Repointing the arrow is not the same as changing what is at the end of it, and confusing the two is a classic bug. This is also the whole story behind what your language calls reference types: <code>b = a</code> copies the address, not the object.</p>
   </section>
 
   <!-- 4 -->
   <section>
-    <h2><span class="num">4</span>You are already using pointers</h2>
-    <p>If you write C or Go, you type pointers on purpose. If you write JavaScript, Python, Ruby, or Java, you rarely see the word, yet every variable that holds an object holds a pointer to it. The language dereferences for you: <code>user.name</code> quietly does the one hop from the reference to the object, then reads a field.</p>
-    <p>This is why assigning one object variable to another does not copy the object. <code>b = a</code> copies the address, so both now aim at one object. That is the whole story behind what your language calls reference types. Whether the arrow is on the screen or hidden, it is there.</p>
-  </section>
-
-  <!-- 5 -->
-  <section>
-    <h2><span class="num">5</span>Why this matters: copy vs share, and aliasing</h2>
+    <h2><span class="num">4</span>Copy vs share, and aliasing</h2>
     <p>Once a value can be an address, two questions run under everything: does this code hold the thing, or a pointer to it? And if it is a pointer, who else holds the same address?</p>
-    <p>That is exactly the difference between <a href="copy-vs-share.html">copy and share</a>. Copy gives each side its own thing; share hands the same address to more than one holder. When two names reach one thing, they are <strong>aliases</strong>, and a change through one silently changes what the other sees. <a href="aliasing-bugs.html">Aliasing bugs</a> are what happens when you forgot that, the <code>b.x = 99</code> surprise from the top of the page, grown up.</p>
+    <p>That is the difference between <a href="copy-vs-share.html">copy and share</a>. Copy gives each side its own thing; share hands the same address to more than one holder. When two names reach one thing, they are <strong>aliases</strong>, and a change through one silently changes what the other sees. This bites hardest across a function call, where you feel safe:</p>
+
+    <pre><code>function markDone(todo) {
+  todo.done = true;   <span class="cm">// edits the caller's object, not a copy</span>
+}
+markDone(myTodo);     <span class="cm">// myTodo.done is now true</span></code></pre>
+
+    <p>You passed <code>myTodo</code> in and the function changed it, because the argument was a pointer to your object, not a fresh copy of it. That is an <a href="aliasing-bugs.html">aliasing bug</a>: the <code>b.x = 99</code> surprise from the top of the page, grown up.</p>
 
     <div class="rule">A pointer is indirection: one extra hop between a name and its value. Every copy-vs-share decision, and every aliasing bug, is really a question about that hop and who else is standing at the other end of it.</div>
-  </section>
 
-  <!-- 6 -->
-  <section>
-    <h2><span class="num">6</span>When the arrow leads nowhere</h2>
-    <p>An arrow only helps if it points at a real value. A pointer can hold a special address that means "points at nothing" (a <strong>null</strong> pointer), or an address that used to be valid but no longer is (a <strong>dangling</strong> pointer). Follow either one and the hop lands in the wrong place, or crashes.</p>
-    <p>These are the sharp edges of the same simple idea, and they get their own page: <a href="null-and-dangling-pointers.html">null and dangling pointers</a>. Keep the arrow picture from this page in mind and those failures stop looking like magic. A pointer is a box holding a location; a bad pointer is a box holding a location you should not follow.</p>
+    <p>One last edge: the arrow only helps if it points at a real value. A pointer can hold a special address meaning "points at nothing" (a <strong>null</strong> pointer), or an address that used to be valid but no longer is (a <strong>dangling</strong> pointer). Follow either and the hop lands in the wrong place, or crashes. Those sharp edges get their own page: <a href="null-and-dangling-pointers.html">null and dangling pointers</a>. Keep the arrow picture in mind and they stop looking like magic.</p>
   </section>
 
   <footer>

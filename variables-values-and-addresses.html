@@ -45,7 +45,7 @@
     <p class="lede">A variable is a <span class="em">name for a place in memory</span>. The value is whatever sits in that place right now. Keep the name, the place, and the value apart, and two puzzles get simple: two names that accidentally share one cell, and why your function changed something it was never supposed to touch.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">The <a href="memory-bytes-and-addresses.html">memory page</a> showed raw memory: a long row of numbered byte-cells, nothing but bits and their addresses. But you do not write <code>address 4096</code> in your code, you write <code>total</code>. This page is the bridge. It shows how the human names in your code map down to those numbered cells, and why that mapping is behind <a href="copy-vs-share.html">copy versus share</a> and <a href="what-is-a-pointer.html">pointers</a>, the two ideas that follow.</p>
+  <p style="margin-top:1.6rem;">The <a href="memory-bytes-and-addresses.html">memory page</a> showed raw memory: a long row of numbered byte-cells, nothing but bits and their addresses. But you do not write <code>address 4096</code> in your code, you write <code>total</code>. This page shows how the human names in your code map down to those numbered cells. On its own that already explains a bug most people hit in their first year: you write <code>b = a</code>, change <code>b</code>, and <code>a</code> changes too. It also sets up <a href="copy-vs-share.html">copy versus share</a> and <a href="what-is-a-pointer.html">pointers</a>, the two ideas that follow.</p>
 
   <!-- 1 -->
   <section>
@@ -57,7 +57,7 @@
   <!-- 2 -->
   <section>
     <h2><span class="num">2</span>The name is for you; the machine runs on addresses</h2>
-    <p>The machine does not know the word <code>score</code>. Addresses are what it works with: read the cell at this address, write to the cell at that one. When you compile or run the program, the tool builds a table that says this name means that address, and everywhere you wrote <code>score</code> it substitutes the real address.</p>
+    <p>The machine does not know the word <code>score</code>. Addresses are what it works with: read the cell at this address, write to the cell at that one. The compiler (or, for an interpreted language like Python or JavaScript, the runtime) builds a table that says this name means that address, and everywhere you wrote <code>score</code> it uses the real address instead. A compiled language does this once, ahead of time; an interpreted one does it while the program runs.</p>
     <p>So the name is a label the tool translates away. You think in names; the machine runs on addresses; the table connects them. This is why the same value can sit in memory under one name, two names, or none: the value lives in the place, and names are just handles you attached to it.</p>
   </section>
 
@@ -65,6 +65,7 @@
   <section>
     <h2><span class="num">3</span>The place, drawn</h2>
     <p>On the left of the diagram, the name <code>score</code> floats above its cell. The dashed line is the table connection: the name up top, the place at address 4096 below, the value inside. To the right, the same cell after <code>score = 42</code> runs. Same name, same address, new value.</p>
+    <p>This is where the equals sign trips people up. In <code>score = 42</code> it is not a claim that two things are equal. It is an instruction: take the value on the right and store it into the place named on the left. Read it as "store into", not "is equal to". That reading makes the diagram obvious: only the value in the cell changes; the place keeps its address.</p>
 
     <figure>
       <svg viewBox="0 0 620 220" role="img" aria-label="On the left, a named box labeled score floats above a memory cell at address 4096 that holds the value 10, connected by a dashed line. An arrow labeled score = 42 points right to the same cell now holding 42, still at address 4096.">
@@ -110,7 +111,7 @@
           <text x="470" y="28">same place, new value</text>
         </g>
       </svg>
-      <figcaption>Assigning overwrites what the cell holds. The equals sign is not a claim that two things are equal; it is an instruction: take the value on the right and store it into the place named on the left. Read it as "store into", not "is equal to". The address stays put for as long as the variable lives; only the value changes.</figcaption>
+      <figcaption>Assigning overwrites what the cell holds. The address stays put for as long as the variable lives; only the value changes.</figcaption>
     </figure>
 
     <p>That gap, a fixed place holding a value that is free to change, is where the next idea comes from. It is the same overwrite the <a href="what-is-state.html">state page</a> called a mutation, now seen from the language level.</p>
@@ -128,19 +129,25 @@ let b = a;        <span class="cmt">// not a fresh copy, a second name</span>
 b.count = 5;      <span class="cmt">// change it through b</span>
 a.count;          <span class="cmt">// 5  -- a changed too</span></pre>
 
-    <p>Nothing touched <code>a</code> on that third line, yet <code>a.count</code> is now 5. The reason: the value stored in <code>a</code> was not the object itself, it was the <em>address</em> of the object elsewhere in memory. <code>let b = a</code> copied that address, so both cells hold directions to the one object. A value that is the address of another place is a <a href="what-is-a-pointer.html">pointer</a>, and it is what lets two names share one thing.</p>
+    <p>Nothing touched <code>a</code> on that third line, yet <code>a.count</code> is now 5. The reason: the value stored in <code>a</code> was not the object itself, it was the <em>address</em> of the object elsewhere in memory. <code>let b = a</code> copied that address, so both cells hold directions to the one object. This is a pointer: a value that holds an address, not the thing itself. A <a href="what-is-a-pointer.html">pointer</a> is what lets two names share one thing.</p>
+
+    <p>This bites objects, not plain numbers. In Java or C#, <code>int b = a; b = 5;</code> leaves <code>a</code> alone, because an <code>int</code> is copied as a value. But <code>SomeObject b = a; b.count = 5;</code> changes <code>a</code> too, because <code>b</code> holds the same address. Python behaves the same way: <code>b = a</code> on a list or dict makes <code>b is a</code> true, and editing through one edits the other. The rule is about reference types (objects, lists, dicts), not primitive numbers.</p>
 
     <div class="rule">A name is not the thing. It is a label on a place. Two labels can sit on one place, and then changing "either" changes the one thing underneath.</div>
 
-    <p>Whether an assignment copies the value into a fresh place or just adds a second name to the old place is the <a href="copy-vs-share.html">copy versus share</a> question, and it decides a large share of real bugs. A function that "changed something it shouldn't have" is almost always this: it was handed a name, not a copy.</p>
+    <p>Whether an assignment copies the value into a fresh place or just adds a second name to the old place is the <a href="copy-vs-share.html">copy versus share</a> question, and it decides a large share of real bugs. A function that "changed something it shouldn't have" is almost always this: it was handed a name, not a copy. You pass a list to a helper, the helper appends one item, and back in the caller your list now has that extra item, because the helper was working on your list the whole time, not a copy of it.</p>
   </section>
 
   <!-- 5 -->
   <section>
     <h2><span class="num">5</span>Three questions when something surprises you</h2>
-    <p>When a line does something you did not expect, pull the name, the place, and the value apart and ask three plain questions. Run them on the case above:</p>
-    <p><strong>What place does this name refer to?</strong> <code>b</code> refers to the same place as <code>a</code>, because <code>let b = a</code> copied a shared address. <strong>What value is in that place right now?</strong> One object, whose <code>count</code> is now 5. <strong>Did this line change the value, or point a name at a different place?</strong> <code>b.count = 5</code> changed the value in the shared place; it did not hand <code>a</code> or <code>b</code> a new place.</p>
-    <p>Hold those three apart and pointers, sharing, and the bugs that come with them stop being mysterious.</p>
+    <p>When a line does something you did not expect, pull the name, the place, and the value apart and ask three plain questions. Here they are, each answered on the case above:</p>
+
+    <p><strong>1. What place does this name refer to?</strong><br><code>b</code> refers to the same place as <code>a</code>, because <code>let b = a</code> copied a shared address.</p>
+    <p><strong>2. What value is in that place right now?</strong><br>One object, whose <code>count</code> is now 5.</p>
+    <p><strong>3. Did this line change the value, or point a name at a different place?</strong><br><code>b.count = 5</code> changed the value in the shared place; it did not hand <code>a</code> or <code>b</code> a new place.</p>
+
+    <p>Hold those three apart and pointers, sharing, and the bugs that come with them stop being mysterious. When you want to know whether an assignment shares or copies, read <a href="copy-vs-share.html">copy versus share</a> next; to see what a shared address really is, read <a href="what-is-a-pointer.html">pointers</a>.</p>
   </section>
 
   <footer>

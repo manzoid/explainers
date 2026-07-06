@@ -68,7 +68,7 @@
       <li>Python raises <code>AttributeError: 'NoneType' object has no attribute ...</code>.</li>
       <li>C or C++ usually gives a <strong>segfault</strong>, short for segmentation fault: the CPU refused an access to an address the program is not allowed to touch.</li>
     </ul>
-    <p>These are all the same event wearing different clothes: you tried to use a thing that was not there. Here it is in Python. The lookup can come back empty, and the next line follows it anyway:</p>
+    <p>These are all the same error: you tried to use a value that was not there. Here it is in Python. The lookup can come back empty, and the next line follows it anyway:</p>
     <pre><code><span class="c"># find_user can return None when nobody matches</span>
 user = find_user(user_id)
 print(user.name)   <span class="lbl"># AttributeError if user is None</span></code></pre>
@@ -78,6 +78,14 @@ print(user.name)   <span class="lbl"># AttributeError if user is None</span></co
     print(user.name)
 else:
     print("unknown")   <span class="c"># the empty case, handled on purpose</span></code></pre>
+    <p>Every language has the same shape. Here is the same guard in Go, where the empty value is <code>nil</code>:</p>
+    <pre><code><span class="c">// Go</span>
+user := findUser(userID)
+<span class="ok">if user != nil {</span>
+    fmt.Println(user.Name)
+} else {
+    fmt.Println("unknown")
+}</code></pre>
 
     <figure>
       <svg viewBox="0 0 620 170" role="img" aria-label="A pointer variable labeled user with an arrow. The arrow leads to an empty cell marked null, crossed out with an X, and a crash symbol beside it.">
@@ -124,16 +132,59 @@ else:
   <!-- 4 -->
   <section>
     <h2><span class="num">4</span>Dangling: a pointer to something that is gone</h2>
-    <div class="note">If you work in Python, Java, Go, JavaScript, or C#, this is mostly not your problem, and the last paragraph says why. It is a live concern mainly in C and C++. Read it as background unless you write manual-memory code.</div>
-    <p>A <strong>dangling</strong> pointer is different from null. It is not pointing at nothing. It points at a real address, but the data that used to live there is gone. The pointer still holds the old address, like an envelope addressed to someone who moved out. It comes in two flavors: <strong>freed memory</strong>, where you handed the memory back with <code>free</code> or <code>delete</code> and a pointer still holds that address (the "use-after-free" bug), and <strong>out of scope</strong>, where you kept a pointer to a local variable after its <a href="the-stack-and-frames.html">stack frame</a> returned and its slot got reused.</p>
+    <div class="note">If you work in Python, Java, Go, JavaScript, or C#, your garbage collector handles this for you, so it is mostly not your problem. It is a live concern mainly in C and C++. The rest of this section explains what actually happens under the hood.</div>
+
+    <p>First, why most readers can relax. Java, Python, Go, JavaScript, and C# use a <strong>garbage collector</strong>: memory is not freed while any pointer still points at it, so a dangling pointer mostly cannot happen. Rust checks lifetimes at compile time, so a dangling pointer will not even build. For most working programmers today, null is the daily problem and dangling is the one you meet only in C, in a native extension, or in a systems job.</p>
+
+    <p>Here is what a garbage collector is saving you from. A <strong>dangling</strong> pointer is not pointing at nothing, the way null does. It points at a real address, but the data that used to live there is gone. The pointer still holds the old address, but whoever lived there is gone. It shows up in two ways.</p>
+
+    <p><strong>Freed memory.</strong> You handed the memory back with <code>free</code> or <code>delete</code>, but a pointer still holds that address. Following it now is the classic "use-after-free" bug.</p>
+    <pre><code><span class="c">// C</span>
+int *p = malloc(sizeof(int));
+free(p);           <span class="c">// memory handed back</span>
+printf("%d", *p);  <span class="lbl">// use-after-free: p still holds the old address</span></code></pre>
+
+    <p><strong>Out of scope.</strong> You kept a pointer to a local variable after its <a href="the-stack-and-frames.html">stack frame</a> returned. The slot that held the variable gets reused by the next call.</p>
+    <pre><code><span class="c">// C</span>
+int *make() {
+    int x = 42;
+    return &amp;x;     <span class="lbl">// returns the address of a local; its slot is freed on return</span>
+}</code></pre>
+
+    <figure>
+      <svg viewBox="0 0 620 200" role="img" aria-label="Two rows. Before free: a pointer labeled p points into a memory cell holding the value 42. After free: the same pointer p still points at the same address, but the cell now holds unknown reused bytes.">
+        <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280">
+          <text x="40" y="30">before free</text>
+          <text x="40" y="130">after free</text>
+        </g>
+
+        <!-- before -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="16" fill="#2c3038" text-anchor="middle">
+          <rect x="40" y="42" width="70" height="42" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="75" y="69">p</text>
+          <rect x="300" y="42" width="120" height="42" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="360" y="69">42</text>
+        </g>
+        <g stroke="#2f7d75" stroke-width="2.5"><line x1="110" y1="63" x2="294" y2="63"/></g>
+        <path d="M294,56 L310,63 L294,70 Z" fill="#2f7d75"/>
+
+        <!-- after -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="16" fill="#2c3038" text-anchor="middle">
+          <rect x="40" y="142" width="70" height="42" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="75" y="169">p</text>
+          <rect x="300" y="142" width="120" height="42" rx="6" fill="#faf0ef" stroke="#b5524a" stroke-width="1.5" stroke-dasharray="5 4"/><text x="360" y="169" fill="#b5524a">? ? ?</text>
+        </g>
+        <g stroke="#b5524a" stroke-width="2.5"><line x1="110" y1="163" x2="294" y2="163"/></g>
+        <path d="M294,156 L310,163 L294,170 Z" fill="#b5524a"/>
+        <text x="500" y="167" font-family="-apple-system, sans-serif" font-size="13" fill="#b5524a">reused bytes</text>
+      </svg>
+      <figcaption>The pointer never changes. Freeing the memory does not clear <code>p</code>; it still holds the old address. The cell it points at may now hold anything.</figcaption>
+    </figure>
+
     <p>Following a dangling pointer is worse than null in one way: it might not crash. The old bytes may still be sitting there, or they may already hold someone else's data. So you sometimes read a stale value, or quietly corrupt unrelated data, and the real symptom shows up far away. When two names share one piece of memory and one of them frees it, you get exactly the tangle covered in <a href="aliasing-bugs.html">aliasing bugs</a>.</p>
-    <p>Most languages spare you all of this. Java, Python, Go, JavaScript, and C# use a <strong>garbage collector</strong>: memory is not freed while any pointer still points at it, so use-after-free mostly cannot happen. Rust checks lifetimes at compile time, so a dangling pointer will not even build. That is why, for most working programmers today, null is the daily problem and dangling is the one you meet only in C, in a native extension, or in a systems job.</p>
   </section>
 
   <!-- 5 -->
   <section>
-    <h2><span class="num">5</span>Habits that keep you out of trouble</h2>
-    <p>You will not out-clever these bugs; you avoid them with a few plain habits. The first three apply to almost every language. The last one is only for manual-memory code.</p>
+    <h2><span class="num">5</span>Habits that help you avoid these bugs</h2>
+    <p>No amount of cleverness avoids these bugs. You avoid them with a few plain habits. The first three apply to almost every language. The last one is only for manual-memory code.</p>
 
     <p><strong>1. Check before you use.</strong> If a value might be null, test for it before you follow it. One check in the right place turns a crash into an ordinary branch you control.</p>
     <pre><code><span class="c"># Python</span>
@@ -151,8 +202,20 @@ def find_user(user_id: int) -> <span class="ok">Optional[User]</span>:
 String name = Optional.ofNullable(user)
     .map(User::getName)
     .orElse("unknown");</code></pre>
+    <p>Kotlin and Swift build the same idea into the language. The type carries a <code>?</code>, and short operators handle the empty case with a fallback value:</p>
+    <pre><code><span class="c">// Kotlin</span>
+val name = user?.name <span class="ok">?:</span> "unknown"
+
+<span class="c">// Swift</span>
+let name = user?.name <span class="ok">??</span> "unknown"</code></pre>
 
     <p><strong>3. Fail fast with a clear message.</strong> If a value should never be null at some point, check it right there and stop with a message that names what went wrong, rather than letting a null travel three functions deep and blow up somewhere confusing. A crash near the cause is a gift; a crash far from the cause costs you an afternoon.</p>
+    <pre><code><span class="c"># Python</span>
+config = load_config(path)
+<span class="ok">assert config is not None</span>, f"no config found at {path}"
+<span class="c"># or raise explicitly:</span>
+if config is None:
+    <span class="ok">raise ValueError(f"no config found at {path}")</span></code></pre>
 
     <p><strong>4. Null out and null-check freed pointers</strong> <span class="em">(C / C++ manual-memory only)</span>. After you free a pointer, set it to null right away, so a later accidental use fails loudly as a null instead of silently reading dead memory. If you write Python, Java, Go, or C#, skip this one; the garbage collector already covers it.</p>
   </section>
@@ -160,8 +223,8 @@ String name = Optional.ofNullable(user)
   <!-- 6 -->
   <section>
     <h2><span class="num">6</span>The short version</h2>
-    <p>A null pointer points at nothing; a dangling pointer points at something that is gone. Both are fine to hold and only bite when you dereference them. Null is everywhere and cheap to guard against once you expect it. Dangling is rarer, mostly a manual-memory and lifetime concern, and mostly handled for you in managed languages.</p>
-    <p>The common thread is a pointer whose promise no longer holds. Assume any pointer that could be empty is empty until you have checked, let the type system carry that doubt for you where it can, and you turn one of the most frequent crashes in real code into a case you simply handle.</p>
+    <p>A null pointer points at nothing; a dangling pointer points at something that is gone. Both are fine to hold and only crash when you dereference them.</p>
+    <p>So carry one working assumption. Any pointer that could be empty is empty until you have checked, and where the language offers it, let the type system carry that doubt for you. Do that and one of the most frequent crashes in real code becomes an ordinary case you handle on purpose.</p>
   </section>
 
   <footer>

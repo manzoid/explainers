@@ -41,16 +41,16 @@
 
   <header>
     <h1>An array problem, in memory</h1>
-    <p class="lede">Here is one small interview problem: reverse an array in place. We will not just solve it. We will watch it run in memory, cell by cell, and name every change in the vocabulary this series has been building. By the end, tracing code by hand should feel like a <span class="em">skill you own</span>, not a trick.</p>
+    <p class="lede">Here is one small interview problem: reverse an array in place. We will not just solve it. We will watch it run in memory, cell by cell, and name every change in the vocabulary this series has been building. By the end, tracing code by hand should feel like a <span class="em">skill you own</span>.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">This is the last page in the series, and it puts the earlier ones to work. <a href="what-is-state.html">State</a> gave us the idea that a running program is information changing step by step. <a href="memory-bytes-and-addresses.html">Memory</a> gave us the cells that information lives in. <a href="arrays.html">Arrays</a> gave us a row of cells reached by an index. And <a href="how-to-solve-a-single-function-problem.html">solving a single-function problem</a> gave us a way to approach a question like this one. Now we take a real problem and run it in our heads, the way the machine would.</p>
+  <p style="margin-top:1.6rem;">This is the last page in the series, and it puts the earlier ones to work. <a href="what-is-state.html">State</a> gave us the idea that a running program is information changing step by step. <a href="memory-bytes-and-addresses.html">Memory</a> gave us the cells that information lives in. <a href="arrays.html">Arrays</a> gave us a row of cells reached by an index. And <a href="how-to-solve-a-single-function-problem.html">solving a single-function problem</a> gave us a method for working through a question like this one: pin down what goes in and out, then check the awkward inputs, not just the tidy one. Now we take a real problem and run it in our heads, the way the machine would.</p>
 
   <!-- 1 -->
   <section>
     <h2><span class="num">1</span>The problem</h2>
     <p>Given an array of numbers, reverse it: the first item ends up last, the last ends up first, and so on toward the middle. Do it <strong>in place</strong>, meaning change the array you were given instead of building a new one alongside it. In place is the harder and more interesting version, because it forces you to think about the exact cells.</p>
-    <p>The clean way to do this uses <strong>two pointers</strong>. Here "pointer" just means an index variable, a number that says which cell we are looking at. One index, <code>left</code>, starts at the first cell. The other, <code>right</code>, starts at the last. We swap the two items they point to, then step both indices one cell inward, and repeat until they meet in the middle.</p>
+    <p>The clean way to do this uses two <strong>index variables</strong>, one starting at each end. <code>left</code> starts at the first cell, <code>right</code> starts at the last. We swap the two items they mark, then step both indices one cell inward, and repeat until they meet in the middle. (This is the standard interview pattern called <strong>two pointers</strong>. Here the word "pointer" means an index variable, a number that says which cell we are looking at, not a memory address as on the <a href="what-is-a-pointer.html">pointer page</a>.)</p>
     <pre><code>def reverse(a):
     left = 0
     right = len(a) - 1
@@ -59,6 +59,7 @@
         left = left + 1
         right = right - 1
     return a</code></pre>
+    <p>The stopping condition is <code>left &lt; right</code>, not <code>left &lt;= right</code>. On an array with an odd number of items, the two indices land on the same middle cell, and <code>left &lt; right</code> is then false, so that cell is never touched. It should not be: the middle item of a reversed array stays exactly where it was.</p>
   </section>
 
   <!-- 2 -->
@@ -71,7 +72,7 @@
   <!-- 3 -->
   <section>
     <h2><span class="num">3</span>The film, snapshot by snapshot</h2>
-    <p>The state page said a run is a film: take a snapshot at every step and play them in order. Here is the whole loop as three snapshots. Read down the rows, and watch the array cells and the two pointers change together.</p>
+    <p>The state page said a run is a film: take a snapshot at every step and play them in order. Here is the whole loop as three snapshots. Read down the rows, and watch the array cells and the two indices change together.</p>
 
     <figure>
       <svg viewBox="0 0 640 470" role="img" aria-label="A filmstrip of three snapshots of the array 5 8 2 9 being reversed in place. At each step left and right point at two cells, those cells swap, and left and right step inward until they cross, leaving 9 2 8 5.">
@@ -128,7 +129,7 @@
         <!-- Result -->
         <text class="lab" x="24" y="446">Result: the array is reversed, in place.</text>
       </svg>
-      <figcaption>Each row is one snapshot of the same six pieces of state. Highlighted cells are the two the pointers are about to swap. After each swap, <code>left</code> steps right and <code>right</code> steps left. When <code>left</code> is no longer less than <code>right</code>, the loop stops.</figcaption>
+      <figcaption>Each row is one snapshot of the same six pieces of state. Highlighted cells are the two the indices are about to swap. After each swap, <code>left</code> steps right and <code>right</code> steps left. When <code>left</code> is no longer less than <code>right</code>, the loop stops.</figcaption>
     </figure>
   </section>
 
@@ -137,14 +138,21 @@
     <h2><span class="num">4</span>Narrate one step in the vocabulary</h2>
     <p>Tracing is nothing more than saying out loud what changed at each step, in the plain words of the series. Do the first step carefully, then the diagram carries the rest.</p>
     <p><strong>Step 1.</strong> <code>left</code> is 0, <code>right</code> is 3, and <code>0 &lt; 3</code> is true, so we run the body. The swap reads cell 0 (which is 5) and cell 3 (which is 9), then overwrites cell 0 with 9 and cell 3 with 5. That is two mutations to the array. Then <code>left</code> becomes 1 and <code>right</code> becomes 2: two more mutations, to the index variables this time. The array is now <code>[9, 8, 2, 5]</code>.</p>
-    <p>That is the whole rhythm of the loop: two mutations to swap, two to step the pointers inward. Steps 2 and 3 in the diagram are the same rhythm again, until the pointers cross and the loop stops. Say them to yourself and check them against the rows.</p>
+    <p>That is the whole rhythm of the loop: two mutations to swap, two to step the indices inward. Steps 2 and 3 in the diagram are the same rhythm again, until the indices cross and the loop stops. Say them to yourself and check them against the rows.</p>
   </section>
 
   <!-- 5 -->
   <section>
     <h2><span class="num">5</span>Why the swap needs care</h2>
-    <p>Look closely at one thing, because it is where beginners write a bug. To swap two cells you cannot just do <code>a[left] = a[right]</code> and then <code>a[right] = a[left]</code>. The first line overwrites cell <code>left</code>, and the old value that lived there is now gone. (On the state page, gone means gone: an overwrite destroys what was there.) The second line then copies the wrong number back, and both cells end up holding the same value.</p>
-    <p>The fix is to hold the old value somewhere before you overwrite it: save <code>a[left]</code> in a temporary variable, copy <code>a[right]</code> into <code>a[left]</code>, then copy the saved value into <code>a[right]</code>. That temporary is one more small piece of state, one more cell. The Python line <code>a[left], a[right] = a[right], a[left]</code> does this saving for you behind the scenes, but the machine still needs the extra hold. Knowing that is knowing the state, not just the syntax.</p>
+    <p>Look closely at one thing, because it is where beginners write a bug. It is tempting to swap two cells like this:</p>
+    <pre><code>a[left] = a[right]   # WRONG
+a[right] = a[left]</code></pre>
+    <p>The first line overwrites cell <code>left</code>, and the old value that lived there is now gone. (On the <a href="what-is-state.html">state page</a>, gone means gone: an overwrite destroys what was there.) The second line then copies the wrong number back, so both cells end up holding what was in <code>a[right]</code>. The original left value is lost.</p>
+    <p>The fix is to hold the old value somewhere before you overwrite it, using one more cell, a temporary variable:</p>
+    <pre><code>temp = a[left]       # save the old left value
+a[left] = a[right]
+a[right] = temp      # put the saved value back</code></pre>
+    <p>That <code>temp</code> is one more small piece of state. The Python line <code>a[left], a[right] = a[right], a[left]</code> does this saving for you behind the scenes, but the language still has to hold the old value somewhere before it can overwrite. Most languages make you write the temporary yourself; Python is one of the few that hides it. JavaScript can hide it too, with the same shape: <code>[a[left], a[right]] = [a[right], a[left]]</code>, and the temporary variable it uses is again the same idea, just out of sight. Knowing what is really happening is knowing the state, not just the syntax.</p>
     <div class="rule">Almost every hard bug is a wrong belief about the state. Trace the cells by hand and any wrong belief becomes visible right away.</div>
   </section>
 
@@ -152,13 +160,13 @@
   <section>
     <h2><span class="num">6</span>Check the edges by tracing them too</h2>
     <p>The single-function page pushed you to test the awkward inputs, not just the tidy one. Trace them the same way, in memory, and they answer themselves.</p>
-    <p>An <strong>empty array</strong>: <code>left</code> is 0, <code>right</code> is -1, and <code>0 &lt; -1</code> is false, so the loop never runs. Correct, an empty array reversed is still empty. A <strong>single item</strong>: <code>left</code> and <code>right</code> both start at 0, <code>0 &lt; 0</code> is false, loop never runs, and one item reversed is itself. An <strong>odd length</strong>, like five items: the pointers meet exactly on the middle cell, which does not need to move, and <code>left &lt; right</code> becomes false right there. The <code>&lt;</code> in the condition, not <code>&lt;=</code>, is what makes the middle cell sit still. You do not have to guess whether these work. You trace them.</p>
+    <p>An <strong>empty array</strong>: <code>left</code> is 0, <code>right</code> is -1, and <code>0 &lt; -1</code> is false, so the loop never runs. Correct, an empty array reversed is still empty. A <strong>single item</strong>: <code>left</code> and <code>right</code> both start at 0, <code>0 &lt; 0</code> is false, loop never runs, and one item reversed is itself. An <strong>odd length</strong>, like <code>[5, 8, 2, 9, 1]</code>: step it yourself and watch <code>left</code> and <code>right</code> meet on cell 2, the middle, where <code>left &lt; right</code> turns false and the loop stops before touching it, exactly as section 1 promised. You do not have to guess whether these work. You trace them.</p>
   </section>
 
   <!-- 7 -->
   <section>
-    <h2><span class="num">7</span>What you actually built</h2>
-    <p>Interview problems on arrays, strings, and lists are, underneath, exactly what we just did: a handful of cells, a few index or pointer variables, and a loop that mutates the state forward until it stands for the answer. When you can read a problem and see the cells, name the mutations, and step the film in your head, you can both solve those problems and explain your solution out loud while you do it. That is the payoff of treating this abstract series as one concrete skill.</p>
+    <h2><span class="num">7</span>The same shape, over and over</h2>
+    <p>Most interview problems on arrays, strings, and lists have the shape you just traced: a handful of cells, a few index variables, and a loop that mutates the state forward until it stands for the answer. Once you can see the cells, the harder-looking problems (removing duplicates in place, partitioning, merging two sorted arrays) are variations on where the indices start and when they move, and you can trace any of them the same way you traced this one.</p>
   </section>
 
   <footer>

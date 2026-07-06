@@ -42,25 +42,18 @@
     <p class="lede">Memory is one long row of numbered cells. Each cell holds one <span class="em">byte</span>, a small number. Each cell has a number of its own, its <span class="em">address</span>. Everything a program holds lives here, as bytes in cells.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said a running program is always holding some information, and that the information is real and sits somewhere. This page is that somewhere. It is the ground the rest of the series stands on: <a href="arrays.html">arrays</a>, <a href="what-is-a-pointer.html">pointers</a>, and the stack are all just patterns laid over these numbered cells. Get this picture solid and the rest stops being mysterious.</p>
+  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said a running program is always holding some information, and that the information is real and sits somewhere. This page is that somewhere. It is the ground the rest of the series stands on: <a href="arrays.html">arrays</a>, <a href="what-is-a-pointer.html">pointers</a>, and the stack are all just patterns laid over these numbered cells. It is also where you drop back to when a program stops making sense, because down here there are only two questions to ask: <strong>which cell</strong>, and <strong>what byte is in it</strong>. Keep those two straight and a lot of confusion clears up.</p>
 
   <!-- 1 -->
   <section>
-    <h2><span class="num">1</span>One long row of cells</h2>
-    <p>Picture memory as a single row of small boxes, side by side, running off into the distance. There is no shape to it beyond that: no named sections, no nested structure, just one flat line of identical cells.</p>
-    <p>Every cell is the same size and holds the same kind of thing: one byte. A real machine has billions of these cells, but the idea is the same whether there are ten or ten billion.</p>
+    <h2><span class="num">1</span>One long row of cells, each holding a byte</h2>
+    <p>Picture memory as a single row of small boxes, side by side, running off into the distance. There are no named sections and no nested structure, just one flat line of identical cells. Every cell is the same size and holds the same kind of thing: one <strong>byte</strong>, a whole number from 0 to 255. Not a letter directly, not a word, not a decimal point. Just a number in that range. (A byte is eight bits, and eight on/off switches have 256 settings, counted 0 to 255.)</p>
+    <p>A real machine has billions of these cells, but the picture is the same whether there are ten or ten billion.</p>
   </section>
 
   <!-- 2 -->
   <section>
-    <h2><span class="num">2</span>Each cell holds one byte</h2>
-    <p>A <strong>byte</strong> is a number from 0 to 255. That is all a single cell can hold: one whole number in that range. Not a letter directly, not a word, not a decimal point as you usually write one. Just a number, 0 through 255.</p>
-    <p>Why 255? A byte is eight bits, eight on/off switches, and eight switches have 256 different settings, which we count as 0 to 255. You do not have to think in bits to use this page. Take the cell as a box that holds one number from 0 to 255, and that is enough.</p>
-  </section>
-
-  <!-- 3 -->
-  <section>
-    <h2><span class="num">3</span>Each cell has an address</h2>
+    <h2><span class="num">2</span>Each cell has an address</h2>
     <p>The cells are numbered in order: 0, 1, 2, 3, and on up. A cell's number is its <strong>address</strong>. The address is fixed. It is where the cell sits in the row, not what it holds. The cell at address 4 is always the fifth box, whatever number is written inside it right now.</p>
 
     <div class="rule">Keep the two numbers apart: the address is <em>which</em> cell, the byte is <em>what is in it</em>. Both are numbers, and mixing them up is the source of a lot of confusion later.</div>
@@ -90,38 +83,40 @@
           <text x="330" y="140">address (which cell)</text>
         </g>
       </svg>
-      <figcaption>Eight cells. The big number inside each is the byte it holds; the small number below is its address. (72 and 105 are the ASCII codes for the letters H and i; section 5 shows how a run of cells like these spells a word.)</figcaption>
+      <figcaption>Eight cells. The big number inside each is the byte it holds; the small number below is its address. (72 and 105 are the ASCII codes for the letters H and i; section 4 shows how a run of cells like these spells a word.)</figcaption>
     </figure>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>Read and write, both by address</h2>
+    <p>The processor does two basic things with memory, and both start with an address. It can <strong>read</strong>: give it an address, and it hands back the byte in that cell. It can <strong>write</strong>: give it an address and a byte, and it puts that byte in that cell, overwriting whatever was there. Read the byte at 3. Write 200 to cell 5. That is the whole conversation. The processor never searches or scans for a value; it names the cell by number and goes straight there, so any cell is as quick to reach as any other.</p>
+    <p>You rely on this every day, usually without naming it. Indexing an array or a Go slice is O(1) because the position is turned into an address and read once, with no scan. A pointer dereference in C, or following a reference in Java or C#, is the same act: a read at an address the program already holds. Where those addresses come from, which cell a name in your code stands for, is what <a href="variables-values-and-addresses.html">variables, values, and addresses</a> covers next.</p>
   </section>
 
   <!-- 4 -->
   <section>
-    <h2><span class="num">4</span>The CPU works by address</h2>
-    <p>The processor does two basic things with memory, and both start with an address. It can <strong>read</strong>: give it an address, and it hands back the byte in that cell. It can <strong>write</strong>: give it an address and a byte, and it puts that byte in that cell, overwriting whatever was there.</p>
-    <p>That is the whole conversation with memory. Read the byte at 3. Write 200 to cell 5. The processor never searches or scans for a value; it names the cell it wants by number and goes straight there. Any cell is as quick to reach as any other, because reaching it is just naming its address. That is how the model works; in practice the processor keeps recently-used cells close and is slower on the rest, but that is a later detail.</p>
-    <p>Where those addresses come from, which cell a name in your code stands for, is what <a href="variables-values-and-addresses.html">variables, values, and addresses</a> is about, and that is a later page.</p>
+    <h2><span class="num">4</span>Bigger values span several cells</h2>
+    <p>One byte only reaches 255, so anything larger will not fit in a single cell. The fix is simple: use several cells in a row and read them as one value. Four cells give 32 bits, which covers about four billion values; the machine treats those four adjacent bytes as one number.</p>
+    <p>How many cells a value gets is fixed by its type. In C, <code>sizeof(int)</code> is usually 4 and <code>sizeof(double)</code> is 8. A Swift <code>Int64</code> occupies 8 cells in a row; call <code>withUnsafeBytes</code> on it and you are looking straight at those eight bytes. In numpy the whole point of <code>int32</code> versus <code>int64</code> is this count, 4 cells per number or 8, which is why a dtype mismatch changes the size of the entire array. In C you pick the size with the type; in Java or C# the runtime fixes it for you, same effect.</p>
+    <p>Text works the same way. Each character is stored as a number in one byte, so the word <code>Hi</code> is two cells: 72 for <code>H</code>, then 105 for <code>i</code>, the two highlighted cells in the diagram above. A longer word is a longer run of cells. The pattern is always the same: a big thing is a group of adjacent cells, and its address is the address of its first cell.</p>
   </section>
 
   <!-- 5 -->
   <section>
-    <h2><span class="num">5</span>Bigger values span several cells</h2>
-    <p>One byte only reaches 255, so anything larger will not fit in a single cell. The fix is simple: use several cells in a row and read them as one value. Four cells give you 32 bits, which covers about four billion different values, so a number up to about four billion takes four cells side by side; the machine treats those four adjacent bytes as one number. The program decides how many cells belong together, which in C is what the type does: it fixes whether a value gets 1 cell or 4.</p>
-    <p>The order those bytes are stored in matters too, and different processors handle it differently; that detail comes up when you look at raw bytes, not before.</p>
-    <p>Text works the same way. Each character is stored as a number in one byte, so the word <code>Hi</code> is two cells: 72 for <code>H</code>, then 105 for <code>i</code>, the two highlighted cells in the diagram above. A longer word is a longer run of cells. The pattern is always the same: a big thing is a group of adjacent cells, and its address is the address of its first cell.</p>
+    <h2><span class="num">5</span>Why your tools show hex</h2>
+    <p>A cell holding 72 does not know whether it is the letter <code>H</code>, the number 72, or one slice of a bigger number. The meaning is not in the cell; it lives in the code that decides how to read each region, the same point the <a href="what-is-state.html">state page</a> made about bits.</p>
+    <p>This row is the picture your tools drop into when things go wrong. It is why a debugger prints a variable as a hex number like <code>0x7ffe...</code> instead of a name: that number is the address of the variable's first cell, not the value inside. And it is why dereferencing a null pointer in C crashes with an address of <code>0x0</code>: the program tried to read at cell zero, an address kept invalid on purpose, instead of at a real one. Confuse the address with the byte and these read as noise; keep them apart and they tell you exactly what happened.</p>
   </section>
 
   <!-- 6 -->
   <section>
-    <h2><span class="num">6</span>The cells do not know what they mean</h2>
-    <p>A cell holding 72 does not know if it is the letter <code>H</code>, the number 72, part of a larger number, or one piece of something else. It is just a byte. The meaning is not in the cell; it lives in the program, in the code that decides how to read each region.</p>
-    <p>This is the same point the <a href="what-is-state.html">state page</a> made: bits are just a pattern until a program reads them a certain way. The same run of cells could be a number to one part of the program and text to another. Nothing in memory settles it. The code does.</p>
-  </section>
-
-  <!-- 7 -->
-  <section>
-    <h2><span class="num">7</span>Everything is bytes in cells</h2>
+    <h2><span class="num">6</span>Everything is bytes in cells</h2>
     <p>Every value your program holds ends up here. A count, a name, a price, a whole list, a picture: all of it is bytes in numbered cells, and nothing else. Higher up, a language gives you names and types and shapes so you rarely think about raw addresses, but underneath, it is this row of cells the entire time.</p>
-    <p>So whenever a program stops making sense, you can drop back to this row and ask just two questions: which cell, and what byte is in it. An <a href="arrays.html">array</a> is only values packed into cells in a row; a <a href="what-is-a-pointer.html">pointer</a> is a value stored across several cells, and that value is itself an address, the number of some other cell. Different shapes, same ground: bytes at addresses.</p>
+
+    <div class="rule">An <a href="arrays.html">array</a> is just values packed into cells in a row. A <a href="what-is-a-pointer.html">pointer</a> is the stranger one: a value stored across a few cells whose content is itself an address, the number of some other cell. A cell that holds the address of another cell is the whole idea the rest of the series builds on.</div>
+
+    <p>Next comes how a name in your code gets attached to a cell in this row, in <a href="variables-values-and-addresses.html">variables, values, and addresses</a>. After that, <a href="arrays.html">arrays</a> and <a href="what-is-a-pointer.html">pointers</a> are just the two shapes above laid out in full. Every one of them, when you need to, comes back to the same two questions: which cell, and what byte is in it.</p>
   </section>
 
   <footer>
