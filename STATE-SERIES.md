@@ -43,15 +43,21 @@ caches, and data locality; true use-after-free.
 
 ## Status
 
-- [ ] 1. What is state?  (in progress)
-- [ ] 2. Memory: bytes at addresses
-- [ ] 3. Variables, values, and addresses
-- [ ] 4. Arrays (C-style)
-- [ ] 5. What a pointer is: indirection
-- [ ] 6. Copy vs share
-- [ ] 7. Aliasing bugs
-- [ ] 8. Null and dangling pointers
-- [ ] 9. The stack and frames
-- [ ] 10. Scope and globals
-- [ ] 11. An array problem, in memory
-- [ ] (sibling) State machines
+All 12 pages are published: built, hardened over a multi-round reader-panel run,
+hand-tuned, committed, and live at their URLs. They are deliberately NOT yet
+linked from the landing page (index.html) / table of contents.
+
+- [x] 1. What is state?  (published, unlisted)
+- [x] 2. Memory: bytes at addresses  (published, unlisted)
+- [x] 3. Variables, values, and addresses  (published, unlisted)
+- [x] 4. Arrays (C-style)  (published, unlisted)
+- [x] 5. What a pointer is: indirection  (published, unlisted)
+- [x] 6. Copy vs share  (published, unlisted)
+- [x] 7. Aliasing bugs  (published, unlisted)
+- [x] 8. Null and dangling pointers  (published, unlisted)
+- [x] 9. The stack and frames  (published, unlisted)
+- [x] 10. Scope and globals  (published, unlisted)
+- [x] 11. An array problem, in memory  (published, unlisted)
+- [x] (sibling) State machines  (published, unlisted)
+
+Next step when ready: add the 12 to index.html and the learning path.
