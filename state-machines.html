@@ -41,7 +41,13 @@
   .col pre{margin:.3rem 0 0;}
   footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
   footer p{margin:.4rem 0;}
-  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+  table.tt{border-collapse:collapse;width:100%;font-size:.92rem;margin:0;}
+  table.tt th,table.tt td{border:1px solid var(--line);padding:.45rem .6rem;text-align:center;}
+  table.tt th{background:var(--accent-soft);color:#1f5b54;font-weight:650;font-size:.82rem;}
+  table.tt td{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;color:var(--accent);}
+  table.tt td.s{text-align:left;background:#faf9f6;color:var(--ink);font-weight:650;}
+  table.tt td.x{background:var(--code-bg);}
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}table.tt{font-size:.8rem;}}
 </style>
 </head>
 <body>
@@ -136,7 +142,24 @@ let isError   = false</code></pre>
     <h2><span class="num">4</span>Transitions you did not allow cannot happen</h2>
     <p>The states are half of it. The arrows are the other half, and they carry the same protection. Take an order: it goes <strong>cart</strong>, then <strong>paid</strong>, then <strong>shipped</strong>, then <strong>delivered</strong>, and the only way out of cart is to paid. There is no arrow from cart straight to shipped. So "we shipped an order nobody paid for" is not a bug you have to remember to guard against. It is a transition the machine does not offer.</p>
     <p>When your code is a pile of flags and <code>if</code> statements, every function is free to set any flag at any time, and the allowed order of events lives only in your head and your hope. A state machine writes that order down. The current state decides which transitions are even on the table; ask for one that is not, and the machine refuses instead of quietly doing something wrong.</p>
-    <p>You can write that down as a plain table: for each state, the events it accepts and where each one leads. The form from section 2 is a few lines.</p>
+    <p>You can write that down as a plain table: rows are states, columns are events, and each cell is the state you land in. The blank cells are the transitions that do not exist, the ones that simply cannot happen.</p>
+
+    <figure>
+      <table class="tt">
+        <thead>
+          <tr><th>state \ event</th><th>submit</th><th>ok</th><th>fail</th><th>retry</th><th>reset</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="s">idle</td><td>loading</td><td class="x"></td><td class="x"></td><td class="x"></td><td class="x"></td></tr>
+          <tr><td class="s">loading</td><td class="x"></td><td>success</td><td>error</td><td class="x"></td><td class="x"></td></tr>
+          <tr><td class="s">error</td><td class="x"></td><td class="x"></td><td class="x"></td><td>loading</td><td class="x"></td></tr>
+          <tr><td class="s">success</td><td class="x"></td><td class="x"></td><td class="x"></td><td class="x"></td><td>idle</td></tr>
+        </tbody>
+      </table>
+      <figcaption>The whole machine as a table. A filled cell is where an event takes you; a blank cell is an event that state ignores. Most of the grid is blank, and that is the point: the few filled cells are the only things that can happen.</figcaption>
+    </figure>
+
+    <p>The same table, written as data your code can read:</p>
 
     <pre><code>const transitions = {
   idle:    { submit: "loading" },
