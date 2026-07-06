@@ -43,10 +43,10 @@
 
   <header>
     <h1>Arrays</h1>
-    <p class="lede">Look up the millionth element of an array and the computer does not scan through a million values to find it. It does one multiply and one add to compute the exact spot, then reads it directly. That is the same tiny bit of work it would spend on the first element. The speed comes from one rule: an <span class="em">array</span> is a row of equal-size cells, packed back to back in memory.</p>
+    <p class="lede">An <span class="em">array</span> is a row of equal-size cells, packed back to back in memory. That one rule buys something surprising: look up the millionth element and the computer does not scan through a million values to reach it. It does one multiply and one add to jump straight to the spot, the same tiny bit of work it would spend on the first element. That single fact is why arrays sit underneath so many coding-interview problems, and why interviewers keep reaching for them.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said a program holds information somewhere. The <a href="memory-bytes-and-addresses.html">memory page</a> said that somewhere is a long line of numbered bytes, each with its own address; if you have not read it, that one sentence is all you need here. An array is the first real shape you can give that line: take some of those bytes and treat them as a row of slots that all hold the same kind of value. This page is about the plain array of raw values, the idea underneath the fancier lists you use every day. The next one, <a href="an-array-problem-in-memory.html">an array problem in memory</a>, puts it to work.</p>
+  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said a program holds information somewhere. The <a href="memory-bytes-and-addresses.html">memory page</a> said that somewhere is a long line of numbered bytes, each with its own address, and that one sentence is all you need here. An array is the first real shape you can give that line: take some of those bytes and treat them as a row of slots that all hold the same kind of value. Below the Python lists and JavaScript arrays you use every day sits this plainer thing, an array of raw values, and it is the one worth understanding first.</p>
 
   <!-- 1 -->
   <section>
@@ -101,36 +101,94 @@
       <figcaption>Six four-byte cells packed from base 1000. To reach element 3 the machine computes base + i * size and goes straight there, no scanning.</figcaption>
     </figure>
 
-    <p>The work does not grow with the size of the array. One multiply, one add, one read, whether you want the first element or the ten-millionth. That is what people mean when they call array indexing <strong>O(1)</strong>, or <strong>constant time</strong>: the cost stays flat as the array grows. Compare that to a <strong>linked list</strong>, where the elements are scattered around memory and each one only holds a pointer to the next. There is no formula for the millionth element; to reach it you follow a million pointers, one after another. The array skips all of that by paying up front: keep every cell the same size and packed together, and any position is just math.</p>
+    <p>The work does not grow with the size of the array. One multiply, one add, one read, whether you want the first element or the ten-millionth. That is what people mean when they call array indexing <strong>O(1)</strong>, or <strong>constant time</strong>. O(1) is Big-O notation, a shorthand for how the work grows as the input grows; O(1) means it does not grow at all, so the cost stays flat whether the array holds ten values or ten million.</p>
+
+    <p>Compare that to a <strong>linked list</strong>, where the elements are scattered around memory and each one only holds a pointer to the next. There is no formula for the millionth element. To reach it you follow a million pointers, one after another. The array skips all of that by paying up front: keep every cell the same size and packed together, and any position is just math.</p>
+
+    <figure>
+      <svg viewBox="0 0 640 268" role="img" aria-label="Top: an array drawn as four numbered boxes packed side by side at consecutive addresses 1000, 1004, 1008, 1012. Bottom: a linked list drawn as four boxes at scattered positions and different addresses, each with an arrow pointing to the next.">
+        <text x="24" y="24" fill="#6b7280" font-size="14" font-family="-apple-system, sans-serif">Array: cells packed, addresses in a row</text>
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="18" fill="#2c3038" text-anchor="middle">
+          <rect x="180" y="38" width="70" height="46" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="215" y="68">42</text>
+          <rect x="250" y="38" width="70" height="46" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="285" y="68">17</text>
+          <rect x="320" y="38" width="70" height="46" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="355" y="68">8</text>
+          <rect x="390" y="38" width="70" height="46" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="425" y="68">99</text>
+        </g>
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="11" fill="#6b7280" text-anchor="middle">
+          <text x="215" y="100">1000</text>
+          <text x="285" y="100">1004</text>
+          <text x="355" y="100">1008</text>
+          <text x="425" y="100">1012</text>
+        </g>
+
+        <text x="24" y="150" fill="#6b7280" font-size="14" font-family="-apple-system, sans-serif">Linked list: cells scattered, each points to the next</text>
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="16" fill="#2c3038">
+          <g>
+            <rect x="24"  y="164" width="104" height="44" rx="6" fill="#ffffff" stroke="#cfccc4"/>
+            <line x1="90" y1="164" x2="90" y2="208" stroke="#e0ddd5"/>
+            <text x="57" y="192" text-anchor="middle">42</text>
+            <circle cx="109" cy="186" r="4" fill="#2f7d75"/>
+            <text x="76" y="226" text-anchor="middle" font-size="11" fill="#6b7280">1000</text>
+          </g>
+          <g>
+            <rect x="228" y="196" width="104" height="44" rx="6" fill="#ffffff" stroke="#cfccc4"/>
+            <line x1="294" y1="196" x2="294" y2="240" stroke="#e0ddd5"/>
+            <text x="261" y="224" text-anchor="middle">17</text>
+            <circle cx="313" cy="218" r="4" fill="#2f7d75"/>
+            <text x="280" y="258" text-anchor="middle" font-size="11" fill="#6b7280">5320</text>
+          </g>
+          <g>
+            <rect x="380" y="150" width="104" height="44" rx="6" fill="#ffffff" stroke="#cfccc4"/>
+            <line x1="446" y1="150" x2="446" y2="194" stroke="#e0ddd5"/>
+            <text x="413" y="178" text-anchor="middle">8</text>
+            <circle cx="465" cy="172" r="4" fill="#2f7d75"/>
+            <text x="432" y="212" text-anchor="middle" font-size="11" fill="#6b7280">2016</text>
+          </g>
+          <g>
+            <rect x="516" y="204" width="104" height="44" rx="6" fill="#ffffff" stroke="#cfccc4"/>
+            <text x="560" y="232" text-anchor="middle">99</text>
+            <text x="568" y="266" text-anchor="middle" font-size="11" fill="#6b7280">8804</text>
+          </g>
+        </g>
+        <path d="M109,186 C160,186 190,210 226,214" fill="none" stroke="#2f7d75" stroke-width="2"/>
+        <path d="M226,214 L216,209 L217,220 Z" fill="#2f7d75"/>
+        <path d="M313,218 C345,218 360,178 378,174" fill="none" stroke="#2f7d75" stroke-width="2"/>
+        <path d="M378,174 L368,171 L370,182 Z" fill="#2f7d75"/>
+        <path d="M465,172 C495,172 500,214 514,222" fill="none" stroke="#2f7d75" stroke-width="2"/>
+        <path d="M514,222 L504,216 L504,227 Z" fill="#2f7d75"/>
+      </svg>
+      <figcaption>The array is one packed run, so any element is base + i * size. The linked list holds the same four values at scattered addresses, joined only by pointers, so reaching the fourth means walking through the first three.</figcaption>
+    </figure>
   </section>
 
   <!-- 3 -->
   <section>
-    <h2><span class="num">3</span>Reading past the end</h2>
-    <p>The formula gives a valid address only when <code>i</code> is between 0 and length minus 1. Ask for element 10 of a six-element array and the formula still computes an address, one that points at memory outside the array. In the languages you write, this is mostly handled for you, so it turns into a clear error rather than a silent disaster. But the two languages you use most handle it differently, and the difference matters.</p>
-    <p>Python raises an <code>IndexError</code> the moment you go out of range (Java and C# raise similar exceptions), so the mistake stops right there with a message that points at the line. JavaScript is looser, and this is the real footgun for you: a read past the end quietly returns <code>undefined</code> instead of throwing. Write <code>arr[arr.length]</code> by mistake and nothing complains; the <code>undefined</code> flows into the next line, and the failure surfaces far from where the off-by-one actually happened.</p>
-    <p>In lower-level languages like C there is no check at all, so the read simply happens and you get garbage or a crash, which is a classic source of security bugs. You will not hit that in Python or JavaScript, but the off-by-one behind it is still a real bug, and it is the most common surprise beginners meet with arrays.</p>
+    <h2><span class="num">3</span>The Python list is not this</h2>
+    <p>Here is where a lot of working programmers carry a fuzzy picture. A Python <code>list</code> or a JavaScript array can hold mixed things: a number, a string, another list, all in one row. Those objects are different sizes, so they cannot be packed into equal cells. The <code>base + i * size</code> formula would fall apart.</p>
+    <p>What sits in the row instead is a set of equal-size <strong>references</strong>: each slot is a <a href="what-is-a-pointer.html">pointer</a> to the real object, which lives somewhere else in memory. So the row itself <em>is</em> a plain array, an array of pointers, and indexing it is still O(1). You get the pointer instantly, then follow it to the object. That convenience, holding mixed types and growing as you go, costs you one extra hop per access and leaves the objects spread around memory rather than packed together.</p>
+    <div class="rule">A Python list is a plain array of pointers. The array of raw values is the simpler idea sitting underneath it.</div>
   </section>
 
   <!-- 4 -->
   <section>
-    <h2><span class="num">4</span>The Python list is not this</h2>
-    <p>Here is where a lot of working programmers carry a fuzzy picture. A Python <code>list</code> or a JavaScript array can hold mixed things: a number, a string, another list, all in one row. Those objects are different sizes, so they cannot be packed into equal cells. The <code>base + i * size</code> formula would fall apart.</p>
-    <p>What sits in the row instead is a set of equal-size <strong>references</strong>: each slot is a <a href="what-is-a-pointer.html">pointer</a> to the real object, which lives somewhere else in memory. So the row itself <em>is</em> a plain array, an array of pointers, and indexing it is still O(1). You get the pointer instantly, then follow it to the object. The convenience costs you that extra hop and the objects being spread around.</p>
-    <div class="rule">A Python list is a plain array of pointers. The array of raw values is the simpler idea sitting underneath it.</div>
+    <h2><span class="num">4</span>Packed cells are also fast to scan</h2>
+    <p>Instant indexing is the headline, but the packed layout pays off again when you loop over the whole array in order, which is most of what real code does. When the CPU reads one value, it also pulls the neighboring values into the <strong>cache</strong>, a small pool of very fast memory sitting next to the processor. Reading from cache is roughly 100 times faster than reaching all the way out to main memory, and those neighbors are exactly the elements the loop reaches next. Packed values stream through the cache well; objects scattered around memory do not.</p>
+    <p>This is why a NumPy array iterates much faster than a Python list of the same numbers: the NumPy array is raw values packed back to back, while the list is pointers to integer objects scattered around memory. (Java shows the same split between an <code>int[]</code> and an <code>ArrayList&lt;Integer&gt;</code>.) In an interview this is the fact that decides a data-structure choice: when you just need to walk a row of numbers and speed matters, reach for the packed array of raw values, not the list of objects.</p>
   </section>
 
   <!-- 5 -->
   <section>
-    <h2><span class="num">5</span>Packed cells are also fast to scan</h2>
-    <p>Instant indexing is the headline, but the packed layout pays off again when you loop over the whole array in order, which is most of what real code does. When the CPU reads one value, it also pulls the neighboring values into a small pool of very fast memory, and those neighbors are exactly the elements the loop reaches next. Packed values stream through that fast memory well; objects scattered around memory do not.</p>
-    <p>This is why a NumPy array iterates much faster than a Python list of the same numbers: the NumPy array is raw values packed back to back, while the list is pointers to integer objects scattered around memory. (The same split shows up in Java between an <code>int[]</code> and an <code>ArrayList&lt;Integer&gt;</code>.) For an interview you do not need the hardware detail; the point to carry is small: scanning a packed array is faster than chasing scattered pointers, and that is why arrays are the default when you just need to walk a row of numbers.</p>
+    <h2><span class="num">5</span>Reading past the end</h2>
+    <p>The formula <code>base + i * size</code> computes an address for any <code>i</code> you hand it, even one past the end of the array. Ask for element 10 of a six-element array and it still produces an address, one that points at memory the array does not own. What happens next depends entirely on the language.</p>
+    <p>JavaScript, one of your two daily languages, is the loose one, and this is the real footgun: a read past the end quietly returns <code>undefined</code> instead of complaining.</p>
+    <div class="rule">In JavaScript, <code>arr[arr.length]</code> returns <code>undefined</code>, not an error. Nothing flags the bad line; the <code>undefined</code> flows into the next line and the failure surfaces far away, which is what makes off-by-one bugs there so slippery.</div>
+    <p>Python is stricter: it raises an <code>IndexError</code> the moment you go out of range (Java and C# throw similar exceptions), so the mistake stops right there with a message that points at the line. In lower-level languages like C there is no check at all, so the read simply happens and you get garbage or a crash, a classic source of security bugs. You will not hit that in Python or JavaScript, but the off-by-one behind it is the same, and it is the most common surprise beginners meet with arrays.</p>
   </section>
 
   <!-- 6 -->
   <section>
     <h2><span class="num">6</span>Why this is the shape interviews push around</h2>
-    <p>The array is the only basic structure where three things line up at once: every element has an index, the elements keep a fixed order, and any one of them is reachable in constant time. Most array interview questions are really about exploiting that combination, moving indices through the row and swapping values as you go.</p>
+    <p>Most array interview questions come down to one thing: moving indices through a fixed row, reading or swapping values as you go. The array is the only basic structure where an index, a fixed order, and constant-time access all line up at once, and the standard patterns all lean on that combination.</p>
     <p>Take reversing an array in place. Put one index at the left and one at the right, swap those two cells, then step the left index forward and the right index back, and stop when they meet. Here it is in Python, short enough to run in your head on <code>[1, 2, 3, 4]</code>, which comes out <code>[4, 3, 2, 1]</code>:</p>
 
     <pre><code>def reverse(a):
@@ -140,12 +198,13 @@
         left += 1
         right -= 1</code></pre>
 
-    <p>No new memory, no scanning, just index arithmetic on a fixed row. That same shape drives a large share of array questions. A few patterns are worth knowing by name before a screen, each with a small example to picture:</p>
+    <p>That is the <strong>two-pointer</strong> pattern: keep two indices and move them by a rule, usually inward from both ends. No new memory, no scanning, just index arithmetic on a fixed row. The same shape checks whether <code>"racecar"</code> reads the same both ways: compare the outer pair, step inward, stop when they meet. Reach for two pointers when the answer depends on a pair of positions. The next page, <a href="an-array-problem-in-memory.html">an array problem in memory</a>, traces this reversal out cell by cell.</p>
+
+    <p>Three more patterns are worth knowing by name before a screen. Each is its own topic, so treat this as a preview, a set of labels to hang your reading on, not the full lesson:</p>
     <ul>
-      <li><strong>Two pointers.</strong> Keep two indices and move them by a rule, usually inward from both ends. Reversing <code>[1,2,3,4]</code> into <code>[4,3,2,1]</code> is one; checking that <code>"racecar"</code> reads the same both ways is another (compare the outer pair, step inward, stop when they meet). Reach for it when the answer depends on a pair of positions.</li>
-      <li><strong>Sliding window.</strong> Keep a start and an end index that mark off a stretch of the array, and slide them along to find the best stretch that fits some rule. For "longest substring with no repeated character," on <code>"abcabcbb"</code> the window grows to <code>"abc"</code>, then slides forward each time a repeat appears; the answer is length 3. Reach for it on "longest or shortest run of..." questions.</li>
-      <li><strong>Prefix sums.</strong> Walk the array once building a running total. For <code>[3,1,4,1,5]</code> the running totals are <code>[3,4,8,9,14]</code>. Now the sum of any slice is one subtraction: elements 1 through 3 sum to 9 - 3 = 6. Reach for it when a question asks about the sums of many different ranges in a large array.</li>
-      <li><strong>Binary search.</strong> On a sorted array, jump to the middle, compare, throw away the half that cannot hold the answer, and repeat. To find 7 in <code>[1,3,5,7,9]</code>, check the middle (5), then search only the right half. Reach for it when the array is sorted and you need a value or a boundary.</li>
+      <li><strong>Sliding window.</strong> Keep a start and an end index that mark off a stretch of the array, and slide them along to find the best stretch that fits some rule. (A <em>substring</em> is one such stretch of a string: the characters from one position to another, in order.) For "longest substring with no repeated character," on <code>"abcabcbb"</code> the window grows to <code>"abc"</code>, then slides forward each time a repeat appears; the answer is length 3. Reach for it on "longest or shortest run of..." questions.</li>
+      <li><strong>Prefix sums.</strong> Walk the array once building a running total, so the sum of any slice becomes a single subtraction. For <code>[3,1,4,1,5]</code> the running totals are <code>[3,4,8,9,14]</code>, and elements 1 through 3 sum to 9 - 3 = 6. Reach for it when a question asks about the sums of many different ranges in a large array.</li>
+      <li><strong>Binary search.</strong> This one needs a <em>sorted</em> array: jump to the middle, compare, throw away the half that cannot hold the answer, and repeat. To find 7 in <code>[1,3,5,7,9]</code>, check the middle (5), then search only the right half. It rides on O(1) indexing, the ability to jump to the middle for free, more than on the packed layout itself, which is why it usually gets its own page. Reach for it when the array is sorted and you need a value or a boundary.</li>
     </ul>
     <p>Once you see the array as a fixed row of numbered cells, the machinery behind all of these is the same: O(1) indexing lets you jump anywhere and move on.</p>
     <p>That is why the array comes first. It is the plainest shape state can take, and the one the most common problems are built on. The next page, <a href="an-array-problem-in-memory.html">an array problem in memory</a>, takes the reversal above and works it out cell by cell.</p>

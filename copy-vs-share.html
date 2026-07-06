@@ -32,6 +32,7 @@
   pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;overflow-x:auto;margin:1.4rem 0;font-size:.9rem;line-height:1.6;}
   code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;}
   pre code{font-size:.9rem;}
+  .lang{font-weight:650;margin:1.2rem 0 .3rem;}
   footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
   @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
 </style>
@@ -41,26 +42,31 @@
 
   <header>
     <h1>Copy vs share</h1>
-    <p class="lede">When you write <code>b = a</code>, or pass a value into a function, one of two things happens. Either <span class="em">b gets its own separate copy</span>, or <span class="em">b becomes a second name for the very same value</span>. Which one it is decides whether changing b also changes a.</p>
+    <p class="lede">You write <code>b = a</code>, or you pass a value into a function. One of two things happens. Either <span class="em">b gets its own separate copy</span>, or <span class="em">b becomes a second name for the very same value</span>. Which one it is decides whether changing b also changes a.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">One quick foundation, in case you have not read the earlier pages. A variable can hold a value directly, like a number, or hold an address that points at a value stored somewhere else, like a list. (That is the subject of <a href="variables-values-and-addresses.html">variables, values, and addresses</a>.) The second kind is the kind that gets shared. In Python it is the reason that <code>b = some_list</code> followed by <code>b.append(x)</code> also changes your original. This copy-versus-share split is one of the most common sources of "wait, why did my original change?" bugs. The bug itself, and how to avoid it, has its own page: <a href="aliasing-bugs.html">aliasing bugs</a>.</p>
+  <p style="margin-top:1.6rem;">The setup in one sentence: a number lives right inside your variable, but a list or an object lives elsewhere and your variable holds its address, and that address is the kind of value that gets shared. (For the mechanics of that, see <a href="variables-values-and-addresses.html">variables, values, and addresses</a>.)</p>
 
   <!-- 1 -->
   <section>
     <h2><span class="num">1</span>Two things assignment can mean</h2>
     <p>Say you have a value in <code>a</code> and you write <code>b = a</code>. There are two ways a language can carry that out.</p>
     <p><strong>Copy.</strong> The language makes a fresh, separate value for <code>b</code> that starts out equal to <code>a</code>. Now you have two values. Change one and the other does not move, because they are different things that just happened to be equal.</p>
-    <p><strong>Share.</strong> The language does not make a new value. It makes <code>b</code> a second name for the same value <code>a</code> already points at. Now two names, one value. Change the value through either name and both names see the change, because there is only one thing to change.</p>
+    <p><strong>Share.</strong> The language does not make a new value. It makes <code>b</code> a second name for the value <code>a</code> already points at. Now two names, one value. Change the value through either name and both names see the change, because there is only one thing to change.</p>
     <p>Sharing is not a flaw; it is often what you want. Hand the same list to three parts of a program and they all work on one list, not three copies that quietly drift apart. The trouble starts only when you share without meaning to.</p>
   </section>
 
   <!-- 2 -->
   <section>
-    <h2><span class="num">2</span>Two names, one value vs two names, two values</h2>
-    <p>Both cases start the same way: <code>a</code> and <code>b</code> name one list, <code>[1, 2]</code>. Then you run <code>b.push(3)</code>. The picture shows where that new item lands, and whether the other name sees it.</p>
+    <h2><span class="num">2</span>What sharing and copying look like</h2>
+    <p>Both cases start the same way: <code>a</code> and <code>b</code> name one list, <code>[1, 2]</code>. Then you run <code>b.append(3)</code>.</p>
+
+<pre><code>b = a
+b.append(3)     # does a change too?</code></pre>
+
+    <p>Read the picture in two halves. On the <strong>share</strong> side, watch how both names still point at one list, so the new item shows up under both. On the <strong>copy</strong> side, watch <code>b</code> sit on its own separate list, so only <code>b</code> grows.</p>
     <figure>
-      <svg viewBox="0 0 620 335" role="img" aria-label="Start: names a and b both point at one list reading 1, 2. After running b.push(3): on the share side a and b still point at one list that now reads 1, 2, 3, so both names see the new item. On the copy side a points at its own list reading 1, 2, while b points at a separate list reading 1, 2, 3, so only b changed.">
+      <svg viewBox="0 0 620 335" role="img" aria-label="Start: names a and b both point at one list reading 1, 2. After running b.append(3): on the share side a and b still point at one list that now reads 1, 2, 3, so both names see the new item. On the copy side a points at its own list reading 1, 2, while b points at a separate list reading 1, 2, 3, so only b changed.">
         <!-- START row -->
         <g font-family="-apple-system, sans-serif" font-size="14" fill="#6b7280" text-anchor="middle">
           <text x="310" y="24">start: a and b both name one list</text>
@@ -84,8 +90,8 @@
 
         <!-- AFTER titles -->
         <g font-family="-apple-system, sans-serif" font-size="14" fill="#6b7280" text-anchor="middle">
-          <text x="155" y="172">share: b.push(3) changes both</text>
-          <text x="465" y="172">copy: b.push(3) changes only b</text>
+          <text x="155" y="172">share: b.append(3) changes both</text>
+          <text x="465" y="172">copy: b.append(3) changes only b</text>
         </g>
 
         <!-- SHARE side -->
@@ -122,16 +128,18 @@
           <path d="M476,289 L488,295 L476,301 Z"/>
         </g>
       </svg>
-      <figcaption>Start: <code>a</code> and <code>b</code> are two names for one list, <code>[1, 2]</code>. After <code>b.push(3)</code>: on the share side they are still two names for one list, so both read <code>[1, 2, 3]</code>. On the copy side <code>b</code> has its own list, so only <code>b</code> grew and <code>a</code> still reads <code>[1, 2]</code>.</figcaption>
+      <figcaption>Start: <code>a</code> and <code>b</code> are two names for one list, <code>[1, 2]</code>. After <code>b.append(3)</code>: on the share side they are still two names for one list, so both read <code>[1, 2, 3]</code>. On the copy side <code>b</code> has its own list, so only <code>b</code> grew and <code>a</code> still reads <code>[1, 2]</code>.</figcaption>
     </figure>
+    <p>So the whole question is which side you are on. If <code>b = a</code> shared, that one <code>append</code> reached <code>a</code>. If it copied, <code>a</code> never moved. The next section is the rule that tells you which one your language did.</p>
   </section>
 
   <!-- 3 -->
   <section>
     <h2><span class="num">3</span>The usual rule: copy small, share big</h2>
+    <div class="rule">In a garbage-collected language, assume plain numbers are copied and lists, arrays, and objects are shared.</div>
     <p>Most languages do not pick one model for everything. They copy small, simple values and share large ones. A number, a single character, a true/false flag is tiny and cheap to duplicate, so the language just copies it. A list, an array, a dictionary, a bigger object can be large, so instead of duplicating the whole thing, the language shares it: it hands you another name for the same one.</p>
-    <p>This follows the split from before: values you hold directly get copied, values you hold through an address get shared, because copying the name copies only the address, not the thing it points at. In Python, JavaScript, Java, and C#, the small values (numbers, booleans, a character) copy, and everything larger (lists, arrays, objects, dictionaries) shares. Some statically typed languages like Go and Rust copy the whole struct or array by default instead, so check the docs if you work in one of those.</p>
-    <div class="rule">In a garbage-collected language, assume plain numbers are copied and lists, arrays, and objects are shared. When in doubt, do not assume: check (section 6 shows how).</div>
+    <p>This follows the split from the setup: values you hold directly get copied, values you hold through an address get shared, because copying the name copies only the address, not the thing it points at. Python and JavaScript both work this way, and so do Java and C#. (Some statically typed languages copy the whole struct or array by default instead; check the docs if you work in one.)</p>
+    <p>When you are not sure which one you got, do not guess. Section 6 shows how to ask the language directly.</p>
   </section>
 
   <!-- 4 -->
@@ -156,12 +164,17 @@ print(cart)                 # ['a', 'b', 'new']  &lt;-- yours changed</code></pr
   <!-- 5 -->
   <section>
     <h2><span class="num">5</span>Getting a copy on purpose</h2>
-    <p>When you want your own separate thing, you have to ask for a copy; the language will not do it for you. In JavaScript the two you will reach for are:</p>
+    <p>When you want your own separate thing, you have to ask for a copy; the language will not do it for you. The idioms are short in both languages:</p>
 
-<pre><code>const b = [...arr];          // spread into a new array
-const b = Array.from(arr);   // same idea</code></pre>
+    <p class="lang">Python:</p>
+<pre><code>b = list(x)     # new list from x
+b = x[:]        # same idea, slice the whole thing
+b = x.copy()    # same idea, spelled out</code></pre>
 
-    <p>Python has its own: <code>list(x)</code>, <code>x[:]</code>, or <code>x.copy()</code>. Other languages have similar.</p>
+    <p class="lang">JavaScript:</p>
+<pre><code>const b = [...arr];        // spread into a new array
+const b = Array.from(arr); // same idea</code></pre>
+
     <p>One catch applies to all of them. These make a <strong>shallow</strong> copy: they duplicate the outer container but leave the inner objects shared. If your list holds other lists, the outer list is now separate, but the inner lists are still the same ones. So this still surprises people:</p>
 
 <pre><code>inner = [1, 2]
@@ -172,8 +185,12 @@ print(a)              # [[1, 2, 3]]  &lt;-- a changed too</code></pre>
 
     <p>For a copy that stays separate all the way down, you need a <strong>deep</strong> copy:</p>
 
-<pre><code>b = copy.deepcopy(a)          # Python (import copy)
-const b = structuredClone(a); // modern JavaScript, ES2022 and up</code></pre>
+    <p class="lang">Python:</p>
+<pre><code>import copy
+b = copy.deepcopy(a)</code></pre>
+
+    <p class="lang">JavaScript:</p>
+<pre><code>const b = structuredClone(a);   // ES2022 and up</code></pre>
 
     <p>Which one you need depends on how deep your changes reach: a shallow copy is enough if you only touch the outer container, a deep copy is needed once you change something nested.</p>
   </section>
@@ -182,9 +199,10 @@ const b = structuredClone(a); // modern JavaScript, ES2022 and up</code></pre>
   <section>
     <h2><span class="num">6</span>Checking whether two names share</h2>
     <p>When you are not sure whether two names point at one object or two, ask the language instead of guessing. In Python, write <code>a is b</code>: it is true only when the two names are the very same object, sharing one address. In JavaScript, <code>a === b</code> does the same for objects: two arrays, or two plain objects, are <code>===</code> only when they are the one object, not merely equal-looking. (Java splits these apart: <code>a == b</code> on objects is the identity check, and <code>a.equals(b)</code> is the value check. Mixing up the two is this exact confusion.)</p>
-    <p>If the check comes back true, a change through one name will show under the other, and that is your signal to make a copy if you did not want that.</p>
+    <p>If the check comes back true, a change through one name will show under the other. That is your signal to make a copy if you did not want that.</p>
     <p>One footnote: these checks are about objects. On plain numbers and other small values, <code>is</code>, <code>===</code>, and <code>==</code> compare the value itself, so <code>5 == 5</code> is true because the values match, not because one object is shared. Identity only becomes a real question once you hold something through an address.</p>
-    <p>So the whole page in one line: copy when you need your own separate thing, let sharing stand when several parts should work on one value, and when something changes that you did not touch, check identity first. The bug this question produces, and how to spot and avoid it, is the <a href="aliasing-bugs.html">aliasing bugs</a> page; the values most often caught by it get their own treatment on the <a href="arrays.html">arrays</a> page.</p>
+    <p>The bug this whole question tends to produce, and how to spot and avoid it, has its own page: <a href="aliasing-bugs.html">aliasing bugs</a>.</p>
+    <div class="rule">Copy when you need your own separate thing. Let sharing stand when several parts should work on one value. And when something changes that you did not touch, check identity first.</div>
   </section>
 
   <footer>

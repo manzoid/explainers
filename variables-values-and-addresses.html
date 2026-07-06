@@ -33,6 +33,9 @@
     font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;line-height:1.6;}
   pre .cmt{color:var(--muted);}
   code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;background:var(--code-bg);padding:.05rem .3rem;border-radius:4px;}
+  .checks{margin:1.2rem 0 0;padding-left:0;list-style:none;}
+  .checks li{margin:.7rem 0;}
+  .checks .q{font-weight:650;}
   footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
   @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
 </style>
@@ -42,15 +45,15 @@
 
   <header>
     <h1>Variables, values, and addresses</h1>
-    <p class="lede">A variable is a <span class="em">name for a place in memory</span>. The value is whatever sits in that place right now. Two bugs stop being mysterious once you keep the name, the place, and the value apart: two names that accidentally share one object, and a function that changed something it was never handed to change.</p>
+    <p class="lede">You wrote <code>total</code>, not <span class="em">address 4096</span>. A variable is a name for a place in memory, and the value is whatever sits in that place right now. Keep the name, the place, and the value apart, and one confusing mechanism becomes plain, the one mechanism behind two bugs you have surely hit.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">You write <code>total</code>, not <code>address 4096</code>. This page shows how the human name in your code maps down to a numbered place in memory, and why that mapping is behind a whole family of bugs you have probably already hit. It is also standard interview ground: when an interviewer asks whether Python passes by value or by reference, or why editing a copy also edited the original, they are checking that you hold exactly these three things apart.</p>
+  <p style="margin-top:1.6rem;">The two bugs: <strong>aliasing</strong>, where two names quietly share one object, so editing through one changes the other; and <strong>unexpected mutation</strong>, where a function changes data you never handed it to change. They feel like separate mysteries. This page shows they are the same thing seen from two angles, and that the fix falls out once you split every line into a name, a place, and a value. It is also standard interview ground: when an interviewer asks whether Python passes by value or by reference, or why editing a copy also edited the original, they are checking that you hold these three apart.</p>
 
   <!-- 1 -->
   <section>
     <h2><span class="num">1</span>Three things, not one</h2>
-    <p>Look at one line: <code>score = 10</code>. It is easy to read that as a single thing, a box called <code>score</code> with <code>10</code> in it. But there are three separate things here, and untangling them is the whole point of the page.</p>
+    <p>Look at one line: <code>score = 10</code>. It is easy to read that as a single thing, a box called <code>score</code> with <code>10</code> in it. But there are three separate things here, and splitting them apart is the whole point of the page.</p>
     <p>There is the <strong>name</strong>, <code>score</code>, which you wrote. There is the <strong>place</strong>, a spot in memory with its own address, which the machine picked. And there is the <strong>value</strong>, <code>10</code>, the bits now sitting in that place. The name is yours. The place is fixed for the life of the variable. The value can change.</p>
     <p>The machine does not know the word <code>score</code>. It works in addresses: read the cell at this address, write to the cell at that one. Your language keeps a table that says this name means that address, so everywhere you wrote <code>score</code> it uses the real address instead. You think in names; the machine runs on addresses; the table connects the two. That is why one value can sit in memory under one name, two names, or none.</p>
   </section>
@@ -58,53 +61,59 @@
   <!-- 2 -->
   <section>
     <h2><span class="num">2</span>The place, drawn</h2>
-    <p>In the diagram, the name <code>score</code> floats above its cell. The dashed line is the table connection: the name up top, the place at address 4096 below, the value inside. To the right, the same cell after <code>score = 42</code> runs. Same name, same address, new value.</p>
-    <p>This is where the equals sign trips people up. In <code>score = 42</code> it is not a claim that two things are equal. It is an instruction: take the value on the right and store it into the place named on the left. Read it as "store into", not "is equal to". Then the diagram is obvious: only the value in the cell changes; the place keeps its address.</p>
+    <p>Before the diagram, fix the one thing that trips people up: the equals sign. In <code>score = 42</code> it is not a claim that two things are equal.</p>
+
+    <div class="rule">Read <code>=</code> as "store into", not "is equal to". <code>score = 42</code> means: take the value on the right and store it into the place named on the left.</div>
+
+    <p>With that in hand the diagram is obvious. On the left is the state after <code>score = 10</code>: the name <code>score</code> sits above its cell, and the table in the middle records that <code>score</code> means address 4096. On the right, after <code>score = 42</code> runs, only the value in the cell changed. Same name, same address, new value.</p>
 
     <figure>
-      <svg viewBox="0 0 620 220" role="img" aria-label="On the left, a named box labeled score floats above a memory cell at address 4096 holding 10, joined by a dashed line. An arrow labeled score = 42 points right to the same cell, still named score and still at address 4096, now holding 42.">
+      <svg viewBox="0 0 620 240" role="img" aria-label="On the left, before, the name score sits above a memory cell at address 4096 holding 10. A small table in the middle records that score maps to address 4096. On the right, after score equals 42, the same name still maps to the same address 4096, but the cell now holds 42.">
         <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
-          <text x="150" y="28">the name (yours)</text>
-          <text x="150" y="180">the place (an address)</text>
+          <text x="118" y="24">before: score = 10</text>
+          <text x="502" y="24">after: score = 42</text>
         </g>
 
         <!-- name box (left) -->
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="18" text-anchor="middle">
-          <rect x="96" y="40" width="108" height="40" rx="8" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
-          <text x="150" y="66" fill="#1f5b54">score</text>
+          <rect x="64" y="40" width="108" height="40" rx="8" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
+          <text x="118" y="66" fill="#1f5b54">score</text>
         </g>
-        <line x1="150" y1="80" x2="150" y2="112" stroke="#2f7d75" stroke-width="2" stroke-dasharray="4 4"/>
+        <line x1="118" y1="80" x2="118" y2="118" stroke="#2f7d75" stroke-width="2" stroke-dasharray="4 4"/>
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="22" text-anchor="middle">
-          <rect x="96" y="112" width="108" height="48" rx="6" fill="#ffffff" stroke="#cfccc4"/>
-          <text x="150" y="145" fill="#2c3038">10</text>
+          <rect x="64" y="118" width="108" height="48" rx="6" fill="#ffffff" stroke="#cfccc4"/>
+          <text x="118" y="151" fill="#2c3038">10</text>
         </g>
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="12" fill="#6b7280" text-anchor="middle">
-          <text x="150" y="200">address 4096</text>
+          <text x="118" y="186">address 4096</text>
         </g>
 
-        <!-- arrow -->
-        <line x1="250" y1="136" x2="330" y2="136" stroke="#2f7d75" stroke-width="2"/>
-        <path d="M330,130 L342,136 L330,142 Z" fill="#2f7d75"/>
-        <text x="290" y="122" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="13" fill="#6b7280" text-anchor="middle">score = 42</text>
+        <!-- the table (middle) -->
+        <g font-family="-apple-system, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">
+          <text x="310" y="90">the table your language keeps</text>
+        </g>
+        <rect x="238" y="98" width="144" height="52" rx="6" fill="#f4f3ef" stroke="#cfccc4"/>
+        <line x1="238" y1="122" x2="382" y2="122" stroke="#cfccc4"/>
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="12" text-anchor="middle">
+          <text x="310" y="115" fill="#6b7280">name &#8594; address</text>
+          <text x="310" y="140" fill="#2c3038">score &#8594; 4096</text>
+        </g>
 
         <!-- name box (right) -->
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="18" text-anchor="middle">
-          <rect x="416" y="40" width="108" height="40" rx="8" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
-          <text x="470" y="66" fill="#1f5b54">score</text>
+          <rect x="448" y="40" width="108" height="40" rx="8" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
+          <text x="502" y="66" fill="#1f5b54">score</text>
         </g>
-        <line x1="470" y1="80" x2="470" y2="112" stroke="#2f7d75" stroke-width="2" stroke-dasharray="4 4"/>
+        <line x1="502" y1="80" x2="502" y2="118" stroke="#2f7d75" stroke-width="2" stroke-dasharray="4 4"/>
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="22" text-anchor="middle">
-          <rect x="416" y="112" width="108" height="48" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
-          <text x="470" y="145" fill="#2c3038">42</text>
+          <rect x="448" y="118" width="108" height="48" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
+          <text x="502" y="151" fill="#2c3038">42</text>
         </g>
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="12" fill="#6b7280" text-anchor="middle">
-          <text x="470" y="200">address 4096</text>
-        </g>
-        <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
-          <text x="470" y="28">same name, new value</text>
+          <text x="502" y="186">address 4096</text>
         </g>
       </svg>
-      <figcaption>Assigning overwrites what the cell holds. The name stays, the address stays; only the value changes.</figcaption>
+      <figcaption>The table maps the name to a fixed address. Assigning overwrites what the cell holds: the name stays, the address stays, only the value changes.</figcaption>
     </figure>
   </section>
 
@@ -158,7 +167,7 @@ a.count;          <span class="cmt">// 5  -- a changed too</span></pre>
       <figcaption>After <code>let b = a</code>, both names hold the same address, so both arrows land on the one object. Change it through either name and the single object underneath changes.</figcaption>
     </figure>
 
-    <p>Python works the same way. <code>b = a</code> on a list or dict makes <code>b is a</code> true, and editing through one edits the other. The rule holds for objects, lists, and dicts, not for plain numbers: a bare number is copied as a value, so <code>b = a</code> then <code>b = 5</code> leaves <code>a</code> alone. Whether an assignment copies the value into a fresh place or just adds a second name to the old place is the <a href="copy-vs-share.html">copy versus share</a> question, and it decides a large share of real bugs.</p>
+    <p>Python works the same way. <code>b = a</code> on a list or dict makes <code>b is a</code> true, and editing through one edits the other. But the rule does not hold for plain numbers. Watch: <code>a = 0</code>, then <code>b = a</code>, then <code>b = 5</code>, and <code>a</code> is still <code>0</code>. The difference is what you can change in place. Numbers, strings, and booleans are <strong>immutable</strong>: you can never edit one in place, so the language is free to give each name its own value and sharing never bites. Lists, dicts, and objects are <strong>mutable</strong>: a shared one shows every edit through every name. Whether an assignment copies the value into a fresh place or just adds a second name to the old place is the <a href="copy-vs-share.html">copy versus share</a> question, and it decides a large share of real bugs.</p>
 
     <div class="rule">A name is not the thing. It is a label on a place. Two labels can sit on one place, and then changing the object through "either" name changes the one thing underneath.</div>
   </section>
@@ -166,7 +175,7 @@ a.count;          <span class="cmt">// 5  -- a changed too</span></pre>
   <!-- 4 -->
   <section>
     <h2><span class="num">4</span>The function that changed your list</h2>
-    <p>A function that "changed something it shouldn't have" is almost always this same thing, one step removed. Passing an argument is an assignment: the parameter becomes a second name for whatever you handed in. If you hand in a list, the function does not get a copy, it gets another name for your list.</p>
+    <p>A function that "changed something it shouldn't have" is this same mechanism, one step removed. Passing an argument is an assignment: the parameter becomes a second name for whatever you handed in. If you hand in a list, the function does not get a copy, it gets another name for your list.</p>
 
     <pre><span class="cmt"># Python</span>
 def add_tag(tags):
@@ -176,7 +185,7 @@ my_tags = ["a", "b"]
 add_tag(my_tags)
 my_tags                  <span class="cmt"># ["a", "b", "new"] -- you never appended</span></pre>
 
-    <p>Inside <code>add_tag</code>, the name <code>tags</code> points at the same list as <code>my_tags</code> outside. The <code>append</code> changes that one list, so the caller sees the extra item. Nothing here is broken; it is the shared-address rule from section 3, now crossing a function boundary.</p>
+    <p>Inside <code>add_tag</code>, the name <code>tags</code> points at the same list as <code>my_tags</code> outside. The <code>append</code> changes that one list, so the caller sees the extra item. This is not a new bug. It is aliasing from section 3, now crossing a function boundary: the same two names on one place, so it bites in the same way.</p>
 
     <p>The fix is to make a real copy before you change it, so the function works on its own place:</p>
 
@@ -189,17 +198,23 @@ def add_tag(tags):
 <span class="cmt">// JavaScript: same idea</span>
 let b = { ...a };        <span class="cmt">// a fresh object, not a shared address</span></pre>
 
-    <p>A shallow copy like this is enough when the items themselves are not shared objects you also mutate; when they are, you need a deeper copy, which is where <a href="copy-vs-share.html">copy versus share</a> picks up.</p>
+    <p>Notice what <code>tags = tags.copy()</code> does in terms of the three parts. It does not change the caller's list. It points the name <code>tags</code> at a brand new place, so every later line touches only that copy. Changing the value in a place is what leaks back to the caller; pointing a name at a different place does not. A shallow copy like this is enough when the items themselves are not shared objects you also mutate; when they are, you need a deeper copy.</p>
   </section>
 
   <!-- 5 -->
   <section>
-    <h2><span class="num">5</span>Three questions when a line surprises you</h2>
-    <p>When code does something you did not expect, pull the name, the place, and the value apart and ask three questions. Run them on the <code>add_tag</code> call above, where <code>my_tags</code> changed on its own:</p>
-    <p><strong>What place does this name refer to?</strong> Inside the function, <code>tags</code> refers to the same list as <code>my_tags</code>, because passing the argument copied a shared address, not the list.</p>
-    <p><strong>Did the line change the value in that place, or point a name at a different place?</strong> <code>tags.append("new")</code> changed the one list in place. It did not give <code>tags</code> a new list. So the change is visible everywhere that list is named, including back in the caller.</p>
-    <p>If instead the function had done <code>tags = tags.copy()</code> first, that assignment would have pointed <code>tags</code> at a fresh place, and the later <code>append</code> would touch only that copy. Same three parts, different answer: which is exactly how you can tell the two cases apart before running anything.</p>
-    <p>To decide when an assignment shares versus copies, read <a href="copy-vs-share.html">copy versus share</a> next. To see what a shared address really is under the hood, read <a href="what-is-a-pointer.html">what is a pointer</a>.</p>
+    <h2><span class="num">5</span>The point</h2>
+    <p>When a line surprises you, do not guess. Split it into the three parts and ask, in order:</p>
+
+    <ul class="checks">
+      <li><span class="q">What place does this name refer to?</span></li>
+      <li><span class="q">Who else holds a name for that same place?</span></li>
+      <li><span class="q">Did this line change the value in that place, or point the name at a different place?</span></li>
+    </ul>
+
+    <p>Changing the value in a shared place is what shows up under every other name; pointing a name at a fresh place does not. Keep name, place, and value separate, and most mutation bugs stop being mysteries and start having an obvious explanation.</p>
+
+    <p>Read <a href="copy-vs-share.html">copy versus share</a> next; it is the more common case, and it settles when an assignment shares a place versus makes a fresh one. After that, <a href="what-is-a-pointer.html">what is a pointer</a> shows what a shared address actually is underneath.</p>
   </section>
 
   <footer>

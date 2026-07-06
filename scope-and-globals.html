@@ -32,8 +32,11 @@
   code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;background:var(--code-bg);padding:.05rem .3rem;border-radius:4px;}
   pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;overflow-x:auto;font-size:.85rem;line-height:1.55;margin:1.2rem 0;}
   pre code{background:none;padding:0;}
-  .label{font-size:.85rem;color:var(--muted);margin:1.2rem 0 -.4rem;}
+  .rx{font-weight:650;font-size:.85rem;color:var(--ink);margin:1.2rem 0 -.4rem;}
+  .habit{font-weight:650;margin:2rem 0 .4rem;}
   footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  .related{margin-top:2.4rem;font-size:.95rem;color:var(--muted);}
+  .related a{white-space:nowrap;}
   @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
 </style>
 </head>
@@ -42,10 +45,10 @@
 
   <header>
     <h1>Scope and globals</h1>
-    <p class="lede">A value in your program is wrong. You search for where it gets set and find four places, in three files, any of which could have run. Nothing tells you which one is at fault. That confusion has a cause and a name: <span class="em">scope</span>, and what happens when you throw it away.</p>
+    <p class="lede">A value in your program is wrong. You go looking for where it gets set and find four places, across three files, any of which could have run, with nothing to say which one is at fault. That is a <span class="em">scope</span> problem. Scope is the region of code where a name can be used, and so the list of code allowed to change it. Lose it and every value has too many suspects.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">Every name in a program has a region of code where it can be used; outside that region it does not exist. That region is its scope. Scope is how you decide who is allowed to see and change a piece of state. The <a href="what-is-state.html">state page</a> said the trouble in programs comes from state that changes; the <a href="the-stack-and-frames.html">stack and frames page</a> showed where a function keeps its own state while it runs. This page is about the next question: once you have some state, who is allowed to touch it?</p>
+  <p style="margin-top:1.6rem;">Once you have some state, this page answers one question about it: who is allowed to touch it? Get that right and a wrong value has a short list of suspects. Get it wrong, with a global, and the list is the whole program.</p>
 
   <!-- 1 -->
   <section>
@@ -54,8 +57,12 @@
     <p>One surprise for Python programmers: Python has no block scope. A variable made inside a loop or an <code>if</code> does not disappear when the block ends. It lives until the whole function returns.</p>
     <pre><code>for i in range(3):
     pass
-print(i)      # 2  -- i is still here after the loop</code></pre>
-    <p>This bites when you reuse <code>i</code> later and get a leftover value, or read a loop variable after a loop that never ran and hit a <code>NameError</code>. (JavaScript's <code>let</code> and <code>const</code> do have block scope; the old <code>var</code> does not, which is its own source of surprises.) The boundary that holds everywhere is the function: that is the box that keeps a name to itself.</p>
+print(i)      # 2  -- i survives the loop and holds its last value</code></pre>
+    <p>This bites two ways. You reuse <code>i</code> later and silently get a leftover value. Or the loop never runs, so the name was never created, and reading it crashes:</p>
+    <pre><code>for i in range(0):    # range(0) is empty, so the body never runs
+    pass
+print(i)              # NameError: name 'i' is not defined</code></pre>
+    <p>New Python programmers rarely expect that one, because an empty loop looks harmless. The boundary that holds everywhere is the function: that is the box that keeps a name to itself. (JavaScript's <code>let</code> and <code>const</code> do have block scope; the old <code>var</code> does not, which is its own source of surprises.)</p>
   </section>
 
   <!-- 2 -->
@@ -98,32 +105,17 @@ print(i)      # 2  -- i is still here after the loop</code></pre>
           <text x="430" y="112">reads</text>
         </g>
       </svg>
-      <figcaption>One global, <code>config</code>. Two functions write it, one reads it, and nothing in the picture says which write ran, or in what order.</figcaption>
+      <figcaption>Every wrong value in <code>config</code> has at least two suspects, <code>setup</code> and <code>reset</code>, and nothing in the code points at which one ran, or when.</figcaption>
     </figure>
 
-    <p>That looks convenient: define it once, reach it from anywhere, no passing it around. But the diagram already shows the cost. When <code>config</code> holds a wrong value, both <code>setup</code> and <code>reset</code> could be to blame, and nothing in the code tells you which one ran, or when. The convenience is up front; the confusion comes later.</p>
+    <p>That looks convenient: define it once, reach it from anywhere, no passing it around. The convenience is up front; the confusion comes later, and the next two sections are what that confusion looks like in code you have actually written.</p>
   </section>
 
   <!-- 3 -->
   <section>
-    <h2><span class="num">3</span>The cost: hidden coupling and order</h2>
-    <p>State is manageable only when you know who can change it. A local name has a short list of suspects. A global has no list: when its value is wrong, the code that set it could be anywhere, run on any path, at any time.</p>
-    <p>Two functions that both touch the same global are joined together, even though nothing in their code says so. One writes it, the other reads it, and now they depend on each other through a channel you cannot see by reading either one. Worse, they depend on <em>order</em>. Say <code>setup()</code> fills in a global that <code>process()</code> reads:</p>
-    <pre><code>config = {}
-
-def setup():
-    config["ready"] = True
-
-def process():
-    return work(config["ready"])   # KeyError if setup() has not run</code></pre>
-    <p>Now the two must run in that order, but nothing in the code says so. Call <code>process()</code> first, or add a caller a month later that forgets <code>setup()</code>, and you get a stale value or a crash on a path that used to work, with no change nearby to explain it.</p>
-    <div class="rule">Scope contains state. It limits the set of code that can touch a value, so when the value is wrong you know where to look. A global throws that limit away, and takes the answer with it.</div>
-  </section>
-
-  <!-- 4 -->
-  <section>
-    <h2><span class="num">4</span>Tests start fighting each other</h2>
-    <p>Here is where this stops being abstract. A good test sets up a small world, runs one thing, and checks the result. A global breaks that, because it is one shared value that outlives any single test.</p>
+    <h2><span class="num">3</span>The cost: order-dependent bugs</h2>
+    <p>If you work in notebooks, you have already met this. Every cell shares one module-level namespace, so a cell that sets a global partway through a session quietly changes what every later cell sees. Re-run cells out of order, or run them top to bottom in a fresh kernel, and the numbers shift, with no line of code changed to blame. The state you are reading was left there by a cell you ran ten minutes ago.</p>
+    <p>The same thing wrecks tests, and here it is concrete. A good test builds a small world, runs one thing, and checks the result. A shared global breaks that, because it outlives any single test:</p>
     <pre><code>users = []              # module-level global
 
 def test_add():
@@ -132,27 +124,55 @@ def test_add():
 
 def test_empty():
     assert users == []   # green on its own, red after test_add runs</code></pre>
-    <p>Run the whole file and one test leaves <code>users</code> dirty for the next. Now a test passes or fails depending on which ran first. Run the file and it is green; run one test alone, or reorder them, and it is red. The test did not change. The shared value it inherited did.</p>
-    <p>If you work in notebooks, you have already met this. Every cell shares one module-level namespace, so a cell that sets a global partway through a session quietly changes what later cells see. Re-run cells out of order and the results shift, with no line of code to blame.</p>
+    <p>Run the whole file and <code>test_add</code> leaves <code>users</code> dirty for <code>test_empty</code>. Now a test passes or fails depending on which ran first. Run one test alone and it is green; run the file, or reorder them, and it is red. The test did not change. The shared value it inherited did.</p>
+    <p>That is the deeper cost. Two functions that both touch one global are joined together, even though nothing in their code says so, and they depend on <em>order</em>: one must write before the other reads. Nothing writes that ordering down, so a caller added a month later that skips the write gets a stale value or a crash, on a path that used to work.</p>
+    <div class="rule">Scope contains state. It limits the set of code that can touch a value, so when the value is wrong you know where to look. A global throws that limit away, and takes the answer with it.</div>
   </section>
 
-  <!-- 5 -->
+  <!-- 4 -->
   <section>
-    <h2><span class="num">5</span>What to do instead</h2>
-    <p>Not every global is bad. True constants and configuration you load once at startup and never touch again are fine, because nobody writes them during the run. The trouble is the global that gets written mid-run, by more than one place. For those, two habits fix it, and they are close to the same idea.</p>
-    <p><strong>Pass state in explicitly.</strong> If a function needs a value, take it as an argument and return what you produce. Then the link between caller and function is written down in the call itself.</p>
-    <p class="label">Before: the function reaches out to a shared global.</p>
+    <h2><span class="num">4</span>What to do instead</h2>
+    <p>Not every global is bad. Constants you set once at startup and never touch again are fine, because nobody writes them during the run:</p>
+    <pre><code>MAX_RETRIES = 3
+BASE_URL = "https://api.example.com"</code></pre>
+    <p>These add no suspects: their value on line one is their value at the end. The trouble is the global that gets <em>written</em> mid-run, by more than one place. For those, two habits fix it.</p>
+
+    <p class="habit">Habit 1: pass state in explicitly.</p>
+    <p>If a function needs a value, take it as an argument and return what you produce. Then the link between caller and function is written down in the call itself.</p>
+    <p class="rx">Before</p>
     <pre><code>total = 0
 
 def add(n):
     global total
     total = total + n   # who else writes total? anyone, anywhere</code></pre>
-    <p class="label">After: the function takes what it needs and hands back the result.</p>
+    <p class="rx">After</p>
     <pre><code>def add(total, n):
     return total + n     # the caller owns total; the trail is right here</code></pre>
-    <p>Same arithmetic, no shared state. You can read who supplies the value and who receives it, and a wrong result has a short trail to follow. (One caution when you pass an object instead of a plain number: two functions can end up sharing one thing under two names. That is a separate, narrower problem, covered on the <a href="aliasing-bugs.html">aliasing page</a>.)</p>
-    <p><strong>Keep every name in the narrowest scope that works.</strong> Declare it inside the loop if the loop is all that uses it; inside the function if only that function uses it; widen it only when a real need forces you to, and no further. The smaller the scope, the shorter the list of code that can be at fault, which is the whole point: the next time a value comes out wrong, you want a short list, not the whole program.</p>
+    <p>Same arithmetic, no shared state. You can read who supplies the value and who receives it, and a wrong result has a short trail to follow. Python's <code>global</code> keyword, in the "before" version, lets a function write a module-level name, so you might wonder if it is the fix. It is not: it welds the function to a global it could have taken as an argument, and makes the tangle bigger, not smaller. (One caution when you pass an object instead of a plain number: two functions can end up sharing one thing under two names, a separate and narrower problem covered on the <a href="aliasing-bugs.html">aliasing page</a>.)</p>
+
+    <p class="habit">Habit 2: keep every name in the narrowest scope that works.</p>
+    <p>Declare a name inside the function if only that function uses it; inside the loop if only the loop uses it. Widen the scope only when a real need forces you to, and no further. A name that starts at module level, out of habit, is a global you did not have to create:</p>
+    <p class="rx">Before</p>
+    <pre><code>seen = set()             # module level, but only summarize() uses it
+
+def summarize(rows):
+    for r in rows:
+        seen.add(r.id)
+    return len(seen)     # a second call finds seen already full</code></pre>
+    <p class="rx">After</p>
+    <pre><code>def summarize(rows):
+    seen = set()         # born and dies inside the call
+    for r in rows:
+        seen.add(r.id)
+    return len(seen)     # every call starts clean</code></pre>
+    <p>Moving one line inward turns a shared global into a local. The second call now works, and the list of code that can touch <code>seen</code> shrinks from the whole module to four lines.</p>
+
+    <p>Interviewers probe this on purpose. A "what is wrong with this code" round often plants a mutable global and waits to see if you name it; a system design round asks what happens when two requests touch the same shared state at once. Knowing why the local version is safer is part of what a passing answer sounds like.</p>
+
+    <p>Do both habits and the opening scenario cannot happen. The value that came out wrong has one owner and a short trail, not four writers across three files. Who is allowed to touch it? Exactly the code you handed it to, and no one else.</p>
   </section>
+
+  <p class="related">Related: <a href="what-is-state.html">what is state</a> (why changing state is the trouble in the first place), <a href="the-stack-and-frames.html">the stack and frames</a> (where a function keeps its own state), and <a href="aliasing-bugs.html">aliasing bugs</a> (two names for one object).</p>
 
   <footer>
     Reuse and share freely.

@@ -46,7 +46,7 @@
 
   <p style="margin-top:1.6rem;">You have already met this row without knowing its name. Run <code>id(x)</code> in a Python notebook and you get back a plain integer. Ask numpy for an <code>int32</code> array instead of <code>int64</code> and it takes half the memory for the exact same numbers. Hit a bug and a debugger shows your variable as <code>0x7ffe...</code> instead of its name, or a crash prints an address of <code>0x0</code>. All four are the same fact showing through: your program's data lives in memory, and memory is nothing but numbered cells holding bytes.</p>
 
-  <p>This page builds that model from the ground up, so those four things stop being trivia and start being one picture you can reason about. It is also what <a href="arrays.html">arrays</a>, <a href="what-is-a-pointer.html">pointers</a>, and the stack are all laid over, and where you drop back to when a program stops making sense, because down here there are only two questions: <strong>which cell</strong>, and <strong>what byte is in it</strong>. Section 5 turns that into the payoff you can use right away, why your tools speak in hex and what an address in a crash is telling you. The <a href="what-is-state.html">state page</a> said a running program is always holding information that is real and sits somewhere. This page is that somewhere.</p>
+  <p>Read this and those four things stop being trivia: you will be able to picture where your data actually sits and reason about it. That picture is what <a href="arrays.html">arrays</a>, <a href="what-is-a-pointer.html">pointers</a>, and the stack are all laid over, and where you drop back to when a program stops making sense.</p>
 
   <!-- 1 -->
   <section>
@@ -59,6 +59,7 @@
   <section>
     <h2><span class="num">2</span>Each cell has an address</h2>
     <p>The cells are numbered in order: 0, 1, 2, 3, and on up. A cell's number is its <strong>address</strong>. The address is fixed. It is where the cell sits in the row, not what it holds. The cell at address 4 is always the fifth box, whatever number is written inside it right now.</p>
+    <p>On a 64-bit machine there are billions of cells, so real addresses are huge numbers. That is why a debugger shows something like <code>0x7ffe1234abcd</code>: it is just one cell's number, written in the short form covered in section 5.</p>
 
     <div class="rule">Keep the two numbers apart: the address is <em>which</em> cell, the byte is <em>what is in it</em>. Both are numbers, and mixing them up is the source of a lot of confusion later.</div>
 
@@ -87,18 +88,23 @@
           <text x="330" y="140">address (which cell)</text>
         </g>
       </svg>
-      <figcaption>Eight cells. The big number inside each is the byte it holds; the small number below is its address. The two highlighted cells hold 72 and 105, the ASCII codes for the letters H and i; section 4 shows how a run of cells like these spells a word.</figcaption>
+      <figcaption>Eight cells. The big number inside each is the byte it holds; the small number below is its address. The highlighted cells at addresses 2 and 3 hold 72 and 105, the ASCII codes for the letters H and i.</figcaption>
     </figure>
   </section>
 
   <!-- 3 -->
   <section>
     <h2><span class="num">3</span>Read and write, both by address</h2>
-    <p>The processor does two basic things with memory, and both start with an address. It can <strong>read</strong>: give it an address, and it hands back the byte in that cell. It can <strong>write</strong>: give it an address and a byte, and it puts that byte in that cell, overwriting whatever was there. Read the byte at 3. Write 200 to cell 5. That is the whole conversation. The processor never searches or scans for a value; it names the cell by number and goes straight there, so any cell is as quick to reach as any other.</p>
-    <p>This is the reason an interviewer expects you to say array indexing is <strong>O(1)</strong>. When you write <code>my_list[5]</code>, Python jumps straight to that cell; it does not count from the front. It takes the same time whether the list has ten items or ten million. numpy makes the arithmetic plain: the values sit in a row starting at some base address, and the address of element <code>i</code> is just</p>
+    <p>The processor does two basic things with memory, and both start with an address. It can <strong>read</strong>: give it an address, and it hands back the byte in that cell. It can <strong>write</strong>: give it an address and a byte, and it puts that byte in that cell, overwriting whatever was there. Read the byte at 3. Write 200 to cell 5. That is the whole conversation. The processor never searches or scans for a value; it names the cell by number and goes straight there. In RAM, unlike a hash map or a database index, every cell is at a fixed physical position, so any cell is as quick to reach as any other.</p>
+    <p>That fixed position is the reason an interviewer expects you to say array indexing is <strong>O(1)</strong>. When you write <code>my_list[5]</code>, the code jumps straight to that cell; it does not count from the front. numpy makes the arithmetic plain: the values sit in a row starting at some base address, and the address of element <code>i</code> is just</p>
     <pre><code>address = base + i * element_size</code></pre>
-    <p>one multiply and one add, no scan, whatever <code>i</code> is. That single calculation is what O(1) means here, and it is why an interviewer treats "index into the array" as free while "search the array" is not.</p>
-    <p>You can see the address itself. In CPython, <code>id(x)</code> returns the memory address of the object <code>x</code> names, which is why two variables with the same <code>id()</code> are the same object in the same cells, not two copies that happen to match. Where these addresses come from, which cell a name in your code stands for, is what <a href="variables-values-and-addresses.html">variables, values, and addresses</a> covers next.</p>
+    <p>one multiply and one add, no scan, whatever <code>i</code> is.</p>
+
+    <div class="rule">Indexing an array is O(1) because the cell number is a fixed calculation, not a search. That is why an interviewer treats "index into the array" as free while "search the array" is not.</div>
+
+    <p>One honest detail: in numpy and C-style arrays the cells hold the literal bytes of each value, so element <code>i</code> lands right on its value. A Python <code>list</code> stores <em>pointers</em> to objects instead, so the cell you land on holds an address, not the number itself. The same O(1) calculation still applies, but there is one more step to reach the value. Pointers are their own <a href="what-is-a-pointer.html">page</a>.</p>
+
+    <p>You can even see one of these addresses from Python. In CPython, <code>id(x)</code> is the memory address of the object <code>x</code> names, which is why two variables with the same <code>id()</code> are the same object in the same cells, not two copies that happen to match. (The language only promises <code>id()</code> is unique per object; CPython happens to use the address.) Which cell a name in your code stands for is what <a href="variables-values-and-addresses.html">variables, values, and addresses</a> covers next.</p>
   </section>
 
   <!-- 4 -->
@@ -114,23 +120,25 @@ b = a.astype(np.int32)
 b.itemsize   # 4
 b.nbytes     # 4_000_000</code></pre>
     <p>This is why a dtype mismatch quietly changes the size of a whole array, and why picking <code>int32</code> over <code>int64</code> is a real decision when memory is tight. The same rule holds in any language: the type fixes the cell count. In C, <code>sizeof(int)</code> is usually 4 and <code>sizeof(double)</code> is 8; in Java or C# the runtime fixes it for you, same effect.</p>
-    <p>Text works the same way. Each character is stored as a number in one byte, so the word <code>Hi</code> is two cells: 72 for <code>H</code>, then 105 for <code>i</code> (the two highlighted cells in the diagram above). A longer word is a longer run of cells. The pattern is always the same: a big thing is a group of adjacent cells, and its address is the address of its first cell.</p>
+    <p>Text works the same way. A character is stored as a number, using a standard character-to-number table. The oldest such table is ASCII, where each character maps to one byte: <code>H</code> is 72 and <code>i</code> is 105, exactly the two highlighted cells in the diagram in section 2. So the word <code>Hi</code> is two cells in a row, cell 2 holding 72 and cell 3 holding 105. You can see the numbers yourself with <code>ord('H')</code>, which returns 72.</p>
+    <p>Modern text can use more than one byte per character (Python strings pick 1, 2, or 4 bytes internally depending on the characters), but the idea does not change: a character is a number, a string is a run of adjacent cells, and its address is the address of its first cell.</p>
   </section>
 
   <!-- 5 -->
   <section>
     <h2><span class="num">5</span>Why your tools show hex</h2>
-    <p>A cell holding 72 does not know whether it is the letter <code>H</code>, the number 72, or one slice of a bigger number. The meaning is not in the cell; it lives in the code that decides how to read each region, the same point the <a href="what-is-state.html">state page</a> made about bits.</p>
-    <p>So why do addresses show up as hex like <code>0x7ffe...</code> and not plain decimal? Because each hex digit stands for exactly four bits, so two hex digits describe one byte cleanly, with nothing left over. That neat fit, one byte per pair of digits, is the whole reason memory tools count in hex: the number on screen lines up with the underlying bytes instead of smearing across them the way a decimal number would.</p>
-    <p>This row is the picture your tools drop into when things go wrong. A debugger prints a variable as <code>0x7ffe...</code> instead of a name because that number is the address of the variable's first cell, not the value inside. A crash on a null pointer shows an address of <code>0x0</code> because the program tried to read at cell zero, an address kept invalid on purpose, instead of at a real one. You hit the same mistake in Python without the hex: following a <code>None</code> reference and getting <code>AttributeError: 'NoneType' object has no attribute ...</code> is the same error one level up, you told the program to go somewhere that holds nothing useful. Confuse the address with the byte and these read as noise; keep them apart and each one tells you exactly what happened.</p>
+    <p>A cell holding 72 does not know whether it is the letter <code>H</code>, the number 72, or one slice of a bigger number. The meaning is not in the cell; it lives in the code that decides how to read each region, the same point the <a href="what-is-state.html">state page</a> made about bits. That is why a debugger does not try to show you a friendly value for a raw location. It shows you the address itself, and for addresses the natural format is hex.</p>
+    <p>Why hex and not plain decimal? Because each hex digit stands for exactly four bits, so two hex digits describe one byte cleanly, with nothing left over. One byte holds 0 to 255, and 255 is <code>0xFF</code> in hex: two digits, one byte, done. The byte 72 is <code>0x48</code>. Every byte maps to exactly two hex digits, no waste, no overlap.</p>
+    <p>Decimal does not line up like that. Take the address 32766. In hex it is <code>0x7FFE</code>, and you can read the bytes straight off it: <code>0x7F</code> is 127, the first byte, and <code>0xFE</code> is 254, the second byte. In decimal, 32766 is five digits that do not line up with any byte boundary. That clean fit is the whole reason memory tools count in hex: the number on screen matches the underlying bytes.</p>
+    <p>So this row is the picture your tools drop into when things go wrong. A debugger prints a variable as <code>0x7ffe...</code> instead of a name because that number is the address of the variable's first cell, not the value inside. A crash on a null pointer shows <code>0x0</code> because the program tried to read at cell zero, an address kept invalid on purpose, instead of at a real one. Once you know the number is an address, <code>0x0</code> tells you exactly what went wrong: you followed a reference that pointed nowhere.</p>
+    <p>You hit the same mistake in Python, just without the hex. Python's <code>None</code> means "no object here," so reading an attribute off it, <code>AttributeError: 'NoneType' object has no attribute ...</code>, is the Python version of reading from <code>0x0</code>: you asked for something at a place that was never given a real value. Confuse the address with the byte and these read as noise; keep them apart and each one tells you what happened.</p>
   </section>
 
   <!-- 6 -->
   <section>
-    <h2><span class="num">6</span>Everything is bytes in cells</h2>
-    <p>Every value your program holds ends up here. A count, a name, a price, a whole list, a picture: all of it is bytes in numbered cells, and nothing else. Higher up, a language gives you names and types and shapes so you rarely think about raw addresses, but underneath, it is this row of cells the entire time.</p>
-    <p>Next comes how a name in your code gets attached to a cell in this row, in <a href="variables-values-and-addresses.html">variables, values, and addresses</a>. After that, an <a href="arrays.html">array</a> is just values packed into cells in a row, and a <a href="what-is-a-pointer.html">pointer</a> is a cell whose content is itself an address, the number of some other cell. Both are shapes laid over the row you now have.</p>
-    <p>The four things that opened this page, the integer from <code>id(x)</code>, the array that shrank when you changed its dtype, the <code>0x7ffe...</code> in a debugger, the <code>0x0</code> in a crash, are one row of numbered cells seen through different tools. When a value surprises you, changes when you did not expect it, crashes, or takes more space than it should, drop back here and ask the two questions: which cell, and what byte is in it.</p>
+    <h2><span class="num">6</span>Where this goes next</h2>
+    <p>Every value your program holds ends up here: a count, a name, a price, a whole list, a picture, all of it bytes in numbered cells and nothing else. Higher up, a language gives you names and types and shapes so you rarely think about raw addresses, but underneath it is this row the entire time. When a value surprises you, if <code>id(x)</code> and <code>id(y)</code> come back equal, they share a cell, so changing one changes the other, they are the same object.</p>
+    <p>From here, <a href="variables-values-and-addresses.html">variables, values, and addresses</a> shows how a name in your code gets attached to a cell, then <a href="arrays.html">arrays</a> and <a href="what-is-a-pointer.html">pointers</a> are just two shapes laid over the row you now have.</p>
   </section>
 
   <footer>

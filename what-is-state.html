@@ -32,10 +32,6 @@
   code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;}
   pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin:1.4rem 0;overflow-x:auto;line-height:1.55;}
   pre code{font-size:.9rem;color:#2c3038;}
-  .nav{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem;margin:1.6rem 0 0;}
-  .nav .t{font-weight:650;display:block;margin-bottom:.5rem;}
-  .nav ul{margin:0;padding-left:1.1rem;}
-  .nav li{margin:.25rem 0;}
   footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
   @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
 </style>
@@ -45,33 +41,34 @@
 
   <header>
     <h1>What is state?</h1>
-    <p class="lede">At any instant, a running program is holding some information: the values worked out so far, and where it is in the job. That held information is its <span class="em">state</span>. Running the program means changing that state, step by step, from the input toward the answer.</p>
+    <p class="lede">You compute a total from a list, save it, then later some code appends to the list. Now the saved total is wrong, even though the line that set it never ran again and every line still looks correct. Nothing in the code is broken. What broke is the program's <span class="em">state</span>.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">Here is a bug you have hit. You compute a total from a list, save it, and later something appends to that list. Now the saved total is wrong, even though the line that set it never ran again and every line still looks correct. Nothing in the code is broken. What broke is the <span class="em">state</span>: the information the program held stopped matching what you believed about it. Almost every hard bug is a version of this, and that is why state is worth understanding on its own.</p>
+  <p style="margin-top:1.6rem;">State is the information a program is holding right now: the values worked out so far, and where it is in the job. Running a program means changing that state, step by step, from the input toward the answer. Almost every hard bug is a moment like the one above, where the state stopped matching what you believed about it. That is why state is worth understanding on its own, and it is one of the first things an interviewer probes when they ask you to trace a piece of code.</p>
 
-  <p>This page is about that held information: what it is, how it changes, and why it causes most of the trouble in programs. The <a href="how-a-cpu-works.html">CPU page</a> covered the machine that does the work; here we look at what it works on.</p>
+  <p>This page is about that held information: what it is, how it changes, and why it causes most of the trouble in programs.</p>
 
   <!-- 1 -->
   <section>
     <h2><span class="num">1</span>State is the information a program holds right now</h2>
-    <p>State is the data a program carries from one moment to the next, the data that shapes what it does next. A plain calculation takes an input, returns an answer, and keeps nothing between calls. That kind of function has no state. A program has state when what it does depends on what came before.</p>
-    <p>Physically, that information is bits sitting somewhere: in memory, or in the small set of fast cells inside the CPU called registers. Bits alone mean nothing until the program reads them a certain way. The same eight bits can stand for the number <code>65</code> or the text character <code>'A'</code>; nothing in the bits says which, the program decides. State is always bits plus a reading of them. The memory those bits sit in gets <a href="memory-bytes-and-addresses.html">its own page</a> next; here we only need the idea that the state is real, and it is somewhere.</p>
-  </section>
+    <p>State is the data a program carries from one moment to the next, the data that shapes what it does next. A plain calculation takes an input, returns an answer, and keeps nothing in between. That kind of function has no state. A program has state when what it does depends on what came before.</p>
 
-  <!-- 2 -->
-  <section>
-    <h2><span class="num">2</span>State changes over time</h2>
-    <p>Freeze the program at one instant and you get a snapshot: one whole arrangement of bits. Take a snapshot at every instant and play them in order, and you have the entire run. Each step, the machine reads the current arrangement and writes a slightly changed one. Fetch, decode, execute, from the CPU page, is exactly the rule for how one snapshot becomes the next.</p>
-
-    <p>Here is a tiny program that adds up a list. Its whole logical state is the two values <code>total</code> and <code>i</code>:</p>
+    <p>Here is the smallest example. This loop adds up a list, and at any instant its whole state is two values, <code>total</code> and <code>i</code>:</p>
 
 <pre><code>nums = [2, 3]
 total = 0
 for i in range(len(nums)):
     total = total + nums[i]</code></pre>
 
-    <p>Watch those two values as it runs:</p>
+    <p><code>total</code> holds the running answer; <code>i</code> holds where the loop is. Read those two and you know exactly where the program stands. Physically they are bits sitting in memory, which gets <a href="memory-bytes-and-addresses.html">its own page</a>; here all we need is that the state is real values you can point at.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>State changes over time</h2>
+    <p>Freeze the program at one instant and you get a snapshot: one whole arrangement of values. Take a snapshot at every step and play them in order, and you have the entire run. Each step, the machine reads the current arrangement and writes a slightly changed one.</p>
+
+    <p>Watch those two values as the loop runs:</p>
 
     <figure>
       <svg viewBox="0 0 620 150" role="img" aria-label="Three snapshots of two memory cells, total and i, as a program adds up the list 2 then 3. From start with total 0 and i 0, to one step later with total 2 and i 1, to one step later with total 5 and i 2, with the changed cells highlighted.">
@@ -116,33 +113,41 @@ for i in range(len(nums)):
   <!-- 3 -->
   <section>
     <h2><span class="num">3</span>A running program is a state machine</h2>
-    <p>Put the snapshot and the sequence together and you have a state machine: at any moment the program is in one state, one whole arrangement, and each step takes it to the next. Every running program is one, planned or not. When its states change in an order you did not expect, you get a bug: a form that submits before the password is set, a cart that checks out twice because two clicks both saw the same "not yet paid" state.</p>
-    <p>Because that unplanned state machine is where those bugs come from, people often flip the idea around and design one on purpose: name a small set of allowed states, like <code>loading</code>, <code>ready</code>, and <code>error</code>, and permit only certain steps between them. That deliberate version is a design tool, and it gets <a href="state-machines.html">its own page</a>.</p>
+    <p>A user double-clicks Buy. Two clicks fire, both read the same "not yet paid" state, and the order is placed twice. Nothing was mistyped. The program simply passed through a state you never pictured. That double charge happened because "paying" was never a state of its own: the code knew only "not paid" and "paid", so the second click still saw "not paid" and went ahead.</p>
+
+    <p>Line up every program and it works this way. At any moment it is in one state, one whole arrangement, and each step takes it to the next. That is a <strong>state machine</strong>, and every running program is one, whether you planned it or not. So people name the states on purpose. Give a checkout form a few named states and allow only certain steps between them:</p>
+
+<pre><code>empty  -->  filled  -->  submitting  -->  done
+
+# "Buy" is allowed only when the state is filled, and it moves you to submitting
+# a second click arrives while the state is already submitting, so it is refused</code></pre>
+
+    <p>Naming <code>submitting</code> as a state of its own is what blocks the second click: once you are in it, another Buy is not an allowed step. Designing systems around named states like this is <a href="state-machines.html">its own page</a>.</p>
   </section>
 
   <!-- 4 -->
   <section>
     <h2><span class="num">4</span>Changing state is literal</h2>
-    <p>To change state is to overwrite the bits that held the old value. The old value is simply gone; the cell now holds the new one. That overwrite has a name: a <strong>mutation</strong>. This is the same word Python uses when it calls a list mutable and a tuple immutable. A mutable object is one whose bits the language lets you overwrite in place.</p>
+    <p>To change state is to overwrite the bits that held the old value. The old value is simply gone; the cell now holds the new one. That overwrite has a name: a <strong>mutation</strong>. It is the same word Python uses when it calls a list mutable and a tuple immutable. A mutable object is one whose contents the language lets you overwrite in place.</p>
 
     <div class="rule">Computation is state, mutated forward: start at the arrangement that stands for the input, apply many small mutations, and arrive at the arrangement that stands for the answer.</div>
 
-    <p>Seeing state as one real arrangement of bits explains a bug that catches everyone once. Two names can point at the same list. Mutate through one, and the other "changes" too, because there is only one arrangement and both names read it:</p>
+    <p>Seeing state as one real arrangement explains a bug that catches everyone once. Two names can point at the same list. Mutate through one, and the other "changes" too, because there is only one list and both names read it:</p>
 
 <pre><code>a = [1, 2]
 b = a          # b is not a copy; it points at the same list
 b.append(3)
 print(a)       # [1, 2, 3], not [1, 2]</code></pre>
 
-    <p>Nothing touched <code>a</code> by name, yet <code>a</code> changed. How two names can share one piece of state, and when you get a copy instead, is <a href="copy-vs-share.html">its own page</a>.</p>
+    <p>Nothing touched <code>a</code> by name, yet <code>a</code> changed. How names refer to values, and when you get a copy instead of a shared one, are <a href="variables-values-and-addresses.html">their</a> <a href="copy-vs-share.html">own pages</a>.</p>
   </section>
 
   <!-- 5 -->
   <section>
-    <h2><span class="num">5</span>Two kinds of state, and the one you debug with</h2>
-    <p>The <strong>machine's state</strong> is every live bit: all of memory, every register, and the program counter that says which instruction is next. It changes on every single step; even a step that does no real work still moves the program counter forward.</p>
-    <p>The program's <strong>logical state</strong> is the part you actually reason about: the counter, the list, the cart, the balance. It changes on many steps, not all. Most of the time you think in the logical state and ignore the rest. This is also the state you manage by hand in application code: React's <code>useState</code>, a Redux store, the fields on an object. Same idea as here, one level up, further from the bits.</p>
-    <p>Then something breaks, and the logical view is no help, because the idea you had about the state is the thing that is wrong. That is when you drop down to the machine's view and read the actual values, one at a time, to find where your idea of the state and the real state parted ways.</p>
+    <h2><span class="num">5</span>Two levels of state, and the one you debug with</h2>
+    <p>There are two levels to a program's state, and you use them at different times. The <strong>machine's state</strong> is every live value: all of memory, plus a program counter that marks which line runs next. In the loop from section 2, that is not only <code>total</code> and <code>i</code> but also the fact that, say, line 4 is up next.</p>
+    <p>The <strong>logical state</strong> is the slice you actually reason about: here, just <code>total</code> and <code>i</code>. Most of the time you think in the logical state and ignore the rest. This is also the state you manage by hand in application code. When a front-end framework talks about "state", React's <code>useState</code> or a Redux store, it means exactly this level: the logical state, named and tracked for you.</p>
+    <p>Then a bug appears and the logical view stops helping, because your idea of the state is the thing that is wrong. That is when you drop to the machine's level: stop reasoning in your head and read the real values one at a time, with a <code>print</code> or a debugger, until you find where your idea of the state and the real state split apart.</p>
   </section>
 
   <!-- 6 -->
@@ -152,30 +157,27 @@ print(a)       # [1, 2, 3], not [1, 2]</code></pre>
 
     <div class="rule">Most hard bugs are a wrong belief about the state: what it is right now, or what some step changed it into.</div>
 
-    <p>This is the bug from the top of the page, made concrete:</p>
+    <p>The stale total at the top of the page is one shape of this. Here is a different shape, where the state hides in a place you did not think had any:</p>
 
-<pre><code>items = [2, 3]
-total = sum(items)   # total is 5; you believe total tracks items
-items.append(10)     # a later step changes items...
-                     # ...but nothing recomputes total
-print(total)         # 5   -- the value you are holding
-print(sum(items))    # 15  -- what it should be now</code></pre>
+<pre><code>def add_item(x, bucket=[]):
+    bucket.append(x)
+    return bucket
 
-    <p>Every line is correct on its own. The bug is the belief that <code>total</code> still reflected <code>items</code> after the list changed. You will meet the same shape everywhere: a cached count that another step made stale, a numpy view you thought was a copy, a variable you were sure held one thing holding another. Debugging is largely the work of finding where your belief about the state and the real state came apart. It is the same difficulty that shows up in hard problems everywhere, not only in code: reasoning about something that keeps changing under you. The page on <a href="metacognition-for-problem-solving.html">why hard problems are hard</a> goes into that.</p>
+print(add_item(1))   # [1]
+print(add_item(2))   # [1, 2]   -- you expected [2]</code></pre>
+
+    <p>You expected a fresh list on every call. But the default list is made once, when the function is defined, and every call that leaves out <code>bucket</code> shares that one list. The state you forgot existed is the default itself. Same lesson as the stale total, different hiding place: the trouble was a belief about the state that did not match what was really there. Debugging is largely the work of finding where your belief about the state and the real state came apart.</p>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2><span class="num">7</span>The point</h2>
+    <p>State is just the information a program is holding right now. It changes every step, and a program is the sequence of those changes. Almost every hard bug is the same story: the state moved, and your picture of it did not. Get in the habit of asking "what is the state right now, and what did that step change it into", and most mysterious bugs stop being mysterious.</p>
   </section>
 
   <footer>
     Reuse and share freely.
   </footer>
-
-  <nav class="nav">
-    <span class="t">Where this goes next</span>
-    <ul>
-      <li><a href="memory-bytes-and-addresses.html">The memory state lives in</a></li>
-      <li><a href="variables-values-and-addresses.html">How names refer to state</a></li>
-      <li><a href="copy-vs-share.html">How two names can share one piece of it</a></li>
-    </ul>
-  </nav>
 
 </div>
 </body>

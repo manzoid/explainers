@@ -7,7 +7,7 @@
 <style>
   :root{
     --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
-    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--warn:#b5524a;--code-bg:#f4f3ef;--maxw:720px;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--warn:#b5524a;--warn-soft:#f6e4e2;--code-bg:#f4f3ef;--maxw:720px;
   }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
@@ -27,12 +27,15 @@
   .em{color:var(--accent);font-weight:600;}
   .rule{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.6rem 0;color:#1f5b54;font-size:1.05rem;}
   .rule .rt{display:block;font-weight:650;margin-bottom:.35rem;}
+  .note{background:var(--card);border:1px solid var(--line);border-left:4px solid #caa44a;border-radius:0 8px 8px 0;padding:.85rem 1.1rem;margin:1.4rem 0;font-size:.97rem;}
+  .note .nt{display:block;font-weight:650;margin-bottom:.25rem;color:#8a6d1f;}
   figure{margin:1.9rem 0;}
   figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;}
   figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem;}
   code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;background:var(--code-bg);padding:.1rem .32rem;border-radius:4px;}
   pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;overflow-x:auto;margin:1.1rem 0;line-height:1.5;}
   pre code{background:none;padding:0;font-size:.86rem;}
+  .lang{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:.9rem 0 -.4rem;font-weight:650;}
   .cmt{color:var(--muted);}
   .bad{color:var(--warn);font-weight:650;}
   .good{color:var(--accent);font-weight:650;}
@@ -40,6 +43,7 @@
   ul.spots li{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:.7rem 1rem;margin:0 0 .6rem;}
   ul.spots .s{font-weight:650;}
   footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  footer a{color:var(--muted);}
   @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
 </style>
 </head>
@@ -51,9 +55,9 @@
     <p class="lede">When two or more names point at the same piece of state, changing it through one name changes it for all of them. That sharing is called <span class="em">aliasing</span>, and when you forget it is there, you get some of the most confusing bugs in everyday programming.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">A variable that holds a list or a dict does not hold the list itself. It holds a reference, a pointer to one object sitting in memory. Assign that variable to a second name and you copy the pointer, not the object, so both names now reach the same list. Change it through one, and the other sees the change. The fix is almost always one of two things: <strong>make a real copy, or make sure only one name ever writes to the shared object.</strong></p>
+  <p style="margin-top:1.6rem;">A variable that holds a list or a dict does not hold the list itself. It holds a reference, a pointer to one object sitting in memory. Assign that variable to a second name and you copy the pointer, not the object, so both names now reach the same list. Change it through one, and the other sees the change.</p>
 
-  <p>The examples use Python, which shares by default and makes the trap easy to hit, but the same bug lives in JavaScript, Java, and Go, any language where a variable can hold a reference. Five bugs follow, each with its fix, then one habit that catches all of them. (The <a href="what-is-a-pointer.html">pointer</a> and <a href="copy-vs-share.html">copy vs share</a> pages explain the underlying model.)</p>
+  <p>The examples use Python, which shares by default and makes the trap easy to hit, but the same bug lives in JavaScript, Java, and Go, any language where a variable can hold a reference. This is also a common source of wrong output on live coding problems: you mutate the input array in place, or state leaks from one test case into the next, and your function passes on the first example and fails on the second. Interviewers know these traps and watch for them. Five bugs follow, each with its fix, then one habit that catches all of them. (The <a href="what-is-a-pointer.html">pointer</a> and <a href="copy-vs-share.html">copy vs share</a> pages explain the underlying model.)</p>
 
   <!-- 1 -->
   <section>
@@ -61,7 +65,7 @@
     <p>Two names, <code>a</code> and <code>b</code>, both point at one list. You change the list through <code>a</code>. Then you read it through <code>b</code> and find it changed too, because there was never a second list to begin with.</p>
 
     <figure>
-      <svg viewBox="0 0 640 240" role="img" aria-label="Before and after. Before: names a and b both point with arrows at one box holding 1, 2, 3. After: the same box now holds 1, 2, 3, 9, changed once through a, and b sees the change because it points at the same box.">
+      <svg viewBox="0 0 640 250" role="img" aria-label="Before and after. Before: names a and b both point with arrows at one box holding 1, 2, 3. After: the same box now holds 1, 2, 3, 9, changed once through a and shown in red, and b still points at the same box so b sees the change too.">
         <g font-family="-apple-system, sans-serif" font-size="14" fill="#6b7280" text-anchor="middle">
           <text x="150" y="26">before</text>
           <text x="490" y="26">after a.append(9)</text>
@@ -69,38 +73,39 @@
 
         <!-- before -->
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="16" fill="#2c3038">
-          <rect x="34" y="58" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="60" y="83" text-anchor="middle">a</text>
-          <rect x="34" y="150" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="60" y="175" text-anchor="middle">b</text>
-          <rect x="176" y="104" width="120" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="236" y="129" text-anchor="middle">[1, 2, 3]</text>
+          <rect x="34" y="70" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="60" y="95" text-anchor="middle">a</text>
+          <rect x="34" y="162" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="60" y="187" text-anchor="middle">b</text>
+          <rect x="176" y="116" width="120" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="236" y="141" text-anchor="middle">[1, 2, 3]</text>
         </g>
         <g stroke="#2f7d75" stroke-width="2" fill="none">
-          <path d="M88,79 C130,86 140,112 174,120"/>
-          <path d="M88,167 C130,160 140,134 174,126"/>
+          <path d="M88,91 C130,98 140,124 174,132"/>
+          <path d="M88,179 C130,172 140,146 174,138"/>
         </g>
         <g fill="#2f7d75">
-          <path d="M170,116 L182,122 L169,127 Z"/>
-          <path d="M170,130 L182,124 L169,119 Z"/>
+          <path d="M170,128 L182,134 L169,139 Z"/>
+          <path d="M170,142 L182,136 L169,131 Z"/>
         </g>
 
         <!-- after -->
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="16" fill="#2c3038">
-          <rect x="374" y="58" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="400" y="83" text-anchor="middle">a</text>
-          <rect x="374" y="150" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="400" y="175" text-anchor="middle">b</text>
-          <rect x="500" y="104" width="128" height="38" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="564" y="129" text-anchor="middle">[1, 2, 3, 9]</text>
+          <rect x="374" y="70" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="400" y="95" text-anchor="middle">a</text>
+          <rect x="374" y="162" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="400" y="187" text-anchor="middle">b</text>
+          <rect x="500" y="116" width="128" height="38" rx="6" fill="#f6e4e2" stroke="#b5524a" stroke-width="1.6"/><text x="564" y="141" text-anchor="middle" fill="#b5524a">[1, 2, 3, 9]</text>
         </g>
         <g stroke="#2f7d75" stroke-width="2" fill="none">
-          <path d="M428,79 C466,86 472,112 498,120"/>
-          <path d="M428,167 C466,160 472,134 498,126"/>
+          <path d="M428,91 C466,98 472,124 498,132"/>
+          <path d="M428,179 C466,172 472,146 498,138"/>
         </g>
         <g fill="#2f7d75">
-          <path d="M494,116 L506,122 L493,127 Z"/>
-          <path d="M494,130 L506,124 L493,119 Z"/>
+          <path d="M494,128 L506,134 L493,139 Z"/>
+          <path d="M494,142 L506,136 L493,131 Z"/>
         </g>
+        <text x="564" y="176" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12.5" fill="#b5524a" font-weight="600">changed through a &#8212; b sees it too</text>
       </svg>
       <figcaption>One box, two names. The mutation happens once, through <code>a</code>, and <code>b</code> reads the same changed box. Nobody touched <code>b</code>, yet <code>b</code> changed.</figcaption>
     </figure>
 
-    <p>Every bug on this page is this picture wearing a disguise. Carry one habit into all of them, the two questions in the box below, and the disguises stop working.</p>
+    <p>Every bug below is a variation on this same picture. Carry one habit into all of them, the two questions in the box, and none of them can catch you.</p>
 
     <div class="rule"><span class="rt">Two questions catch almost every case.</span>Is the object <strong>mutable</strong>, something you can change in place, like a list, dict, or set? And will <strong>more than one name write to it</strong>? If both are yes, copy it, or make sure only one name ever writes. A number or a string is not mutable, so sharing one is always safe.</div>
   </section>
@@ -116,9 +121,15 @@ settings = defaults           <span class="cmt"># not a copy, a second name</spa
 settings["theme"] = "light"
 <span class="cmt"># defaults["theme"] is now <span class="bad">"light"</span> as well</span></code></pre>
 
-    <p>Assignment copies the pointer, not the object. This is safe until someone mutates the shared object, which is why it can hide for a long time: everything works until the day someone writes through one of the names. Then a change over here shows up over there, far from where you were looking. The same trap sits in JavaScript, Go, and Java: assigning an array or map gives you a second name, not a second copy. (Swift is the exception. Its arrays and dictionaries copy on assignment, so this particular trap does not reach them.)</p>
+    <p>Assignment copies the pointer, not the object. This is safe until someone mutates the shared object, which is why it can hide for a long time: everything works until the day someone writes through one of the names. Then a change over here shows up over there, far from where you were looking. The fix is the same everywhere on this page, so learn it once: <strong>make a real copy when you mean a separate thing, or make sure only one name ever writes to the shared object.</strong> Here: <code>settings = dict(defaults)</code>, or a deep copy if it nests.</p>
 
-    <p><span class="good">Fix:</span> copy when you mean a separate thing. <code>settings = dict(defaults)</code>, or a deep copy if it nests.</p>
+    <p>The same trap sits in JavaScript, Go, and Java: assigning an array or object gives you a second name, not a second copy. In JavaScript it is one line to see for yourself:</p>
+
+    <p class="lang">JavaScript</p>
+    <pre><code>const a = [1, 2, 3];
+const b = a;                  <span class="cmt">// second name, not a copy</span>
+b.push(9);
+console.log(a);               <span class="cmt">// <span class="bad">[1, 2, 3, 9]</span> &#8212; a changed too</span></code></pre>
   </section>
 
   <!-- 3 -->
@@ -132,13 +143,19 @@ for n in nums:
         nums.remove(n)        <span class="cmt"># editing the list we are walking</span>
 <span class="cmt"># nums is <span class="bad">[1, 4, 5]</span>: 4 is even, so it should be gone, but it survived</span></code></pre>
 
-    <p>The loop tracks its position by index. It reads index 1 (<code>2</code>) and removes it. Everything after shifts left by one, so <code>4</code> slides down into index 1, a slot the loop already passed. The loop steps on to index 2 and never looks back at <code>4</code>. Whenever two items to remove sit next to each other, the second one slips through.</p>
+    <p>The loop tracks its position by a hidden index. Walk <code>[1, 2, 4, 5]</code> step by step:</p>
+
+    <pre><code>position 0 -> 1   odd, keep, move on
+position 1 -> 2   even, remove it. now [1, 4, 5], and <span class="bad">4 slides into position 1</span>
+position 2 -> 5   the loop skipped position 1, so it <span class="bad">never sees 4</span></code></pre>
+
+    <p>Removing <code>2</code> shifted everything after it left by one, so <code>4</code> dropped into a slot the loop already passed. Whenever two items to remove sit next to each other, the second one slips through.</p>
 
     <figure>
-      <svg viewBox="0 0 640 250" role="img" aria-label="Two rows of index boxes. Before remove: indices 0 to 3 hold 1, 2, 4, 5, and the loop pointer i sits under index 1, which holds 2. After remove: everything shifts left to hold 1, 4, 5 at indices 0, 1, 2. The value 4 now sits at index 1, which the loop already passed, and the pointer i has stepped on to index 2. So 4 is skipped.">
+      <svg viewBox="0 0 640 250" role="img" aria-label="Two rows of index boxes. Before remove: positions 0 to 3 hold 1, 2, 4, 5, and the loop is at position 1, which holds 2. After remove: everything shifts left to hold 1, 4, 5 at positions 0, 1, 2. The value 4 now sits at position 1, which the loop already passed, and the loop has stepped on to position 2. So 4 is skipped.">
         <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280">
-          <text x="40" y="24">before: remove the 2 at index 1</text>
-          <text x="40" y="150">after: values shift left, loop steps to index 2</text>
+          <text x="40" y="24">before: remove the 2 at position 1</text>
+          <text x="40" y="150">after: values shift left, loop steps to position 2</text>
         </g>
 
         <!-- before row -->
@@ -152,7 +169,7 @@ for n in nums:
           <rect x="262" y="50" width="60" height="42" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="292" y="77">5</text>
         </g>
         <path d="M144,116 L136,104 L152,104 Z" fill="#2f7d75"/>
-        <text x="144" y="134" text-anchor="middle" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="14" fill="#2f7d75" font-weight="600">i</text>
+        <text x="144" y="134" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" fill="#2f7d75" font-weight="600">loop is here</text>
 
         <!-- after row -->
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="12" fill="#9a978f" text-anchor="middle">
@@ -163,16 +180,18 @@ for n in nums:
           <rect x="114" y="176" width="60" height="42" rx="6" fill="#f6e4e2" stroke="#b5524a"/><text x="144" y="203">4</text>
           <rect x="188" y="176" width="60" height="42" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="218" y="203">5</text>
         </g>
-        <text x="144" y="240" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" fill="#b5524a">4 landed here, already passed</text>
+        <text x="144" y="240" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" fill="#b5524a">4 slid into position 1, already passed</text>
         <path d="M218,242 L210,230 L226,230 Z" fill="#2f7d75"/>
-        <text x="256" y="240" text-anchor="start" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="14" fill="#2f7d75" font-weight="600">i is here now</text>
+        <text x="256" y="240" text-anchor="start" font-family="-apple-system, sans-serif" font-size="13" fill="#2f7d75" font-weight="600">loop is here now</text>
       </svg>
-      <figcaption>Removing index 1 shifts everything left. <code>4</code> drops into index 1, the slot the loop just left, while <code>i</code> moves on to index 2. The loop never sees <code>4</code> again.</figcaption>
+      <figcaption>Whenever two items you want to remove sit next to each other, the second one always slips through: it slides into the slot the loop just left.</figcaption>
     </figure>
 
     <p><span class="good">Fix:</span> loop over one thing and build a separate result, so the thing you read and the thing you change are not the same object.</p>
 
     <pre><code>nums = [n for n in nums if n % 2 != 0]   <span class="cmt"># new list, old one untouched</span></code></pre>
+
+    <p>The exact index-shift is a Python detail; JavaScript's <code>for...of</code> does not renumber the same way. But the broader rule holds in every language: do not read from one thing and write to it at the same time. Read from one, write to another.</p>
   </section>
 
   <!-- 4 -->
@@ -188,7 +207,7 @@ user_tags = ["python", "web"]
 build_tags(user_tags)
 <span class="cmt"># user_tags is now <span class="bad">["python", "web", "draft"]</span></span></code></pre>
 
-    <p>Passing a list to a function does not copy the list. It copies the pointer, so the parameter <code>base</code> and your <code>user_tags</code> are two names for one list. A name being local to the function does not make the object it points at local.</p>
+    <p>Passing a list to a function does not copy the list. It copies the pointer, so the parameter <code>base</code> and your <code>user_tags</code> are two names for one list. A name being local to the function does not make the object it points at local. This is the same shape as section 2, just with the second name created by a function call instead of a plain assignment.</p>
 
     <p><span class="good">Fix:</span> make a real copy at the boundary, right where the list comes in.</p>
 
@@ -210,7 +229,7 @@ build_tags(user_tags)
 add_item("a")   <span class="cmt"># ['a']</span>
 add_item("b")   <span class="cmt"># <span class="bad">['a', 'b']</span>  ... where did 'a' come from?</span></code></pre>
 
-    <p>The default value <code>[]</code> is built once, when the function is defined, not once per call. So every call that leaves out <code>bucket</code> shares that same one list. The disguise here is that you never wrote a second name for the list; the language did, quietly, by reusing the default.</p>
+    <p>The default value <code>[]</code> is built once, when the function is defined, not once per call. So every call that leaves out <code>bucket</code> shares that same one list. The hidden second name here is one you never wrote: the language made it for you by reusing the default. Because that shared state survives between calls, it is a classic way for one test to poison the next.</p>
 
     <p>Java, C#, JavaScript, and Go have no mutable default arguments, so this exact bug cannot happen there. It stays on the list because it is the purest example of the underlying trap: the language hands you a second name to one object, and you never see it get made.</p>
 
@@ -226,7 +245,7 @@ add_item("b")   <span class="cmt"># <span class="bad">['a', 'b']</span>  ... whe
   <!-- 6 -->
   <section>
     <h2><span class="num">6</span>The shallow copy that still shares</h2>
-    <p>So you learned to copy. But a plain copy of a container copies only the top layer. If the container holds other containers, the copy still points at the same inner ones.</p>
+    <p>So you learned to copy. But a <strong>shallow copy</strong> duplicates only the top-level container; any containers inside it are still shared. If your dict holds a list, the copy gets its own dict but points at the same inner list.</p>
 
     <pre><code>original = {"name": "cart", "items": ["apple"]}
 clone = dict(original)         <span class="cmt"># a shallow copy</span>
@@ -234,16 +253,23 @@ clone = dict(original)         <span class="cmt"># a shallow copy</span>
 clone["items"].append("pear")
 <span class="cmt"># original["items"] is now <span class="bad">["apple", "pear"]</span> too</span></code></pre>
 
-    <p><code>dict(original)</code> gives you a new outer dictionary, but its <code>"items"</code> key still holds the same list the original does. You copied the box and left the inner box shared. The disguise is that the copy worked for the top level, so you stop worrying, and the sharing hides one layer down.</p>
+    <p><code>dict(original)</code> gives you a new outer dictionary, but its <code>"items"</code> key still holds the same list the original does. You copied the box and left the inner box shared. The copy worked for the top level, so you stop worrying, and the sharing hides one layer down.</p>
 
     <p><span class="good">Fix:</span> copy deeply when the contents are themselves mutable. Python has a tool for exactly this.</p>
 
     <pre><code>import copy
 clone = copy.deepcopy(original)   <span class="cmt"># inner list is copied too</span></code></pre>
 
-    <p>A deep copy costs more, so reach for it only when you know the contents are shared and mutable. Often the cheaper answer is to not share at all, or to treat the data as read-only and never mutate it. That read-only habit is the whole idea behind immutable updates in front-end code: in a React reducer you write <code>{...state, key: val}</code> to build a new top-level object instead of changing the old one, so nothing else holding the old object gets surprised.</p>
+    <p>A deep copy costs more, so reach for it only when you know the contents are shared and mutable. Often the cheaper answer is to treat the data as read-only and never mutate it, building a new object instead.</p>
 
-    <p>Data folks meet the same thing as view versus copy: <code>df['col']</code> on a pandas DataFrame can hand back a view onto the original, so mutating it sometimes changes the source and sometimes does not, depending on how you sliced. When in doubt, take an explicit <code>.copy()</code>.</p>
+    <div class="note"><span class="nt">In front-end code (React)</span>That read-only habit is the whole idea behind immutable updates. Instead of changing the old state object, you spread it into a new one and override the key you want:
+    <pre><code>const next = { ...state, count: state.count + 1 };</code></pre>
+    Nothing else holding the old <code>state</code> gets surprised, because you never wrote through the shared object.</div>
+
+    <div class="note"><span class="nt">In data work (pandas)</span>Slicing a DataFrame can hand back a <em>view</em> onto the original, not a copy, so writing through it can change the source:
+    <pre><code>sub = df[df["price"] > 100]   <span class="cmt"># may be a view</span>
+sub["price"] = 0              <span class="cmt"># may also zero df, or warn, depending on the slice</span></code></pre>
+    That ambiguity is what <code>SettingWithCopyWarning</code> is telling you about. When you mean a separate frame, say so: <code>sub = df[df["price"] > 100].copy()</code>.</div>
   </section>
 
   <!-- 7 -->
@@ -257,12 +283,20 @@ clone = copy.deepcopy(original)   <span class="cmt"># inner list is copied too</
       <li><span class="s">Returning and keeping</span> (<code>return self.items</code>). The caller walks away holding the same object the function held. Fix: <code>return list(self.items)</code>, or agree to treat it as read-only.</li>
       <li><span class="s">Storing on an object</span> (<code>self.items = a</code>). The field becomes a second name for the caller's list. Fix: <code>self.items = list(a)</code>.</li>
       <li><span class="s">A default list or dict argument</span> (<code>def f(x, acc=[])</code>, Python). The default is one shared object. Fix: default to <code>None</code>, build a fresh one inside.</li>
+      <li><span class="s">A shallow copy of nested data</span> (<code>dict(a)</code>, <code>a[:]</code>). Copies the top layer, shares the inner ones. Fix: <code>copy.deepcopy(a)</code> when the contents are mutable.</li>
     </ul>
 
-    <p>Every one is the picture from section 1: a second name for one object. When you see it, run the two questions. Is the object mutable, and will more than one name write to it? If both are yes, copy it, or let only one name write. The same reference thinking explains the failures on the <a href="null-and-dangling-pointers.html">null and dangling pointers</a> page, a name that points at nothing, or at something already gone.</p>
+    <p>Every one is the picture from section 1: a second name for one object. When you see it, run the two questions from the box in section 1, and you are done.</p>
+  </section>
+
+  <!-- point -->
+  <section>
+    <h2>The point</h2>
+    <p>A variable holds a reference, not the object. So the whole family of bugs comes down to one habit: when a mutable object picks up a second name, decide whether both names should see the writes. If not, copy it, or let only one name write. Two questions, asked every time, and the confusing bugs stop being confusing.</p>
   </section>
 
   <footer>
+    Related: <a href="null-and-dangling-pointers.html">null and dangling pointers</a>, <a href="copy-vs-share.html">copy vs share</a>, <a href="what-is-a-pointer.html">what is a pointer</a>.<br>
     Reuse and share freely.
   </footer>
 

@@ -46,7 +46,7 @@
     <p class="lede">When a function runs, its own working state has to live somewhere. Each call gets a <span class="em">frame</span>: a small chunk of memory holding that call's parameters, its local variables, and where to go back when it finishes.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said a running program holds information as it works, and the <a href="memory-bytes-and-addresses.html">memory page</a> said that information sits in numbered memory. This page is about one well-organized part of that memory: the part that answers "where do a function's locals live, and why are they gone the moment it returns?" Once you see it, recursion stops being magic, a whole class of Python bugs starts to make sense, and a crash traceback turns into something you can read line by line. It is also one of the fundamentals big-tech interviewers probe, so the payoff is direct.</p>
+  <p style="margin-top:1.6rem;">You have surely written a function that resets a counter to zero on every call, or stared at a crash traceback with no idea which line actually broke. Both come down to one well-organized part of memory: the part that holds a function's local variables while it runs and throws them away the instant it returns. (The <a href="memory-bytes-and-addresses.html">memory page</a> covered where values sit; this is one tidy region of that memory.) That part is a stack of frames. Once you see it, recursion stops being magic and a traceback turns into something you can read line by line.</p>
 
   <!-- 1 -->
   <section>
@@ -88,12 +88,8 @@
         <path d="M588,75 L600,80 L588,85 Z" fill="#c9c6be"/>
         <text x="560" y="74" font-family="-apple-system, sans-serif" font-size="11" fill="#9b978d">time</text>
 
-        <!-- grows-upward marker -->
-        <g stroke="#b8b4ab" stroke-width="1.5" fill="none">
-          <line x1="24" y1="292" x2="24" y2="160"/>
-        </g>
-        <path d="M24,154 L19,166 L29,166 Z" fill="#b8b4ab"/>
-        <text x="16" y="228" transform="rotate(-90 16 228)" font-family="-apple-system, sans-serif" font-size="11" fill="#9b978d" text-anchor="middle">stack grows up</text>
+        <!-- pile marker (no directional claim: a teaching layout, not a memory map) -->
+        <text x="16" y="228" transform="rotate(-90 16 228)" font-family="-apple-system, sans-serif" font-size="11" fill="#9b978d" text-anchor="middle">frames pile up</text>
 
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="14" text-anchor="middle">
           <!-- Step 1: main, cook -->
@@ -130,7 +126,7 @@
           <circle cx="108" cy="414" r="3.2" fill="#2f7d75"/><text x="120" y="418" fill="#2c3038"><tspan fill="#1f5b54" font-weight="600">return address</tspan> where to resume in the caller</text>
         </g>
       </svg>
-      <figcaption>Frames go on and come off only at the top, newest first. A push adds a frame on top (green, pointing down); a pop removes the top frame (red, pointing up). The top frame is always the one running now; everything below it is paused. Each frame holds that call's parameters, its locals, and a return address.</figcaption>
+      <figcaption>The top frame is always the one running now; everything below it is paused. Frames go on and come off only at the top: a push adds a frame (green, pointing down), a pop removes the top one (red, pointing up). Each frame holds that call's parameters, its locals, and a return address. The upward layout is just a teaching device, not a claim about which way memory addresses run.</figcaption>
     </figure>
 
     <p>The word "stack" is not a loose picture. It is the same last-in, first-out shape you get stacking plates: you add and remove only at the top. That simple rule is what lets the machine track a deep chain of calls with almost no bookkeeping.</p>
@@ -139,7 +135,7 @@
   <!-- 4 -->
   <section>
     <h2><span class="num">4</span>A local lives and dies with its frame</h2>
-    <p>When a call returns, its frame comes off the stack. The memory it used is not carefully erased; it is simply handed back, free for the next call to overwrite. So every local variable in that frame is gone. Not hidden, not saved somewhere, gone.</p>
+    <p>When a call returns, its frame comes off the stack. The memory it used is not carefully erased; it is simply handed back, free for the next call to overwrite.</p>
 
     <div class="rule">A local variable lives exactly as long as its frame. It appears when the call starts and disappears when the call returns. That is why each fresh call starts with fresh locals, and why a value you want to keep has to be returned, not left behind in the frame.</div>
 
@@ -155,9 +151,11 @@ count_up()             <span class="cmt"># 1 again, not 2</span></code></pre>
 
     <p>It resets to 0 every time, and now you can see exactly why: each call is a new frame, so <code>total</code> is a new local that starts from scratch. The frame from the last call, and its <code>total</code>, is already gone. To carry a value across calls you have to put it somewhere that outlives a single frame: return it and have the caller hold it, or store it on an object (a class attribute, say) that keeps living after the call returns.</p>
 
-    <p>In Python, JavaScript, Java, Go, and other managed languages that is the whole surprise; the runtime keeps whatever you return alive for you. Lower-level languages have a nastier version of the same rule. C, for one, lets you hand back the address of a local itself, and since the frame is already gone, that address now points at freed memory. The lifetime rule underneath is identical; managed languages just refuse to let you write that bug, keeping a value alive as long as something still refers to it.</p>
+    <p>In Python, JavaScript, Java, Go, and other managed languages that is the whole surprise: the runtime keeps a value alive as long as something you returned still refers to it. (In C you can even hand back the address of a dead frame and read freed memory, but Python simply will not let you write that bug.)</p>
 
-    <div class="note">Keep two ideas apart, they are easy to blur. <strong>Lifetime</strong> is how long a local lives, the subject of this page. <strong>Visibility</strong> is who is allowed to see a name in the first place, a separate rule covered on the <a href="scope-and-globals.html">scope and globals</a> page.</div>
+    <p>This is also the point where two ideas get blurred, so keep them apart. When a name stops working, it is easy to think the variable is "gone" because it left scope, when the real question is whether its frame is still live.</p>
+
+    <div class="note"><strong>Lifetime</strong> is how long a local lives, the subject of this page. <strong>Visibility</strong> is who is allowed to see a name in the first place, a separate rule covered on the <a href="scope-and-globals.html">scope and globals</a> page. A name can be out of scope while its frame is still alive, and a frame can be gone while the name is still in scope elsewhere.</div>
   </section>
 
   <!-- 5 -->
@@ -173,7 +171,9 @@ count_up()             <span class="cmt"># 1 again, not 2</span></code></pre>
 factorial(3)                   <span class="cmt"># 3 frames stack up: (3), then (2), then (1)</span></code></pre>
 
     <p>Call <code>factorial(3)</code> and it calls <code>factorial(2)</code>, which calls <code>factorial(1)</code>. That is three frames stacked up, all running the same code, each with its own <code>n</code>. Because each frame has its own copy of the parameters, the <code>n</code> in one call does not disturb the <code>n</code> in another. They are different variables at different addresses that happen to share a name.</p>
-    <p>The frames unwind in reverse: <code>factorial(1)</code> returns 1 first, then <code>factorial(2)</code> returns 2, then <code>factorial(3)</code> returns 6, each handing its result down to the call that was waiting for it. Want to see all three frames at once? Set a breakpoint inside the base case, add <code>import pdb; pdb.set_trace()</code> just before <code>return 1</code>, or click the line's gutter in VS Code, run it, and the debugger's call stack lists all three <code>factorial</code> frames, each with its own <code>n</code>.</p>
+    <p>The frames unwind in reverse: <code>factorial(1)</code> returns 1 first, then <code>factorial(2)</code> returns 2, then <code>factorial(3)</code> returns 6, each handing its result down to the call that was waiting for it.</p>
+
+    <div class="note"><strong>Try this right now.</strong> Put <code>breakpoint()</code> on the line just before <code>return 1</code>, then run the file. When it stops, the debugger's call stack shows all three <code>factorial</code> frames at once, each with its own value of <code>n</code>. (<code>breakpoint()</code> is the built-in way to do this from Python 3.7 on.)</div>
   </section>
 
   <!-- 6 -->
@@ -181,7 +181,7 @@ factorial(3)                   <span class="cmt"># 3 frames stack up: (3), then 
     <h2><span class="num">6</span>The stack has a size limit: overflow</h2>
     <p>The stack is a fixed region of memory, not endless. Every frame takes up some space, so a very deep chain of calls can fill it. When the machine tries to add one more frame past the limit, you get a <strong>stack overflow</strong>, and the program stops.</p>
     <p>The usual cause is a recursion that never stops, a missing or wrong base case (the condition that stops the recursion), so it calls itself forever, piling on frames until the stack runs out. In Python this shows up as a <code>RecursionError</code>, raised once you pass its default limit of about 1000 nested calls; many other languages crash with a message that literally says stack overflow. Either way the cause is the same: the pile of frames hit the ceiling.</p>
-    <p>Very deep but correct recursion can overflow too. Some languages reuse the current frame for the last recursive call instead of adding a new one, so the depth stays flat; CPython does not, so in Python deep recursion usually means rewriting it as a loop.</p>
+    <p>Very deep but correct recursion can overflow too. Some languages reuse the current frame for the last recursive call instead of adding a new one, so the depth stays flat; this is called <strong>tail-call optimization</strong>. CPython does not do it, so in Python deep recursion usually means rewriting it as a loop.</p>
   </section>
 
   <!-- 7 -->

@@ -33,6 +33,10 @@
   pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;overflow-x:auto;margin:1.4rem 0;font-size:.9rem;line-height:1.65;}
   pre code{background:none;padding:0;border-radius:0;}
   pre .cm{color:var(--muted);}
+  .next{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem;margin:1.8rem 0 0;}
+  .next h3{margin:0 0 .6rem;font-size:1rem;}
+  .next ul{margin:0;padding-left:1.2rem;}
+  .next li{margin:.35rem 0;}
   footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
   @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
 </style>
@@ -42,59 +46,25 @@
 
   <header>
     <h1>What a pointer is: indirection</h1>
-    <p class="lede">A pointer is a value whose content is an <span class="em">address</span>: a box that holds a location, not a thing. It says "the thing is over there," and following it is one hop to the real value. That extra hop has a name: <span class="em">indirection</span>.</p>
+    <p class="lede">A pointer is a value that holds an <span class="em">address</span>: not a thing, but where a thing is. It says "the thing is over there," and reading it is one hop to the real value. That extra hop has a name: <span class="em">indirection</span>.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">You may write Python or JavaScript and never type a pointer. You lean on them in every line anyway. This bug is why it matters:</p>
+  <p style="margin-top:1.6rem;">You may write Python or JavaScript and never type the word pointer. You lean on pointers in every line anyway. Here is the bug that shows it:</p>
 
   <pre><code>let a = { x: 1 };
-let b = a;      <span class="cm">// b now points at the same object as a</span>
-b.x = 99;       <span class="cm">// a.x is 99 too, though you never touched a</span></code></pre>
+let b = a;      <span class="cm">// copy a into b, or so it looks</span>
+b.x = 99;       <span class="cm">// now a.x is 99 too, though you never touched a</span></code></pre>
 
-  <p>You changed <code>b</code> and <code>a</code> moved. That surprise, and a whole family of bugs like it, comes from one idea: when a variable holds an object or an array, it does not hold the object. It holds a pointer to it. An <strong>address</strong> is just a number that names one slot in memory, the way a house number names one house on a street. A pointer is a value that <em>is</em> such a number. This page draws that picture so the bugs stop surprising you.</p>
+  <p>You changed <code>b</code> and <code>a</code> changed with it. That surprise, and a whole family of bugs like it, comes from one fact: when a variable holds an object, a list, a dict, an array, it does not hold that thing. It holds a pointer to it. The line <code>b = a</code> copied the pointer, so now two names point at one object, and a change through either name shows up through both.</p>
 
-  <p>If you want the two steps this builds on, memory as numbered slots is the <a href="memory-bytes-and-addresses.html">bytes and addresses page</a>, and a name standing for a value at one slot is the <a href="variables-values-and-addresses.html">variables page</a>. Neither is required to follow along here.</p>
+  <p>The sharpest version of this shows up in interviews, when a function quietly changes its caller's data. That payoff is section 3. The first two sections build the small picture that makes it obvious, so it stops catching you off guard.</p>
 
   <!-- 1 -->
   <section>
-    <h2><span class="num">1</span>A pointer is just a number, read as a place</h2>
-    <p>A normal variable holds a value you want directly: the slot for <code>count</code> holds 7, and 7 is the answer. A pointer's slot holds a number too, say 4000, but you do not want 4000. You want whatever lives at address 4000.</p>
-    <p>The two look identical in memory. A slot holding the integer 4000 and a slot holding a pointer to address 4000 store the same number; nothing in the bits marks one as a place. The only difference is how your code reads it: as "the value I have" or as "where the value is." That is the whole trick, and the rest of the page is what it costs and what it buys.</p>
-  </section>
+    <h2><span class="num">1</span>A name holds an address, not the thing</h2>
+    <p>Think of memory as a long row of numbered boxes. An <strong>address</strong> is just the number of one box, the way a house number names one house on a street. Sometimes a box holds the value you want directly. Often it holds an address instead: a number that says "the value is in box 4000, go look there." A box holding such a number is a pointer.</p>
 
-  <!-- 2 -->
-  <section>
-    <h2><span class="num">2</span>Following it is one hop</h2>
-    <p>To get from the pointer to the real value, you follow the address it holds. You read the pointer, get a location, and go read what is at that location. One hop. That step has a name: <strong>dereferencing</strong>.</p>
-
-    <figure>
-      <svg viewBox="0 0 620 200" role="img" aria-label="A pointer cell named p holds the address 4000. An arrow runs from p to a value cell at address 4000, which holds the number 7.">
-        <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
-          <text x="110" y="40">pointer</text>
-          <text x="490" y="40">value it points to</text>
-        </g>
-
-        <!-- pointer cell -->
-        <rect x="40" y="56" width="140" height="60" rx="8" fill="#ffffff" stroke="#2f7d75" stroke-width="1.5"/>
-        <text x="110" y="93" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="22" fill="#2c3038" text-anchor="middle">4000</text>
-        <text x="110" y="136" font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">p</text>
-        <text x="110" y="154" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="11" fill="#9a978f" text-anchor="middle">at address 2200</text>
-
-        <!-- value cell -->
-        <rect x="420" y="56" width="140" height="60" rx="8" fill="#ffffff" stroke="#cfccc4"/>
-        <text x="490" y="93" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="22" fill="#2c3038" text-anchor="middle">7</text>
-        <text x="490" y="136" font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">count</text>
-        <text x="490" y="154" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="11" fill="#9a978f" text-anchor="middle">at address 4000</text>
-
-        <!-- arrow -->
-        <line x1="184" y1="86" x2="410" y2="86" stroke="#2f7d75" stroke-width="2.5"/>
-        <path d="M410,80 L424,86 L410,92 Z" fill="#2f7d75"/>
-        <text x="297" y="76" font-family="-apple-system, sans-serif" font-size="12" fill="#2f7d75" text-anchor="middle">dereference: go there</text>
-      </svg>
-      <figcaption>An arrow is all a pointer is. The slot named <code>p</code> holds 4000; following that number lands on the slot at address 4000, which holds 7.</figcaption>
-    </figure>
-
-    <p>Python and JavaScript never make you write that hop, so it is easy to forget it happens. When you write <code>user.name</code>, the language quietly follows the reference to the object, then reads the field. You can make the hidden address show itself in Python with <code>id()</code>, which reports the address a name points at:</p>
+    <p>Python lets you see the address a name points at. <code>id(x)</code> reports it as a plain number:</p>
 
     <pre><code>a = [1, 2, 3]
 b = a
@@ -102,41 +72,84 @@ id(a) == id(b)   <span class="cm"># True: two names, one address</span>
 b.append(4)
 a                <span class="cm"># [1, 2, 3, 4]: same list, reached through a</span></code></pre>
 
-    <p>Two names, one address, so a change through either shows up through both. The hop is silent, but it is there, and it only works if the address points at a real value. A pointer can hold a special address meaning "points at nothing" (a <strong>null</strong> pointer), or an address whose value is gone (a <strong>dangling</strong> pointer); follow either and the same one hop lands on garbage or crashes. Those two failure modes get their own page: <a href="null-and-dangling-pointers.html">null and dangling pointers</a>.</p>
+    <p>The names <code>a</code> and <code>b</code> are two boxes holding the same address. The list lives somewhere else, in one place, and both names point at it:</p>
+
+    <figure>
+      <svg viewBox="0 0 620 210" role="img" aria-label="Two name cells, a and b, each holding an arrow that points to a single list object containing 1, 2, 3, 4.">
+        <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
+          <text x="95" y="30">names</text>
+          <text x="470" y="30">one list object</text>
+        </g>
+
+        <!-- name a -->
+        <rect x="40" y="48" width="110" height="46" rx="8" fill="#ffffff" stroke="#2f7d75" stroke-width="1.5"/>
+        <text x="95" y="77" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="19" fill="#2c3038" text-anchor="middle">a</text>
+
+        <!-- name b -->
+        <rect x="40" y="118" width="110" height="46" rx="8" fill="#ffffff" stroke="#2f7d75" stroke-width="1.5"/>
+        <text x="95" y="147" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="19" fill="#2c3038" text-anchor="middle">b</text>
+
+        <!-- list object -->
+        <rect x="360" y="66" width="220" height="78" rx="10" fill="#ffffff" stroke="#cfccc4"/>
+        <text x="470" y="112" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="21" fill="#2c3038" text-anchor="middle">[1, 2, 3, 4]</text>
+
+        <!-- arrows -->
+        <line x1="150" y1="71" x2="352" y2="96" stroke="#2f7d75" stroke-width="2.5"/>
+        <path d="M352,90 L366,98 L350,102 Z" fill="#2f7d75"/>
+        <line x1="150" y1="141" x2="352" y2="116" stroke="#2f7d75" stroke-width="2.5"/>
+        <path d="M352,120 L350,108 L366,112 Z" fill="#2f7d75"/>
+        <text x="250" y="98" font-family="-apple-system, sans-serif" font-size="12" fill="#2f7d75" text-anchor="middle">follow the arrow</text>
+      </svg>
+      <figcaption>Two names, one object. Because <code>a</code> and <code>b</code> hold the same address, <code>b.append(4)</code> changes the thing <code>a</code> sees too.</figcaption>
+    </figure>
+
+    <p>Following the address, going from the name to the value it points at, is that one hop. Python and JavaScript take the hop for you every time: when you write <code>a[0]</code> or <code>user.name</code>, the language reads the pointer, lands on the object, then reads inside it. You never write the hop, so it is easy to forget it is there. The hop has a formal name, <strong>dereferencing</strong>, but the picture above is the whole idea.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>Changing the thing vs repointing the name</h2>
+    <p>Because a name is itself a box holding a pointer, you can overwrite the pointer. Two lines that look almost the same do very different things:</p>
+
+    <pre><code>let a = { x: 1 };
+let b = a;        <span class="cm">// a and b point at one object</span>
+b.x = 99;         <span class="cm">// change the thing:   a.x is now 99 too</span>
+b = { x: 0 };     <span class="cm">// repoint b:          a is untouched, still { x: 99 }</span></code></pre>
+
+    <p><code>b.x = 99</code> follows <code>b</code>'s arrow and edits the shared object, so <code>a</code>, which points at the same object, sees the change. <code>b = { x: 0 }</code> does not touch that object at all. It swings <code>b</code>'s arrow to a brand new object and leaves <code>a</code> pointing where it always did.</p>
+
+    <div class="rule">Changing the thing the arrow points at is not the same as repointing the arrow. <code>b = a</code> copies the address, not the object; <code>b.x = 99</code> reaches through the address and edits the one object both names share.</div>
   </section>
 
   <!-- 3 -->
   <section>
-    <h2><span class="num">3</span>Why go through an address at all</h2>
-    <p>Holding a location instead of the thing sounds like extra work. The reason it is worth it, and the reason it bites you, are the same reason: <strong>two names can share one thing</strong>. Two pointers holding the same address both reach the same value, so a change through one shows up through the other. One thing, two ways in. Nearly every pointer bug you will hit is a case of this working when you did not expect it.</p>
-    <p>Sharing also means big things move cheaply. Hand a function a 10,000-item list and nothing is copied; the language passes the small address, and the function reaches your list through it. High-level languages do this for you by default, which is convenient and is exactly why the sharing can catch you off guard: you never asked for it.</p>
-    <p>Because a pointer is itself just a value in a slot, you can overwrite it, and two acts that look alike are not:</p>
-
-    <pre><code>let a = { x: 1 };
-let b = a;        <span class="cm">// a and b point at one object</span>
-b.x = 99;         <span class="cm">// change the thing:  a.x is now 99 too</span>
-b = { x: 0 };     <span class="cm">// repoint b:  a is untouched, still { x: 99 }</span></code></pre>
-
-    <p>The line <code>b.x = 99</code> reaches through the arrow and edits the shared object, so <code>a</code> sees it. The line <code>b = { x: 0 }</code> only bends <code>b</code>'s arrow to a new object; nothing at the old address moved, so <code>a</code> is untouched.</p>
-
-    <div class="rule">Repointing the arrow is not the same as changing what is at the end of it. Confusing the two is a classic bug, and it is the whole story behind what your language calls reference types: <code>b = a</code> copies the address, not the object.</div>
-  </section>
-
-  <!-- 4 -->
-  <section>
-    <h2><span class="num">4</span>Copy vs share, and aliasing</h2>
-    <p>The sharing bites hardest across a function call, where you feel safe handing an argument in. This is the case interviewers probe, and the one that breaks real code:</p>
+    <h2><span class="num">3</span>Share, not copy: where the bugs live</h2>
+    <p>The sharing bites hardest across a function call, exactly where you feel safe handing an argument in. This is the case interviewers probe, and the one that breaks real code:</p>
 
     <pre><code>def mark_done(todo):
     todo["done"] = True   <span class="cm"># edits the caller's dict, not a copy</span>
 
 mark_done(my_todo)        <span class="cm"># my_todo["done"] is now True</span></code></pre>
 
-    <p>You passed <code>my_todo</code> in and the function changed it, because the argument was a pointer to your dict, not a fresh copy. This is what people mean by Python's <strong>pass-by-object-reference</strong>, and it is why <code>def f(lst): lst.append(1)</code> grows the caller's list. When two names reach one thing this way, they are <strong>aliases</strong>, and a change through one silently changes what the other sees. That is the <code>b.x = 99</code> surprise from the top of the page, grown up into an <a href="aliasing-bugs.html">aliasing bug</a>.</p>
+    <p>You passed <code>my_todo</code> in, and the function changed your dict, because the argument was a pointer to it, not a fresh copy. This is what people mean by Python's <strong>pass-by-object-reference</strong>: the function gets the same address you hold, so <code>def f(lst): lst.append(1)</code> grows the caller's list. Handing in a million-item list copies nothing, which is fast and convenient, and is the same fact behind the classic mutable-default-argument trap (<code>def f(acc=[])</code> reuses one shared list across calls).</p>
 
-    <p>So under everything runs one question: does this code hold the thing, or a pointer to it, and if it is a pointer, who else holds the same address? That is the difference between <a href="copy-vs-share.html">copy and share</a>. Copy gives each side its own thing; share hands the same address to more than one holder. When a value seems to change on its own, the first check in your own code is whether some other name is aliased to it: did you write <code>b = a</code> where you meant a copy, or pass a list into a function that kept it?</p>
+    <p>An <strong>alias</strong> is two names for one thing. When two names reach one object this way, they are aliases, and a change through either one silently changes what the other sees. So how do you get a real, independent copy instead? Ask for one:</p>
 
-    <div class="rule">A pointer is indirection: one extra hop between a name and its value. Every copy-vs-share decision, and every aliasing bug, is really a question about that hop and who else is standing at the other end of it.</div>
+    <pre><code>b = a.copy()      <span class="cm"># or list(a), dict(a): a new object, its own address</span>
+b.append(4)       <span class="cm"># a is untouched now</span></code></pre>
+
+    <p>One more thing can go wrong with the hop itself. A pointer can hold a special address meaning "points at nothing," which in Python is <code>None</code> (a <strong>null</strong> pointer). Follow it and you get <code>AttributeError: 'NoneType' object has no attribute 'x'</code>, the "why is this None" crash. Python spares you the other classic, a <strong>dangling</strong> pointer, an address whose object is already gone: its garbage collector keeps an object alive as long as any name still points at it. Both failure modes get their own page, <a href="null-and-dangling-pointers.html">null and dangling pointers</a>.</p>
+
+    <p>When a value seems to change on its own, run one check first: does another name hold the same address? Did you write <code>b = a</code> where you meant <code>b = a.copy()</code>? Did you hand a list to a function that kept it? Every copy-vs-share decision and every aliasing bug reduces to that one hop, and to who else is standing at the other end of it.</p>
+
+    <div class="next">
+      <h3>Where this fits</h3>
+      <ul>
+        <li>Just before this: <a href="variables-values-and-addresses.html">variables, values, and addresses</a>, and <a href="memory-bytes-and-addresses.html">memory as bytes and addresses</a>.</li>
+        <li>Good next page: <a href="aliasing-bugs.html">aliasing bugs</a>, the family of surprises this idea explains.</li>
+        <li>Then: <a href="copy-vs-share.html">copy vs share</a> (how to choose one on purpose) and <a href="null-and-dangling-pointers.html">null and dangling pointers</a>.</li>
+      </ul>
+    </div>
   </section>
 
   <footer>

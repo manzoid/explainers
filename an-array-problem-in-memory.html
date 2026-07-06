@@ -41,10 +41,10 @@
 
   <header>
     <h1>An array problem, in memory</h1>
-    <p class="lede">Here is one small interview problem: reverse an array in place. We will not just solve it. We will watch it run in memory, cell by cell, and name every change in the plain vocabulary this series has been building.</p>
+    <p class="lede">You can read this code, follow every line, and still not be sure what it does to the array. That gap is exactly what interviewers probe, and closing it is a different skill from reading code. This page closes it for one real problem: reverse an array in place.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">The earlier pages built the words: a running program is <a href="what-is-state.html">state</a> changing step by step, that state lives in <a href="memory-bytes-and-addresses.html">memory</a> cells, and an <a href="arrays.html">array</a> is a row of cells you reach by an index. This page takes one real problem and runs it in your head the way the machine would, so those words become something you can do.</p>
+  <p style="margin-top:1.6rem;">We will name every change with three plain words. <strong>State</strong> is everything the program is holding right now. A <strong>mutation</strong> is overwriting a value in place, so the old one is gone. A <strong>snapshot</strong> is the whole state frozen at one step. (These come from the earlier pages: a running program is <a href="what-is-state.html">state</a> changing step by step, that state lives in <a href="memory-bytes-and-addresses.html">memory</a> cells, and an <a href="arrays.html">array</a> is a row of cells you reach by an index.) Here we take one problem and run it in your head the way the machine would, so those words become something you can do.</p>
 
   <!-- 1 -->
   <section>
@@ -66,13 +66,13 @@
   <section>
     <h2><span class="num">2</span>What is in memory before we start</h2>
     <p>Say the array is <code>[5, 8, 2, 9]</code>. From the arrays page, that is four cells in a row, reached by index 0 to 3. Alongside them sit two more small pieces of state, the index variables <code>left</code> and <code>right</code>, each holding a single number.</p>
-    <p>So the whole state we care about is: four array cells, plus <code>left</code> and <code>right</code>. That is the logical state from the <a href="what-is-state.html">state page</a>, the part we actually reason about. We set <code>left</code> to 0 and <code>right</code> to 3, and now every step of the run is going to overwrite some of these cells. Each overwrite is a <strong>mutation</strong>: the old value is gone, the cell holds the new one.</p>
+    <p>So the whole state we care about is: four array cells, plus <code>left</code> and <code>right</code>. That is the logical state from the <a href="what-is-state.html">state page</a> (the part relevant to the algorithm, not every byte in memory). We set <code>left</code> to 0 and <code>right</code> to 3, and now every step of the run overwrites some of these cells. Each overwrite is a <strong>mutation</strong>: the old value is gone, the cell holds the new one.</p>
   </section>
 
   <!-- 3 -->
   <section>
     <h2><span class="num">3</span>The film, snapshot by snapshot</h2>
-    <p>The state page said a run is a film: take a snapshot at every step and play them in order. Here is the whole loop as three snapshots. Read down the rows, and watch the array cells and the two indices change together.</p>
+    <p>The state page said a run is a film: take a snapshot at every step and play them in order. Here is the whole loop as three snapshots. Read down the rows, and watch the array cells and the two indices change together. One thing to expect: in Step 3 the <code>left</code> and <code>right</code> labels appear on opposite sides, because by then the indices have passed each other. That is the signal to stop.</p>
 
     <figure>
       <svg viewBox="0 0 640 528" role="img" aria-label="Three stacked snapshots of the array 5 8 2 9 being reversed in place. In step 1 left points at cell 0 and right at cell 3, and the two ends swap. In step 2 left is at cell 1 and right at cell 2, and the middle two swap. In step 3 the indices have crossed, so the loop stops, leaving 9 2 8 5.">
@@ -145,7 +145,7 @@
 
         <text class="lab" x="320" y="518">Result: the array is reversed, in place.</text>
       </svg>
-      <figcaption>Each row is one snapshot of the same six pieces of state. The highlighted cells are the two the indices are about to swap, and the small arrow under each index points up to the cell it marks. In Step 3 <code>left</code> now sits to the right of <code>right</code>: the two indices have passed each other, so their labels are on switched sides compared to Steps 1 and 2. That is exactly what "they crossed" means, and it is the signal to stop.</figcaption>
+      <figcaption>Each row is one snapshot of the same six pieces of state. The highlighted cells are the two the indices are about to swap, and the small arrow under each index points up to the cell it marks. In Step 3 <code>left</code> has moved past <code>right</code>, so the loop stops.</figcaption>
     </figure>
   </section>
 
@@ -155,7 +155,8 @@
     <p>Tracing is nothing more than saying out loud what changed at each step, in the plain words of the series. Here are the first two steps, said slowly.</p>
     <p><strong>Step 1.</strong> <code>left</code> is 0, <code>right</code> is 3, and <code>0 &lt; 3</code> is true, so we run the body. The swap reads cell 0 (which is 5) and cell 3 (which is 9), then overwrites cell 0 with 9 and cell 3 with 5. That is two mutations to the array. Then <code>left</code> becomes 1 and <code>right</code> becomes 2: two more mutations, to the index variables this time. The array is now <code>[9, 8, 2, 5]</code>.</p>
     <p><strong>Step 2.</strong> <code>left</code> is 1, <code>right</code> is 2, and <code>1 &lt; 2</code> is true, so we run the body again. The swap reads cell 1 (which is 8) and cell 2 (which is 2), then overwrites cell 1 with 2 and cell 2 with 8. Two mutations. Then <code>left</code> becomes 2 and <code>right</code> becomes 1. The array is now <code>[9, 2, 8, 5]</code>.</p>
-    <p>That is the whole rhythm of the loop: two mutations to swap, two to step the indices inward. In Step 3 the check is <code>2 &lt; 1</code>, which is false, so the loop stops. Say these to yourself and check them against the rows. If you would rather have the film played for you, paste this code into <strong>codeviz</strong>, a step-by-step visualizer, and watch it snapshot each line. Predict the next snapshot first, then check.</p>
+    <p>The rhythm repeats: two mutations to swap, two to step the indices inward. In Step 3 the check is <code>2 &lt; 1</code>, which is false, so the loop stops. Say these to yourself and check them against the rows.</p>
+    <div class="rule">Want the film played for you? Paste this code into a step-by-step visualizer like <a href="https://pythontutor.com">Python Tutor</a> and watch it snapshot each line. Predict the next snapshot first, then check.</div>
   </section>
 
   <!-- 5 -->
@@ -188,8 +189,65 @@ a[right] = temp      # put the saved value back</code></pre>
   <section>
     <h2><span class="num">7</span>The same shape, over and over</h2>
     <p>Most interview problems on arrays, strings, and lists have the shape you just traced: a handful of cells, a few index variables, and a loop that mutates the state forward until it stands for the answer. The harder-looking ones only change where the indices start and when they move.</p>
-    <p>Take <strong>removing duplicates from a sorted array in place</strong>. Same array, but now the two indices do different jobs instead of walking toward each other. One, call it <code>write</code>, marks where the next kept item goes; it starts at 0. The other, <code>read</code>, scans forward looking for the next new value; it starts at 1. On <code>[1, 1, 2, 3, 3]</code>, <code>read</code> finds the 2, so we copy it just past <code>write</code> and step <code>write</code> forward; the kept part grows at the front while <code>read</code> runs ahead. Different rule, same picture: cells, indices, a loop, mutations you can name one at a time.</p>
-    <p>Partitioning an array and merging two sorted arrays are more of the same, and the <a href="arrays.html">arrays page</a> lays out the family these belong to (two pointers, the sliding window, prefix sums). Whichever one you meet, trace it the way you traced this one.</p>
+    <p>Take <strong>removing duplicates from a sorted array in place</strong>. Same array, but now the two indices do different jobs instead of walking toward each other. One, call it <code>write</code>, marks the end of the kept part at the front. The other, <code>read</code>, scans ahead looking for the next new value. When <code>read</code> lands on a value that is new, we copy it just past <code>write</code> and step <code>write</code> forward. Here are two snapshots of that on <code>[1, 1, 2, 3, 3]</code>.</p>
+
+    <figure>
+      <svg viewBox="0 0 640 356" role="img" aria-label="Two snapshots of removing duplicates from the sorted array 1 1 2 3 3. In the first, read sits on the value 2 which is new, and write sits at the front on index 0. In the second, that 2 has been copied to index 1, write has stepped to index 1, and read has moved on, so the kept part at the front is now 1 2.">
+        <style>
+          .cell2{fill:#ffffff;stroke:#cfccc4;}
+          .cell2hot{fill:#e7f1ef;stroke:#2f7d75;stroke-width:1.5;}
+          .val2{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:20px;fill:#2c3038;text-anchor:middle;}
+          .idx2{font-family:-apple-system,sans-serif;font-size:11px;fill:#9b988f;text-anchor:middle;}
+          .lab2{font-family:-apple-system,sans-serif;font-size:13px;fill:#6b7280;text-anchor:middle;}
+          .ptr2{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12px;fill:#2f7d75;text-anchor:middle;font-weight:700;}
+          .conn2{font-family:-apple-system,sans-serif;font-size:12px;fill:#9b988f;text-anchor:middle;font-style:italic;}
+        </style>
+
+        <!-- centers: 200,260,320,380,440 -->
+
+        <!-- Snapshot 1: write=0, read=2 on the new value 2 -->
+        <text class="lab2" x="320" y="30">read=2 lands on a new value (2); write=0</text>
+        <g>
+          <rect class="cell2"    x="172" y="46" width="56" height="44" rx="6"/><text class="val2" x="200" y="75">1</text>
+          <rect class="cell2"    x="232" y="46" width="56" height="44" rx="6"/><text class="val2" x="260" y="75">1</text>
+          <rect class="cell2hot" x="292" y="46" width="56" height="44" rx="6"/><text class="val2" x="320" y="75">2</text>
+          <rect class="cell2"    x="352" y="46" width="56" height="44" rx="6"/><text class="val2" x="380" y="75">3</text>
+          <rect class="cell2"    x="412" y="46" width="56" height="44" rx="6"/><text class="val2" x="440" y="75">3</text>
+          <text class="idx2" x="200" y="106">0</text><text class="idx2" x="260" y="106">1</text>
+          <text class="idx2" x="320" y="106">2</text><text class="idx2" x="380" y="106">3</text><text class="idx2" x="440" y="106">4</text>
+          <path d="M200,114 L194,124 L206,124 Z" fill="#2f7d75"/>
+          <path d="M320,114 L314,124 L326,124 Z" fill="#2f7d75"/>
+          <text class="ptr2" x="200" y="138">write</text>
+          <text class="ptr2" x="320" y="138">read</text>
+        </g>
+
+        <!-- connector -->
+        <text class="conn2" x="320" y="164">copy the new value just past write, then step write forward</text>
+        <line x1="320" y1="170" x2="320" y2="182" stroke="#cfccc4" stroke-width="1.5"/>
+        <path d="M314,180 L326,180 L320,188 Z" fill="#cfccc4"/>
+
+        <!-- Snapshot 2: write=1 now holds 2, read moved on -->
+        <text class="lab2" x="320" y="206">write=1 now holds the 2; read moves on</text>
+        <g>
+          <rect class="cell2"    x="172" y="222" width="56" height="44" rx="6"/><text class="val2" x="200" y="251">1</text>
+          <rect class="cell2hot" x="232" y="222" width="56" height="44" rx="6"/><text class="val2" x="260" y="251">2</text>
+          <rect class="cell2"    x="292" y="222" width="56" height="44" rx="6"/><text class="val2" x="320" y="251">2</text>
+          <rect class="cell2"    x="352" y="222" width="56" height="44" rx="6"/><text class="val2" x="380" y="251">3</text>
+          <rect class="cell2"    x="412" y="222" width="56" height="44" rx="6"/><text class="val2" x="440" y="251">3</text>
+          <text class="idx2" x="200" y="282">0</text><text class="idx2" x="260" y="282">1</text>
+          <text class="idx2" x="320" y="282">2</text><text class="idx2" x="380" y="282">3</text><text class="idx2" x="440" y="282">4</text>
+          <path d="M260,290 L254,300 L266,300 Z" fill="#2f7d75"/>
+          <path d="M380,290 L374,300 L386,300 Z" fill="#2f7d75"/>
+          <text class="ptr2" x="260" y="314">write</text>
+          <text class="ptr2" x="380" y="314">read</text>
+        </g>
+
+        <text class="lab2" x="320" y="346">The kept part at the front is now 1, 2.</text>
+      </svg>
+      <figcaption>Same picture as the reversal: cells, two indices, a loop, and mutations you can name one at a time. Only the rule changed. Here <code>write</code> marks the end of the kept part, and <code>read</code> scans ahead for the next new value.</figcaption>
+    </figure>
+
+    <p>Partitioning an array, merging two sorted arrays, the sliding window, prefix sums: the <a href="arrays.html">arrays page</a> lays out this family. Each is the same picture with a different rule for where the indices start and when they move. Trace any of them the way you traced this one.</p>
   </section>
 
   <footer>
