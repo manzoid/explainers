@@ -51,9 +51,9 @@
     <p class="lede">When two or more names point at the same piece of state, changing it through one name changes it for all of them. That sharing is called <span class="em">aliasing</span>, and when you forget it is there, you get some of the most confusing bugs in everyday programming.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">In languages like Python, JavaScript, Java, and C#, a variable that holds an object holds a reference to it, not a copy. So two variables can end up pointing at one object without your noticing, and then a change through one name shows up through the other. The fix is almost always one of two things: <strong>make a real copy, or do not share the mutable object.</strong></p>
+  <p style="margin-top:1.6rem;">A variable that holds a list or a dict does not hold the list itself. It holds a reference, a pointer to one object sitting in memory. Assign that variable to a second name and you copy the pointer, not the object, so both names now reach the same list. Change it through one, and the other sees the change. The fix is almost always one of two things: <strong>make a real copy, or make sure only one name ever writes to the shared object.</strong></p>
 
-  <p>The examples below use Python, because it shares by default and makes the trap easy to hit. The same bug lives in JavaScript, Java, C#, Ruby, and Go, any language where a variable can hold a reference to an object, and a few snippets show it in those too. Swift is the exception worth naming: its arrays and dictionaries are value types that copy on assignment, the opposite of Python, so these sharing bugs mostly do not reach them. What follows is five sharing bugs you will meet at work, each with its fix, then one habit that catches all five. One bug is Python-only, and it is labeled where it appears. (The <a href="what-is-a-pointer.html">pointer</a> and <a href="copy-vs-share.html">copy vs share</a> pages explain the underlying model.)</p>
+  <p>The examples use Python, which shares by default and makes the trap easy to hit, but the same bug lives in JavaScript, Java, and Go, any language where a variable can hold a reference. Five bugs follow, each with its fix, then one habit that catches all of them. (The <a href="what-is-a-pointer.html">pointer</a> and <a href="copy-vs-share.html">copy vs share</a> pages explain the underlying model.)</p>
 
   <!-- 1 -->
   <section>
@@ -116,15 +116,7 @@ settings = defaults           <span class="cmt"># not a copy, a second name</spa
 settings["theme"] = "light"
 <span class="cmt"># defaults["theme"] is now <span class="bad">"light"</span> as well</span></code></pre>
 
-    <p>Assignment copies the pointer, not the object. This is safe until someone mutates the shared object, which is why it can hide for a long time: everything works until the day someone writes through one of the names. Then a change over here shows up over there, far from where you were looking.</p>
-
-    <p>The same trap lives outside Python. In Go, a map is a reference, so assigning one makes a second name for the same map:</p>
-
-    <pre><code>a := map[string]int{"x": 1}
-b := a                <span class="cmt">// not a copy, a second name</span>
-b["x"] = 99           <span class="cmt">// a["x"] is now <span class="bad">99</span> too</span></code></pre>
-
-    <p>In Java it is the same story: <code>List&lt;String&gt; b = a;</code> gives two names for one list, not two lists. Any language with reference types has this bug.</p>
+    <p>Assignment copies the pointer, not the object. This is safe until someone mutates the shared object, which is why it can hide for a long time: everything works until the day someone writes through one of the names. Then a change over here shows up over there, far from where you were looking. The same trap sits in JavaScript, Go, and Java: assigning an array or map gives you a second name, not a second copy. (Swift is the exception. Its arrays and dictionaries copy on assignment, so this particular trap does not reach them.)</p>
 
     <p><span class="good">Fix:</span> copy when you mean a separate thing. <code>settings = dict(defaults)</code>, or a deep copy if it nests.</p>
   </section>
@@ -132,7 +124,7 @@ b["x"] = 99           <span class="cmt">// a["x"] is now <span class="bad">99</s
   <!-- 3 -->
   <section>
     <h2><span class="num">3</span>Changing a collection while looping over it</h2>
-    <p>This one passes your tests and fails in production, which is the worst kind. You loop over a list and remove items as you go. On some inputs it drops the right items; on others it silently skips one, and which inputs fail depends on where the matches sit in the list.</p>
+    <p>This one can pass your tests and still fail in production. You loop over a list and remove items as you go. On some inputs it drops the right items; on others it silently skips one, and which inputs fail depends on where the matches sit. If your test cases happen to put the matches apart, everything looks fine.</p>
 
     <pre><code>nums = [1, 2, 4, 5]
 for n in nums:
@@ -140,7 +132,43 @@ for n in nums:
         nums.remove(n)        <span class="cmt"># editing the list we are walking</span>
 <span class="cmt"># nums is <span class="bad">[1, 4, 5]</span>: 4 is even, so it should be gone, but it survived</span></code></pre>
 
-    <p>The loop tracks its position by index. It reads position 1 (<code>2</code>) and removes it; everything after shifts left by one, so <code>4</code> slides into a slot the loop already passed, and the loop never looks at it. Any time two items to remove sit next to each other, the second one slips through. (Run the same code on <code>[1, 2, 3, 4, 5, 6]</code> and you get <code>[1, 3, 5]</code>, which looks correct, so the test passes and the bug ships.)</p>
+    <p>The loop tracks its position by index. It reads index 1 (<code>2</code>) and removes it. Everything after shifts left by one, so <code>4</code> slides down into index 1, a slot the loop already passed. The loop steps on to index 2 and never looks back at <code>4</code>. Whenever two items to remove sit next to each other, the second one slips through.</p>
+
+    <figure>
+      <svg viewBox="0 0 640 250" role="img" aria-label="Two rows of index boxes. Before remove: indices 0 to 3 hold 1, 2, 4, 5, and the loop pointer i sits under index 1, which holds 2. After remove: everything shifts left to hold 1, 4, 5 at indices 0, 1, 2. The value 4 now sits at index 1, which the loop already passed, and the pointer i has stepped on to index 2. So 4 is skipped.">
+        <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280">
+          <text x="40" y="24">before: remove the 2 at index 1</text>
+          <text x="40" y="150">after: values shift left, loop steps to index 2</text>
+        </g>
+
+        <!-- before row -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="12" fill="#9a978f" text-anchor="middle">
+          <text x="70" y="44">0</text><text x="144" y="44">1</text><text x="218" y="44">2</text><text x="292" y="44">3</text>
+        </g>
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="17" fill="#2c3038" text-anchor="middle">
+          <rect x="40"  y="50" width="60" height="42" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="70"  y="77">1</text>
+          <rect x="114" y="50" width="60" height="42" rx="6" fill="#f6e4e2" stroke="#b5524a"/><text x="144" y="77">2</text>
+          <rect x="188" y="50" width="60" height="42" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="218" y="77">4</text>
+          <rect x="262" y="50" width="60" height="42" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="292" y="77">5</text>
+        </g>
+        <path d="M144,116 L136,104 L152,104 Z" fill="#2f7d75"/>
+        <text x="144" y="134" text-anchor="middle" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="14" fill="#2f7d75" font-weight="600">i</text>
+
+        <!-- after row -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="12" fill="#9a978f" text-anchor="middle">
+          <text x="70" y="170">0</text><text x="144" y="170">1</text><text x="218" y="170">2</text>
+        </g>
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="17" fill="#2c3038" text-anchor="middle">
+          <rect x="40"  y="176" width="60" height="42" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="70"  y="203">1</text>
+          <rect x="114" y="176" width="60" height="42" rx="6" fill="#f6e4e2" stroke="#b5524a"/><text x="144" y="203">4</text>
+          <rect x="188" y="176" width="60" height="42" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="218" y="203">5</text>
+        </g>
+        <text x="144" y="240" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" fill="#b5524a">4 landed here, already passed</text>
+        <path d="M218,242 L210,230 L226,230 Z" fill="#2f7d75"/>
+        <text x="256" y="240" text-anchor="start" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="14" fill="#2f7d75" font-weight="600">i is here now</text>
+      </svg>
+      <figcaption>Removing index 1 shifts everything left. <code>4</code> drops into index 1, the slot the loop just left, while <code>i</code> moves on to index 2. The loop never sees <code>4</code> again.</figcaption>
+    </figure>
 
     <p><span class="good">Fix:</span> loop over one thing and build a separate result, so the thing you read and the thing you change are not the same object.</p>
 
@@ -216,26 +244,22 @@ clone = copy.deepcopy(original)   <span class="cmt"># inner list is copied too</
     <p>A deep copy costs more, so reach for it only when you know the contents are shared and mutable. Often the cheaper answer is to not share at all, or to treat the data as read-only and never mutate it. That read-only habit is the whole idea behind immutable updates in front-end code: in a React reducer you write <code>{...state, key: val}</code> to build a new top-level object instead of changing the old one, so nothing else holding the old object gets surprised.</p>
 
     <p>Data folks meet the same thing as view versus copy: <code>df['col']</code> on a pandas DataFrame can hand back a view onto the original, so mutating it sometimes changes the source and sometimes does not, depending on how you sliced. When in doubt, take an explicit <code>.copy()</code>.</p>
-
-    <p>C and C++ add a sharper version, worth knowing if you work there. The compiler assumes two pointers of different types do not point at the same memory, the strict aliasing rule, and it optimizes on that assumption. If they do point at the same memory, you can get silently wrong output rather than a mere shared-mutation surprise. Different mechanism from the sharing above, same core question: do two names reach the same bytes?</p>
   </section>
 
   <!-- 7 -->
   <section>
-    <h2><span class="num">7</span>How to see aliasing coming</h2>
-    <p>You do not have to memorize five bugs. You need one habit: whenever a mutable object gets a second name, ask whether both names should see the change. Second names appear in more places than people notice. These are the spots to watch, and the one-line fix for each:</p>
+    <h2><span class="num">7</span>How to spot it, even in someone else's code</h2>
+    <p>You do not have to memorize five bugs. You need one habit: when a mutable object gets a second name, ask whether both names should see the writes. In a code review, second names are easy to catch once you know the shapes. Each is a plain assignment or pass that looks like a copy and is not:</p>
 
     <ul class="spots">
       <li><span class="s">Assignment</span> (<code>b = a</code>). The plain assign makes a second name, not a second object. Fix: <code>b = list(a)</code> or <code>dict(a)</code>.</li>
       <li><span class="s">Passing into a function</span> (<code>f(a)</code>). The parameter is a second name for your object. Fix: copy at the top of the function, <code>base = list(base)</code>.</li>
-      <li><span class="s">Returning and keeping</span>. The returned object is the same one the function held. Fix: return a copy, or agree to treat it as read-only.</li>
-      <li><span class="s">Storing on an object or in a list</span> (<code>self.items = a</code>). The field becomes a second name. Fix: <code>self.items = list(a)</code>.</li>
-      <li><span class="s">A default list or dict argument</span> (Python). The default is one shared object. Fix: default to <code>None</code>, build a fresh one inside.</li>
+      <li><span class="s">Returning and keeping</span> (<code>return self.items</code>). The caller walks away holding the same object the function held. Fix: <code>return list(self.items)</code>, or agree to treat it as read-only.</li>
+      <li><span class="s">Storing on an object</span> (<code>self.items = a</code>). The field becomes a second name for the caller's list. Fix: <code>self.items = list(a)</code>.</li>
+      <li><span class="s">A default list or dict argument</span> (<code>def f(x, acc=[])</code>, Python). The default is one shared object. Fix: default to <code>None</code>, build a fresh one inside.</li>
     </ul>
 
-    <p>In every one, a plain assignment or pass makes a second name, not a second object. When you spot one, run the two questions from the box at the top.</p>
-
-    <p>Aliasing turns the <a href="what-is-a-pointer.html">pointer</a> and <a href="copy-vs-share.html">copy vs share</a> model into a skill you use every week. The same reference thinking explains the failures on the <a href="null-and-dangling-pointers.html">null and dangling pointers page</a>: a name that points at nothing, or at something already gone. Names and the state they point at are where most hard bugs live, and now you can see one whole class of them coming.</p>
+    <p>Every one is the picture from section 1: a second name for one object. When you see it, run the two questions. Is the object mutable, and will more than one name write to it? If both are yes, copy it, or let only one name write. The same reference thinking explains the failures on the <a href="null-and-dangling-pointers.html">null and dangling pointers</a> page, a name that points at nothing, or at something already gone.</p>
   </section>
 
   <footer>

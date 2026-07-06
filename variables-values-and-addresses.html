@@ -42,48 +42,38 @@
 
   <header>
     <h1>Variables, values, and addresses</h1>
-    <p class="lede">A variable is a <span class="em">name for a place in memory</span>. The value is whatever sits in that place right now. Keep the name, the place, and the value apart, and two puzzles get simple: two names that accidentally share one cell, and why your function changed something it was never supposed to touch.</p>
+    <p class="lede">A variable is a <span class="em">name for a place in memory</span>. The value is whatever sits in that place right now. Two bugs stop being mysterious once you keep the name, the place, and the value apart: two names that accidentally share one object, and a function that changed something it was never handed to change.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">The <a href="memory-bytes-and-addresses.html">memory page</a> showed raw memory: a long row of numbered byte-cells, nothing but bits and their addresses. But you do not write <code>address 4096</code> in your code, you write <code>total</code>. This page shows how the human names in your code map down to those numbered cells. On its own that already explains a bug most people hit in their first year: you write <code>b = a</code>, change <code>b</code>, and <code>a</code> changes too. It also sets up <a href="copy-vs-share.html">copy versus share</a> and <a href="what-is-a-pointer.html">pointers</a>, the two ideas that follow.</p>
+  <p style="margin-top:1.6rem;">You write <code>total</code>, not <code>address 4096</code>. This page shows how the human name in your code maps down to a numbered place in memory, and why that mapping is behind a whole family of bugs you have probably already hit. It is also standard interview ground: when an interviewer asks whether Python passes by value or by reference, or why editing a copy also edited the original, they are checking that you hold exactly these three things apart.</p>
 
   <!-- 1 -->
   <section>
     <h2><span class="num">1</span>Three things, not one</h2>
-    <p>Look at one line of code: <code>score = 10</code>. It is easy to read that as a single thing, a box called <code>score</code> with <code>10</code> in it. But there are three separate things here, and untangling them is the whole point of this page.</p>
+    <p>Look at one line: <code>score = 10</code>. It is easy to read that as a single thing, a box called <code>score</code> with <code>10</code> in it. But there are three separate things here, and untangling them is the whole point of the page.</p>
     <p>There is the <strong>name</strong>, <code>score</code>, which you wrote. There is the <strong>place</strong>, a spot in memory with its own address, which the machine picked. And there is the <strong>value</strong>, <code>10</code>, the bits now sitting in that place. The name is yours. The place is fixed for the life of the variable. The value can change.</p>
+    <p>The machine does not know the word <code>score</code>. It works in addresses: read the cell at this address, write to the cell at that one. Your language keeps a table that says this name means that address, so everywhere you wrote <code>score</code> it uses the real address instead. You think in names; the machine runs on addresses; the table connects the two. That is why one value can sit in memory under one name, two names, or none.</p>
   </section>
 
   <!-- 2 -->
   <section>
-    <h2><span class="num">2</span>The name is for you; the machine runs on addresses</h2>
-    <p>The machine does not know the word <code>score</code>. Addresses are what it works with: read the cell at this address, write to the cell at that one. The compiler (or, for an interpreted language like Python or JavaScript, the runtime) builds a table that says this name means that address, and everywhere you wrote <code>score</code> it uses the real address instead. A compiled language does this once, ahead of time; an interpreted one does it while the program runs.</p>
-    <p>So the name is a label the tool translates away. You think in names; the machine runs on addresses; the table connects them. This is why the same value can sit in memory under one name, two names, or none: the value lives in the place, and names are just handles you attached to it.</p>
-  </section>
-
-  <!-- 3 -->
-  <section>
-    <h2><span class="num">3</span>The place, drawn</h2>
-    <p>On the left of the diagram, the name <code>score</code> floats above its cell. The dashed line is the table connection: the name up top, the place at address 4096 below, the value inside. To the right, the same cell after <code>score = 42</code> runs. Same name, same address, new value.</p>
-    <p>This is where the equals sign trips people up. In <code>score = 42</code> it is not a claim that two things are equal. It is an instruction: take the value on the right and store it into the place named on the left. Read it as "store into", not "is equal to". That reading makes the diagram obvious: only the value in the cell changes; the place keeps its address.</p>
+    <h2><span class="num">2</span>The place, drawn</h2>
+    <p>In the diagram, the name <code>score</code> floats above its cell. The dashed line is the table connection: the name up top, the place at address 4096 below, the value inside. To the right, the same cell after <code>score = 42</code> runs. Same name, same address, new value.</p>
+    <p>This is where the equals sign trips people up. In <code>score = 42</code> it is not a claim that two things are equal. It is an instruction: take the value on the right and store it into the place named on the left. Read it as "store into", not "is equal to". Then the diagram is obvious: only the value in the cell changes; the place keeps its address.</p>
 
     <figure>
-      <svg viewBox="0 0 620 220" role="img" aria-label="On the left, a named box labeled score floats above a memory cell at address 4096 that holds the value 10, connected by a dashed line. An arrow labeled score = 42 points right to the same cell now holding 42, still at address 4096.">
+      <svg viewBox="0 0 620 220" role="img" aria-label="On the left, a named box labeled score floats above a memory cell at address 4096 holding 10, joined by a dashed line. An arrow labeled score = 42 points right to the same cell, still named score and still at address 4096, now holding 42.">
         <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
           <text x="150" y="28">the name (yours)</text>
           <text x="150" y="180">the place (an address)</text>
         </g>
 
-        <!-- name box -->
+        <!-- name box (left) -->
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="18" text-anchor="middle">
           <rect x="96" y="40" width="108" height="40" rx="8" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
           <text x="150" y="66" fill="#1f5b54">score</text>
         </g>
-
-        <!-- connector -->
         <line x1="150" y1="80" x2="150" y2="112" stroke="#2f7d75" stroke-width="2" stroke-dasharray="4 4"/>
-
-        <!-- memory cell -->
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="22" text-anchor="middle">
           <rect x="96" y="112" width="108" height="48" rx="6" fill="#ffffff" stroke="#cfccc4"/>
           <text x="150" y="145" fill="#2c3038">10</text>
@@ -92,14 +82,17 @@
           <text x="150" y="200">address 4096</text>
         </g>
 
-        <!-- arrow to the right: assignment -->
-        <g stroke="#2f7d75" stroke-width="2">
-          <line x1="250" y1="136" x2="330" y2="136"/>
-        </g>
+        <!-- arrow -->
+        <line x1="250" y1="136" x2="330" y2="136" stroke="#2f7d75" stroke-width="2"/>
         <path d="M330,130 L342,136 L330,142 Z" fill="#2f7d75"/>
         <text x="290" y="122" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="13" fill="#6b7280" text-anchor="middle">score = 42</text>
 
-        <!-- same cell, new value -->
+        <!-- name box (right) -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="18" text-anchor="middle">
+          <rect x="416" y="40" width="108" height="40" rx="8" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
+          <text x="470" y="66" fill="#1f5b54">score</text>
+        </g>
+        <line x1="470" y1="80" x2="470" y2="112" stroke="#2f7d75" stroke-width="2" stroke-dasharray="4 4"/>
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="22" text-anchor="middle">
           <rect x="416" y="112" width="108" height="48" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
           <text x="470" y="145" fill="#2c3038">42</text>
@@ -108,20 +101,17 @@
           <text x="470" y="200">address 4096</text>
         </g>
         <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
-          <text x="470" y="28">same place, new value</text>
+          <text x="470" y="28">same name, new value</text>
         </g>
       </svg>
-      <figcaption>Assigning overwrites what the cell holds. The address stays put for as long as the variable lives; only the value changes.</figcaption>
+      <figcaption>Assigning overwrites what the cell holds. The name stays, the address stays; only the value changes.</figcaption>
     </figure>
-
-    <p>That gap, a fixed place holding a value that is free to change, is where the next idea comes from. It is the same overwrite the <a href="what-is-state.html">state page</a> called a mutation, now seen from the language level.</p>
   </section>
 
-  <!-- 4 -->
+  <!-- 3 -->
   <section>
-    <h2><span class="num">4</span>Two names, one place</h2>
-    <p>Once the name and the place are separate, a sharp question appears: can two names point at the <em>same</em> place? Yes. And that is where the trouble starts.</p>
-    <p>Here is the case that bites most people, in JavaScript. You put an object in <code>a</code>, then copy <code>a</code> into <code>b</code>, and change something through <code>b</code>:</p>
+    <h2><span class="num">3</span>Two names, one place</h2>
+    <p>Once the name and the place are separate, a sharp question appears: can two names point at the <em>same</em> place? Yes. That is where the trouble starts. Here it is in JavaScript. You put an object in <code>a</code>, copy <code>a</code> into <code>b</code>, and change something through <code>b</code>:</p>
 
     <pre><span class="cmt">// a and b end up naming the same object</span>
 let a = { count: 0 };
@@ -129,25 +119,87 @@ let b = a;        <span class="cmt">// not a fresh copy, a second name</span>
 b.count = 5;      <span class="cmt">// change it through b</span>
 a.count;          <span class="cmt">// 5  -- a changed too</span></pre>
 
-    <p>Nothing touched <code>a</code> on that third line, yet <code>a.count</code> is now 5. The reason: the value stored in <code>a</code> was not the object itself, it was the <em>address</em> of the object elsewhere in memory. <code>let b = a</code> copied that address, so both cells hold directions to the one object. This is a pointer: a value that holds an address, not the thing itself. A <a href="what-is-a-pointer.html">pointer</a> is what lets two names share one thing.</p>
+    <p>Nothing touched <code>a</code> on that third line, yet <code>a.count</code> is now 5. The reason: the value stored in <code>a</code> was not the object itself, it was the <em>address</em> of the object, which lives elsewhere in memory. <code>let b = a</code> copied that address, so both cells now hold directions to the one object. Changing it through <code>b</code> changes the same object you can also reach through <code>a</code>.</p>
 
-    <p>This bites objects, not plain numbers. In Java or C#, <code>int b = a; b = 5;</code> leaves <code>a</code> alone, because an <code>int</code> is copied as a value. But <code>SomeObject b = a; b.count = 5;</code> changes <code>a</code> too, because <code>b</code> holds the same address. Python behaves the same way: <code>b = a</code> on a list or dict makes <code>b is a</code> true, and editing through one edits the other. The rule is about reference types (objects, lists, dicts), not primitive numbers.</p>
+    <figure>
+      <svg viewBox="0 0 620 220" role="img" aria-label="Two name boxes, a and b, each holding an address, with arrows that both point at one object box holding count colon 5 at address 8192.">
+        <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
+          <text x="105" y="28">two names</text>
+          <text x="470" y="28">one object</text>
+        </g>
 
-    <div class="rule">A name is not the thing. It is a label on a place. Two labels can sit on one place, and then changing "either" changes the one thing underneath.</div>
+        <!-- name a -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="18" text-anchor="middle">
+          <rect x="50" y="48" width="110" height="44" rx="8" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
+          <text x="105" y="76" fill="#1f5b54">a</text>
+        </g>
+        <!-- name b -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="18" text-anchor="middle">
+          <rect x="50" y="128" width="110" height="44" rx="8" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
+          <text x="105" y="156" fill="#1f5b54">b</text>
+        </g>
 
-    <p>Whether an assignment copies the value into a fresh place or just adds a second name to the old place is the <a href="copy-vs-share.html">copy versus share</a> question, and it decides a large share of real bugs. A function that "changed something it shouldn't have" is almost always this: it was handed a name, not a copy. You pass a list to a helper, the helper appends one item, and back in the caller your list now has that extra item, because the helper was working on your list the whole time, not a copy of it.</p>
+        <!-- arrows converging -->
+        <g stroke="#2f7d75" stroke-width="2" fill="none">
+          <path d="M160,70 C260,70 300,104 358,108"/>
+          <path d="M160,150 C260,150 300,116 358,112"/>
+        </g>
+        <path d="M358,108 L346,102 L349,114 Z" fill="#2f7d75"/>
+
+        <!-- object cell -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="20" text-anchor="middle">
+          <rect x="360" y="86" width="210" height="50" rx="6" fill="#ffffff" stroke="#cfccc4"/>
+          <text x="465" y="118" fill="#2c3038">{ count: 5 }</text>
+        </g>
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="12" fill="#6b7280" text-anchor="middle">
+          <text x="465" y="158">address 8192</text>
+        </g>
+      </svg>
+      <figcaption>After <code>let b = a</code>, both names hold the same address, so both arrows land on the one object. Change it through either name and the single object underneath changes.</figcaption>
+    </figure>
+
+    <p>Python works the same way. <code>b = a</code> on a list or dict makes <code>b is a</code> true, and editing through one edits the other. The rule holds for objects, lists, and dicts, not for plain numbers: a bare number is copied as a value, so <code>b = a</code> then <code>b = 5</code> leaves <code>a</code> alone. Whether an assignment copies the value into a fresh place or just adds a second name to the old place is the <a href="copy-vs-share.html">copy versus share</a> question, and it decides a large share of real bugs.</p>
+
+    <div class="rule">A name is not the thing. It is a label on a place. Two labels can sit on one place, and then changing the object through "either" name changes the one thing underneath.</div>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>The function that changed your list</h2>
+    <p>A function that "changed something it shouldn't have" is almost always this same thing, one step removed. Passing an argument is an assignment: the parameter becomes a second name for whatever you handed in. If you hand in a list, the function does not get a copy, it gets another name for your list.</p>
+
+    <pre><span class="cmt"># Python</span>
+def add_tag(tags):
+    tags.append("new")   <span class="cmt"># edits the caller's list</span>
+
+my_tags = ["a", "b"]
+add_tag(my_tags)
+my_tags                  <span class="cmt"># ["a", "b", "new"] -- you never appended</span></pre>
+
+    <p>Inside <code>add_tag</code>, the name <code>tags</code> points at the same list as <code>my_tags</code> outside. The <code>append</code> changes that one list, so the caller sees the extra item. Nothing here is broken; it is the shared-address rule from section 3, now crossing a function boundary.</p>
+
+    <p>The fix is to make a real copy before you change it, so the function works on its own place:</p>
+
+    <pre><span class="cmt"># Python: copy first</span>
+def add_tag(tags):
+    tags = tags.copy()   <span class="cmt"># a fresh list, its own place</span>
+    tags.append("new")
+    return tags
+
+<span class="cmt">// JavaScript: same idea</span>
+let b = { ...a };        <span class="cmt">// a fresh object, not a shared address</span></pre>
+
+    <p>A shallow copy like this is enough when the items themselves are not shared objects you also mutate; when they are, you need a deeper copy, which is where <a href="copy-vs-share.html">copy versus share</a> picks up.</p>
   </section>
 
   <!-- 5 -->
   <section>
-    <h2><span class="num">5</span>Three questions when something surprises you</h2>
-    <p>When a line does something you did not expect, pull the name, the place, and the value apart and ask three plain questions. Here they are, each answered on the case above:</p>
-
-    <p><strong>1. What place does this name refer to?</strong><br><code>b</code> refers to the same place as <code>a</code>, because <code>let b = a</code> copied a shared address.</p>
-    <p><strong>2. What value is in that place right now?</strong><br>One object, whose <code>count</code> is now 5.</p>
-    <p><strong>3. Did this line change the value, or point a name at a different place?</strong><br><code>b.count = 5</code> changed the value in the shared place; it did not hand <code>a</code> or <code>b</code> a new place.</p>
-
-    <p>Hold those three apart and pointers, sharing, and the bugs that come with them stop being mysterious. When you want to know whether an assignment shares or copies, read <a href="copy-vs-share.html">copy versus share</a> next; to see what a shared address really is, read <a href="what-is-a-pointer.html">pointers</a>.</p>
+    <h2><span class="num">5</span>Three questions when a line surprises you</h2>
+    <p>When code does something you did not expect, pull the name, the place, and the value apart and ask three questions. Run them on the <code>add_tag</code> call above, where <code>my_tags</code> changed on its own:</p>
+    <p><strong>What place does this name refer to?</strong> Inside the function, <code>tags</code> refers to the same list as <code>my_tags</code>, because passing the argument copied a shared address, not the list.</p>
+    <p><strong>Did the line change the value in that place, or point a name at a different place?</strong> <code>tags.append("new")</code> changed the one list in place. It did not give <code>tags</code> a new list. So the change is visible everywhere that list is named, including back in the caller.</p>
+    <p>If instead the function had done <code>tags = tags.copy()</code> first, that assignment would have pointed <code>tags</code> at a fresh place, and the later <code>append</code> would touch only that copy. Same three parts, different answer: which is exactly how you can tell the two cases apart before running anything.</p>
+    <p>To decide when an assignment shares versus copies, read <a href="copy-vs-share.html">copy versus share</a> next. To see what a shared address really is under the hood, read <a href="what-is-a-pointer.html">what is a pointer</a>.</p>
   </section>
 
   <footer>

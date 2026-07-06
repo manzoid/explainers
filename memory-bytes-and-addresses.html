@@ -26,10 +26,12 @@
   a{color:var(--accent);}
   .em{color:var(--accent);font-weight:600;}
   .rule{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.6rem 0;color:#1f5b54;font-size:1.05rem;}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;overflow-x:auto;margin:1.3rem 0;}
   figure{margin:1.9rem 0;}
   figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;}
   figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem;}
   code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;background:var(--code-bg);padding:.05rem .3rem;border-radius:4px;}
+  pre code{background:none;padding:0;line-height:1.55;color:#2c3038;}
   footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
   @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
 </style>
@@ -42,7 +44,9 @@
     <p class="lede">Memory is one long row of numbered cells. Each cell holds one <span class="em">byte</span>, a small number. Each cell has a number of its own, its <span class="em">address</span>. Everything a program holds lives here, as bytes in cells.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said a running program is always holding some information, and that the information is real and sits somewhere. This page is that somewhere. It is the ground the rest of the series stands on: <a href="arrays.html">arrays</a>, <a href="what-is-a-pointer.html">pointers</a>, and the stack are all just patterns laid over these numbered cells. It is also where you drop back to when a program stops making sense, because down here there are only two questions to ask: <strong>which cell</strong>, and <strong>what byte is in it</strong>. Keep those two straight and a lot of confusion clears up.</p>
+  <p style="margin-top:1.6rem;">You have already met this row without knowing its name. Run <code>id(x)</code> in a Python notebook and you get back a plain integer. Ask numpy for an <code>int32</code> array instead of <code>int64</code> and it takes half the memory for the exact same numbers. Hit a bug and a debugger shows your variable as <code>0x7ffe...</code> instead of its name, or a crash prints an address of <code>0x0</code>. All four are the same fact showing through: your program's data lives in memory, and memory is nothing but numbered cells holding bytes.</p>
+
+  <p>This page builds that model from the ground up, so those four things stop being trivia and start being one picture you can reason about. It is also what <a href="arrays.html">arrays</a>, <a href="what-is-a-pointer.html">pointers</a>, and the stack are all laid over, and where you drop back to when a program stops making sense, because down here there are only two questions: <strong>which cell</strong>, and <strong>what byte is in it</strong>. Section 5 turns that into the payoff you can use right away, why your tools speak in hex and what an address in a crash is telling you. The <a href="what-is-state.html">state page</a> said a running program is always holding information that is real and sits somewhere. This page is that somewhere.</p>
 
   <!-- 1 -->
   <section>
@@ -83,7 +87,7 @@
           <text x="330" y="140">address (which cell)</text>
         </g>
       </svg>
-      <figcaption>Eight cells. The big number inside each is the byte it holds; the small number below is its address. (72 and 105 are the ASCII codes for the letters H and i; section 4 shows how a run of cells like these spells a word.)</figcaption>
+      <figcaption>Eight cells. The big number inside each is the byte it holds; the small number below is its address. The two highlighted cells hold 72 and 105, the ASCII codes for the letters H and i; section 4 shows how a run of cells like these spells a word.</figcaption>
     </figure>
   </section>
 
@@ -91,32 +95,42 @@
   <section>
     <h2><span class="num">3</span>Read and write, both by address</h2>
     <p>The processor does two basic things with memory, and both start with an address. It can <strong>read</strong>: give it an address, and it hands back the byte in that cell. It can <strong>write</strong>: give it an address and a byte, and it puts that byte in that cell, overwriting whatever was there. Read the byte at 3. Write 200 to cell 5. That is the whole conversation. The processor never searches or scans for a value; it names the cell by number and goes straight there, so any cell is as quick to reach as any other.</p>
-    <p>You rely on this every day, usually without naming it. Indexing an array or a Go slice is O(1) because the position is turned into an address and read once, with no scan. A pointer dereference in C, or following a reference in Java or C#, is the same act: a read at an address the program already holds. Where those addresses come from, which cell a name in your code stands for, is what <a href="variables-values-and-addresses.html">variables, values, and addresses</a> covers next.</p>
+    <p>This is the reason an interviewer expects you to say array indexing is <strong>O(1)</strong>. When you write <code>my_list[5]</code>, Python jumps straight to that cell; it does not count from the front. It takes the same time whether the list has ten items or ten million. numpy makes the arithmetic plain: the values sit in a row starting at some base address, and the address of element <code>i</code> is just</p>
+    <pre><code>address = base + i * element_size</code></pre>
+    <p>one multiply and one add, no scan, whatever <code>i</code> is. That single calculation is what O(1) means here, and it is why an interviewer treats "index into the array" as free while "search the array" is not.</p>
+    <p>You can see the address itself. In CPython, <code>id(x)</code> returns the memory address of the object <code>x</code> names, which is why two variables with the same <code>id()</code> are the same object in the same cells, not two copies that happen to match. Where these addresses come from, which cell a name in your code stands for, is what <a href="variables-values-and-addresses.html">variables, values, and addresses</a> covers next.</p>
   </section>
 
   <!-- 4 -->
   <section>
     <h2><span class="num">4</span>Bigger values span several cells</h2>
     <p>One byte only reaches 255, so anything larger will not fit in a single cell. The fix is simple: use several cells in a row and read them as one value. Four cells give 32 bits, which covers about four billion values; the machine treats those four adjacent bytes as one number.</p>
-    <p>How many cells a value gets is fixed by its type. In C, <code>sizeof(int)</code> is usually 4 and <code>sizeof(double)</code> is 8. A Swift <code>Int64</code> occupies 8 cells in a row; call <code>withUnsafeBytes</code> on it and you are looking straight at those eight bytes. In numpy the whole point of <code>int32</code> versus <code>int64</code> is this count, 4 cells per number or 8, which is why a dtype mismatch changes the size of the entire array. In C you pick the size with the type; in Java or C# the runtime fixes it for you, same effect.</p>
-    <p>Text works the same way. Each character is stored as a number in one byte, so the word <code>Hi</code> is two cells: 72 for <code>H</code>, then 105 for <code>i</code>, the two highlighted cells in the diagram above. A longer word is a longer run of cells. The pattern is always the same: a big thing is a group of adjacent cells, and its address is the address of its first cell.</p>
+    <p>How many cells a value gets is fixed by its type, and numpy is where you can watch this happen. A dtype is exactly this count: how many cells each element takes. An <code>int32</code> gets 4 cells per number, an <code>int64</code> gets 8. So a one-million-element <code>int64</code> array occupies 8 million consecutive cells, and the same array as <code>int32</code> occupies 4 million. Same values, half the memory. You can check it directly:</p>
+    <pre><code>a = np.zeros(1_000_000, dtype=np.int64)
+a.itemsize   # 8   cells per element
+a.nbytes     # 8_000_000
+
+b = a.astype(np.int32)
+b.itemsize   # 4
+b.nbytes     # 4_000_000</code></pre>
+    <p>This is why a dtype mismatch quietly changes the size of a whole array, and why picking <code>int32</code> over <code>int64</code> is a real decision when memory is tight. The same rule holds in any language: the type fixes the cell count. In C, <code>sizeof(int)</code> is usually 4 and <code>sizeof(double)</code> is 8; in Java or C# the runtime fixes it for you, same effect.</p>
+    <p>Text works the same way. Each character is stored as a number in one byte, so the word <code>Hi</code> is two cells: 72 for <code>H</code>, then 105 for <code>i</code> (the two highlighted cells in the diagram above). A longer word is a longer run of cells. The pattern is always the same: a big thing is a group of adjacent cells, and its address is the address of its first cell.</p>
   </section>
 
   <!-- 5 -->
   <section>
     <h2><span class="num">5</span>Why your tools show hex</h2>
     <p>A cell holding 72 does not know whether it is the letter <code>H</code>, the number 72, or one slice of a bigger number. The meaning is not in the cell; it lives in the code that decides how to read each region, the same point the <a href="what-is-state.html">state page</a> made about bits.</p>
-    <p>This row is the picture your tools drop into when things go wrong. It is why a debugger prints a variable as a hex number like <code>0x7ffe...</code> instead of a name: that number is the address of the variable's first cell, not the value inside. And it is why dereferencing a null pointer in C crashes with an address of <code>0x0</code>: the program tried to read at cell zero, an address kept invalid on purpose, instead of at a real one. Confuse the address with the byte and these read as noise; keep them apart and they tell you exactly what happened.</p>
+    <p>So why do addresses show up as hex like <code>0x7ffe...</code> and not plain decimal? Because each hex digit stands for exactly four bits, so two hex digits describe one byte cleanly, with nothing left over. That neat fit, one byte per pair of digits, is the whole reason memory tools count in hex: the number on screen lines up with the underlying bytes instead of smearing across them the way a decimal number would.</p>
+    <p>This row is the picture your tools drop into when things go wrong. A debugger prints a variable as <code>0x7ffe...</code> instead of a name because that number is the address of the variable's first cell, not the value inside. A crash on a null pointer shows an address of <code>0x0</code> because the program tried to read at cell zero, an address kept invalid on purpose, instead of at a real one. You hit the same mistake in Python without the hex: following a <code>None</code> reference and getting <code>AttributeError: 'NoneType' object has no attribute ...</code> is the same error one level up, you told the program to go somewhere that holds nothing useful. Confuse the address with the byte and these read as noise; keep them apart and each one tells you exactly what happened.</p>
   </section>
 
   <!-- 6 -->
   <section>
     <h2><span class="num">6</span>Everything is bytes in cells</h2>
     <p>Every value your program holds ends up here. A count, a name, a price, a whole list, a picture: all of it is bytes in numbered cells, and nothing else. Higher up, a language gives you names and types and shapes so you rarely think about raw addresses, but underneath, it is this row of cells the entire time.</p>
-
-    <div class="rule">An <a href="arrays.html">array</a> is just values packed into cells in a row. A <a href="what-is-a-pointer.html">pointer</a> is the stranger one: a value stored across a few cells whose content is itself an address, the number of some other cell. A cell that holds the address of another cell is the whole idea the rest of the series builds on.</div>
-
-    <p>Next comes how a name in your code gets attached to a cell in this row, in <a href="variables-values-and-addresses.html">variables, values, and addresses</a>. After that, <a href="arrays.html">arrays</a> and <a href="what-is-a-pointer.html">pointers</a> are just the two shapes above laid out in full. Every one of them, when you need to, comes back to the same two questions: which cell, and what byte is in it.</p>
+    <p>Next comes how a name in your code gets attached to a cell in this row, in <a href="variables-values-and-addresses.html">variables, values, and addresses</a>. After that, an <a href="arrays.html">array</a> is just values packed into cells in a row, and a <a href="what-is-a-pointer.html">pointer</a> is a cell whose content is itself an address, the number of some other cell. Both are shapes laid over the row you now have.</p>
+    <p>The four things that opened this page, the integer from <code>id(x)</code>, the array that shrank when you changed its dtype, the <code>0x7ffe...</code> in a debugger, the <code>0x0</code> in a crash, are one row of numbered cells seen through different tools. When a value surprises you, changes when you did not expect it, crashes, or takes more space than it should, drop back here and ask the two questions: which cell, and what byte is in it.</p>
   </section>
 
   <footer>
