@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scope and globals</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--warn:#b5524a;--code-bg:#f4f3ef;--maxw:720px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 1rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3rem;}
+  h2{font-size:1.3rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+  .em{color:var(--accent);font-weight:600;}
+  .rule{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.6rem 0;color:#1f5b54;font-size:1.05rem;}
+  figure{margin:1.9rem 0;}
+  figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;}
+  figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem;}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;background:var(--code-bg);padding:.05rem .3rem;border-radius:4px;}
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Scope and globals</h1>
+    <p class="lede">Every name in a program has a region of code where it can be used, and outside that region it does not exist. That region is its <span class="em">scope</span>. Scope is how you decide who is allowed to see and change a piece of state.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said the trouble in programs comes from state that changes. The <a href="the-stack-and-frames.html">stack and frames page</a> showed where a function keeps its own state while it runs. This page is about a related question: once you have a piece of state, who is allowed to touch it? Scope is the answer, and a global is what you get when you refuse to answer it.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>Scope is where a name is usable</h2>
+    <p>Write <code>total</code> inside a function and the rest of the program cannot see it. The name lives in that function's frame, is born when the call starts, and is gone when the call returns. That region, the block of code where the name means something, is its scope.</p>
+    <p>Scope is a rule the language enforces at the level of names, not bits. The bits are just memory. Scope decides which parts of the code are even allowed to write a name that points at them.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>Scopes nest, and inner can see outer</h2>
+    <p>Scopes sit inside each other like boxes. A function has an outer scope; a loop or an <code>if</code> inside it has a smaller scope of its own. Code in an inner box can reach the names of the boxes around it, but code outside cannot reach in. In most modern statically-typed languages a name declared deep inside a loop does not exist once the loop ends. (Some languages are looser here: Python has no block scope, so a loop variable outlives its loop, and older JavaScript with <code>var</code> did the same.)</p>
+    <p>So most names have a short life and a small audience. That is the point of them: a <code>total</code> local to one function is state that only that function can touch, which means only that function's code can be at fault when it goes wrong.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>A global is visible everywhere</h2>
+    <p>At the outermost level is the <strong>global</strong> scope. A name here is not inside any box, so every box can see it. Any function, anywhere in the program, can read it, and any function can write it.</p>
+
+    <figure>
+      <svg viewBox="0 0 620 300" role="img" aria-label="On the left, three nested boxes: a large outer scope containing a function scope, which contains a loop scope with a local name total. On the right, a global box named config, with double-headed arrows connecting it to three functions f, g, and h, showing that each function both reads and writes the global.">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+            <path d="M0,0 L6.5,3 L0,6 Z" fill="#b5524a"/>
+          </marker>
+        </defs>
+
+        <!-- nested scopes -->
+        <text x="30" y="26" fill="#6b7280" font-size="13" font-family="-apple-system, sans-serif">Contained: nested scopes</text>
+        <rect x="30" y="40" width="230" height="230" rx="10" fill="#ffffff" stroke="#cfccc4"/>
+        <text x="46" y="62" fill="#6b7280" font-size="12" font-family="-apple-system, sans-serif">outer scope</text>
+        <rect x="54" y="78" width="182" height="170" rx="9" fill="#f4f3ef" stroke="#cfccc4"/>
+        <text x="70" y="100" fill="#6b7280" font-size="12" font-family="-apple-system, sans-serif">function scope</text>
+        <rect x="80" y="116" width="130" height="112" rx="8" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/>
+        <text x="96" y="138" fill="#1f5b54" font-size="12" font-family="-apple-system, sans-serif">loop scope</text>
+        <rect x="104" y="156" width="82" height="46" rx="6" fill="#ffffff" stroke="#2f7d75"/>
+        <text x="145" y="184" fill="#2c3038" font-size="15" text-anchor="middle" font-family="SF Mono, ui-monospace, Menlo, monospace">total</text>
+
+        <!-- global reachable from everywhere -->
+        <text x="392" y="26" fill="#b5524a" font-size="13" font-family="-apple-system, sans-serif">Uncontained: one global</text>
+        <rect x="470" y="122" width="120" height="56" rx="8" fill="#f7e9e7" stroke="#b5524a" stroke-width="1.5"/>
+        <text x="530" y="155" fill="#b5524a" font-size="15" text-anchor="middle" font-family="SF Mono, ui-monospace, Menlo, monospace">config</text>
+
+        <g font-family="-apple-system, sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">
+          <rect x="330" y="52" width="66" height="34" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="363" y="73">f()</text>
+          <rect x="330" y="133" width="66" height="34" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="363" y="154">g()</text>
+          <rect x="330" y="214" width="66" height="34" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="363" y="235">h()</text>
+        </g>
+
+        <!-- double-headed arrows: each function both reads and writes the global -->
+        <g stroke="#b5524a" stroke-width="1.6" fill="none" marker-start="url(#ah)" marker-end="url(#ah)">
+          <line x1="400" y1="72" x2="466" y2="132"/>
+          <line x1="400" y1="150" x2="466" y2="150"/>
+          <line x1="400" y1="228" x2="466" y2="168"/>
+        </g>
+        <text x="433" y="120" fill="#b5524a" font-size="11.5" text-anchor="middle" font-family="-apple-system, sans-serif">read / write</text>
+      </svg>
+      <figcaption>Left: a local name sits in the narrowest box, and only code inside that box can touch it. Right: a global sits in no box, so functions from all over the program connect to it, each one both reading and writing (the arrows run both ways).</figcaption>
+    </figure>
+
+    <p>That sounds convenient. You define it once and reach it from anywhere, no passing it around. The cost is hidden, and it shows up later.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>The cost: you cannot tell who changed it</h2>
+    <p>State is only manageable when you know who can change it. A local name has a short list of suspects: the code in its box, and nowhere else. A global has no list. When its value is wrong, the code that set it could be anywhere, run at any time, on any path.</p>
+    <div class="rule">Scope is how you contain state. It limits the set of code that can touch a value, so when the value is wrong, you know where to look. A global throws that limit away.</div>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>Hidden coupling and order-dependence</h2>
+    <p>Two functions that both touch the same global are joined together, even if nothing in their code says so. One writes it, the other reads it, and now they depend on each other through a channel you cannot see by reading either one. That is <strong>hidden coupling</strong>: a connection with no line drawn between the parts.</p>
+    <p>It gets worse with order. If <code>setup()</code> has to run before <code>process()</code> because it fills in a global that <code>process()</code> reads, then the two must run in that order, and nothing forces it. Call them the other way, or add a third caller later, and it breaks in a way that looks like nothing changed. (This is the exact problem when you run notebook cells out of order: a later cell reads a value that an earlier cell was supposed to set, and if you skipped that cell, you get a stale value or an error.) This is <strong>order-dependence</strong>: correctness that leans on an unwritten schedule.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>Tests fight each other</h2>
+    <p>A good test sets up a small world, runs one thing, and checks the result. A global breaks that, because it is one shared value that outlives any single test. One test writes it, the next test reads what the first left behind, and now the second passes or fails depending on which ran first.</p>
+    <p>So tests that should be independent start interfering, and you get failures that appear and vanish depending on order. This is the same order-dependence from the last section, showing up where it hurts most: the code you were trusting to catch bugs.</p>
+    <p>Put the three failure modes together, cannot tell who changed it, hidden coupling, tests that fight, and you have why the phrase "globals considered harmful" stuck. The harm is not the keyword. It is the loss of containment: a global is scope removed, everything can reach in, and uncontained changing state is exactly the thing this whole series is about.</p>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2><span class="num">7</span>What to do instead</h2>
+    <p>Two habits, and they are the same habit seen twice.</p>
+    <p><strong>Pass state in explicitly.</strong> If a function needs a value, give it as an argument and return what it produces. Now the connection between caller and function is written down in the call itself. You can read who supplies the value and who receives it, and a wrong value has a short trail to follow.</p>
+    <p><strong>Keep every name in the narrowest scope that works.</strong> Declare it inside the loop if the loop is all that uses it; inside the function if only that function uses it. Widen the scope only when a real need forces you to, and no further. The smaller the scope, the shorter the list of code that can be at fault.</p>
+    <p>Passing values in has a close cousin to watch for: once you hand the same object to two places, both can change it through their own name, a problem called <strong>aliasing</strong>. That is its own trap, covered on the <a href="aliasing-bugs.html">aliasing page</a>.</p>
+  </section>
+
+  <footer>
+    Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>

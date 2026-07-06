@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What a pointer is: indirection</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--code-bg:#f4f3ef;--maxw:720px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 1rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3rem;}
+  h2{font-size:1.3rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+  .em{color:var(--accent);font-weight:600;}
+  .rule{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.6rem 0;color:#1f5b54;font-size:1.05rem;}
+  figure{margin:1.9rem 0;}
+  figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;}
+  figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem;}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;background:var(--code-bg);padding:.05rem .3rem;border-radius:4px;}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;overflow-x:auto;margin:1.4rem 0;font-size:.9rem;line-height:1.65;}
+  pre code{background:none;padding:0;border-radius:0;}
+  pre .cm{color:var(--muted);}
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>What a pointer is: indirection</h1>
+    <p class="lede">A pointer is a value whose content is an <span class="em">address</span>: a box that holds a location, not a thing. It says "the thing is over there," and following it is one hop to the real value.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">The <a href="memory-bytes-and-addresses.html">bytes and addresses page</a> showed that memory is a long row of numbered cells, each with an address. The <a href="variables-values-and-addresses.html">variables page</a> showed a name standing for a value at one of those addresses. A pointer is the next step: a value that <em>is</em> an address.</p>
+
+  <p>You may write JavaScript or Python and never type a pointer. You lean on them constantly anyway. Whenever a variable holds an object or an array, it holds a pointer to that object, not the object itself. That is why this can bite you:</p>
+
+  <pre><code>let a = { x: 1 };
+let b = a;      <span class="cm">// b now points at the same object as a</span>
+b.x = 99;       <span class="cm">// a.x is 99 too, though you never touched a</span></code></pre>
+
+  <p>A shaky picture of pointers is what makes that surprise, and a whole family of bugs like it, feel like magic. This page draws the picture so they stop.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>A pointer is just a number, read as a place</h2>
+    <p>A normal variable holds a value you want directly: the cell for <code>count</code> holds 7, and 7 is the answer. A pointer's cell holds a number too, say 4000, but you do not want 4000. You want whatever lives at address 4000.</p>
+    <p>Nothing in the bits marks a pointer as special. An address is just a number, and the cell holding it looks like any other cell. What makes it a pointer is how you read it: not "the value I have" but "where the value is." As the <a href="what-is-state.html">state page</a> put it, bits mean nothing until something reads them a certain way.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>Following it is one hop</h2>
+    <p>To go from the pointer to the real value, you follow the address it holds. That step has a name: <strong>dereferencing</strong>. You read the pointer, get a location, and go read what is at that location. One hop.</p>
+
+    <figure>
+      <svg viewBox="0 0 620 200" role="img" aria-label="A pointer cell named p holds the address 4000. An arrow runs from p to a value cell at address 4000, which holds the number 7.">
+        <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
+          <text x="110" y="40">pointer</text>
+          <text x="490" y="40">value it points to</text>
+        </g>
+
+        <!-- pointer cell -->
+        <rect x="40" y="56" width="140" height="60" rx="8" fill="#ffffff" stroke="#2f7d75" stroke-width="1.5"/>
+        <text x="110" y="93" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="22" fill="#2c3038" text-anchor="middle">4000</text>
+        <text x="110" y="136" font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">p</text>
+        <text x="110" y="154" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="11" fill="#9a978f" text-anchor="middle">at address 2200</text>
+
+        <!-- value cell -->
+        <rect x="420" y="56" width="140" height="60" rx="8" fill="#ffffff" stroke="#cfccc4"/>
+        <text x="490" y="93" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="22" fill="#2c3038" text-anchor="middle">7</text>
+        <text x="490" y="136" font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">count</text>
+        <text x="490" y="154" font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="11" fill="#9a978f" text-anchor="middle">at address 4000</text>
+
+        <!-- arrow -->
+        <line x1="184" y1="86" x2="410" y2="86" stroke="#2f7d75" stroke-width="2.5"/>
+        <path d="M410,80 L424,86 L410,92 Z" fill="#2f7d75"/>
+        <text x="297" y="76" font-family="-apple-system, sans-serif" font-size="12" fill="#2f7d75" text-anchor="middle">dereference: go there</text>
+      </svg>
+      <figcaption>An arrow is all a pointer is. The picture also hints at the failure it cannot draw: point <code>p</code> at a number that is not a live value, and the same one hop lands on garbage, or crashes. Section 6 is about that case.</figcaption>
+    </figure>
+
+    <p>Drawn this way, a pointer is just an arrow from one cell to another. That picture is the whole idea.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>Why go through an address at all</h2>
+    <p>Holding a location instead of the thing sounds like extra work. It buys three things a plain copy cannot.</p>
+    <p>You can <strong>let two places share one thing</strong>. Two pointers holding the same address both reach the same value, so a change through one shows up through the other. One thing, two ways in.</p>
+    <p>You can <strong>refer to something big without copying it</strong>. Passing an address is cheap; passing the thing means copying every byte. A single small address can stand in for a huge table.</p>
+    <p>You can <strong>handle a thing whose size you did not know up front</strong>. A pointer stays small and fixed no matter how big the thing at the other end is.</p>
+    <p>And because the pointer is itself just a value in a cell, you can overwrite it. Here is where pointer code most often goes wrong, because two acts that look alike are not:</p>
+
+    <pre><code>let a = { x: 1 };
+let b = a;        <span class="cm">// a and b point at one object</span>
+b.x = 99;         <span class="cm">// change the thing:  a.x is now 99 too</span>
+b = { x: 0 };     <span class="cm">// repoint b:  a is untouched, still { x: 99 }</span></code></pre>
+
+    <p>The line <code>b.x = 99</code> reaches through the arrow and edits the shared object. The line <code>b = { x: 0 }</code> only bends <code>b</code>'s arrow at a new object; nothing at the old address moved. Repointing the arrow is not the same as changing what is at the end of it, and confusing the two is a classic bug.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>You are already using pointers</h2>
+    <p>If you write C or Go, you type pointers on purpose. If you write JavaScript, Python, Ruby, or Java, you rarely see the word, yet every variable that holds an object holds a pointer to it. The language dereferences for you: <code>user.name</code> quietly does the one hop from the reference to the object, then reads a field.</p>
+    <p>This is why assigning one object variable to another does not copy the object. <code>b = a</code> copies the address, so both now aim at one object. That is the whole story behind what your language calls reference types. Whether the arrow is on the screen or hidden, it is there.</p>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>Why this matters: copy vs share, and aliasing</h2>
+    <p>Once a value can be an address, two questions run under everything: does this code hold the thing, or a pointer to it? And if it is a pointer, who else holds the same address?</p>
+    <p>That is exactly the difference between <a href="copy-vs-share.html">copy and share</a>. Copy gives each side its own thing; share hands the same address to more than one holder. When two names reach one thing, they are <strong>aliases</strong>, and a change through one silently changes what the other sees. <a href="aliasing-bugs.html">Aliasing bugs</a> are what happens when you forgot that, the <code>b.x = 99</code> surprise from the top of the page, grown up.</p>
+
+    <div class="rule">A pointer is indirection: one extra hop between a name and its value. Every copy-vs-share decision, and every aliasing bug, is really a question about that hop and who else is standing at the other end of it.</div>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>When the arrow leads nowhere</h2>
+    <p>An arrow only helps if it points at a real value. A pointer can hold a special address that means "points at nothing" (a <strong>null</strong> pointer), or an address that used to be valid but no longer is (a <strong>dangling</strong> pointer). Follow either one and the hop lands in the wrong place, or crashes.</p>
+    <p>These are the sharp edges of the same simple idea, and they get their own page: <a href="null-and-dangling-pointers.html">null and dangling pointers</a>. Keep the arrow picture from this page in mind and those failures stop looking like magic. A pointer is a box holding a location; a bad pointer is a box holding a location you should not follow.</p>
+  </section>
+
+  <footer>
+    Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>

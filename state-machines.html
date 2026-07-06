@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>State machines</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--warn:#b5524a;--code-bg:#f4f3ef;--maxw:720px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 1rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3rem;}
+  h2{font-size:1.3rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+  .em{color:var(--accent);font-weight:600;}
+  .rule{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.6rem 0;color:#1f5b54;font-size:1.05rem;}
+  figure{margin:1.9rem 0;}
+  figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;}
+  figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem;}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;background:var(--code-bg);padding:.1rem .3rem;border-radius:4px;}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;overflow-x:auto;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;line-height:1.6;margin:1.4rem 0;}
+  pre code{background:none;padding:0;}
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>State machines</h1>
+    <p class="lede">A state machine is a short list of named states, plus the transitions allowed between them, with exactly one state active right now. You draw the states a thing can be in, draw the arrows it may follow, and <span class="em">any arrow you did not draw simply cannot happen</span>.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> showed that every running program is already a state machine whether you planned it or not: at each step it sits in one whole arrangement and moves to the next. This page is about the deliberate version, choosing on purpose to model a small piece of your program as a handful of named states. That choice is one of the cheapest ways there is to make a whole class of bugs impossible to write.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>Three parts, that is all</h2>
+    <p>A state machine has just three parts. A set of <strong>states</strong>, each with a name. A set of <strong>transitions</strong>, the arrows that say which state you may move to from which. And <strong>one current state</strong>, the single state the thing is in at this moment.</p>
+    <p>The word "finite" you sometimes see attached to it, as in <em>finite state machine</em>, only means the list of states is short and fixed. You can write them all down on a napkin. That is the whole point: a small, closed set you can hold in your head.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>An example you have shipped a hundred times</h2>
+    <p>Think about a form that submits to a server. It is <strong>idle</strong> until the user hits submit. Then it is <strong>loading</strong> while the request is out. Then it lands on <strong>success</strong> or <strong>error</strong>. Four states, and the arrows between them are obvious once you name them.</p>
+
+    <figure>
+      <svg viewBox="0 0 640 240" role="img" aria-label="A state diagram for a form. A circle labeled idle has an arrow labeled submit going to a circle labeled loading. From loading, one arrow labeled ok goes to a circle labeled success, and another arrow labeled fail goes to a circle labeled error. From error, an arrow labeled retry goes back to loading. From success, an arrow labeled reset goes back to idle.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 Z" fill="#2f7d75"/>
+          </marker>
+        </defs>
+
+        <g stroke="#2f7d75" stroke-width="2" fill="none" marker-end="url(#arrow)">
+          <path d="M120,120 L228,120"/>
+          <path d="M332,98 C400,50 470,58 510,92"/>
+          <path d="M332,142 C400,190 470,182 510,148"/>
+          <path d="M560,168 C560,210 360,214 336,150"/>
+          <path d="M512,92 C440,120 400,120 336,120" stroke-dasharray="0"/>
+        </g>
+
+        <g stroke="#2f7d75" stroke-width="2" fill="none" marker-end="url(#arrow)">
+          <path d="M540,148 C560,110 540,110 528,104"/>
+        </g>
+
+        <g fill="#ffffff" stroke="#2f7d75" stroke-width="2">
+          <circle cx="80" cy="120" r="40"/>
+          <circle cx="280" cy="120" r="42"/>
+          <circle cx="540" cy="80" r="42"/>
+          <circle cx="540" cy="160" r="42"/>
+        </g>
+
+        <g font-family="-apple-system, sans-serif" font-size="15" fill="#23272e" text-anchor="middle" font-weight="650">
+          <text x="80" y="125">idle</text>
+          <text x="280" y="125">loading</text>
+          <text x="540" y="85">success</text>
+          <text x="540" y="165">error</text>
+        </g>
+
+        <g font-family="-apple-system, sans-serif" font-size="12.5" fill="#6b7280" text-anchor="middle">
+          <text x="174" y="110">submit</text>
+          <text x="415" y="52">ok</text>
+          <text x="415" y="192">fail</text>
+          <text x="420" y="228">reset</text>
+          <text x="588" y="122">retry</text>
+        </g>
+      </svg>
+      <figcaption>The form as four named states. Submit goes idle to loading; the response goes to success or error; retry goes back to loading; reset goes back to idle. Every arrow is one you chose to draw.</figcaption>
+    </figure>
+
+    <p>The same shape fits things far from the screen. An <strong>order</strong> goes cart, then paid, then shipped, then delivered. A <strong>door lock</strong> is locked or unlocked: turning the key unlocks it, turning it back locks it again. A <strong>traffic light</strong> cycles green, yellow, red. Different words, one idea underneath.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>One variable instead of five booleans</h2>
+    <p>Here is what you buy. Look at the form again, but built the way most of us build it the first time, as a bag of booleans:</p>
+
+    <pre><code>let isLoading = false
+let isSuccess = false
+let isError   = false</code></pre>
+
+    <p>Three true-or-false flags have eight combinations. But most of them are nonsense. <code>isLoading</code> and <code>isError</code> both true means the request is somehow in flight and already failed. <code>isSuccess</code> and <code>isError</code> both true means it worked and did not. These states have no meaning, yet the code lets you write them, so sooner or later some path does, and you get a spinner sitting on top of an error message.</p>
+
+    <p>Now say it as one state instead:</p>
+
+    <pre><code>state = "idle"   // or "loading", "success", "error"</code></pre>
+
+    <div class="rule">Model the valid states and transitions, and the illegal states stop existing. There is no arrangement of the code that puts you in "loading and error at once," because there is only ever one state, and "loading and error" is not one of the names.</div>
+
+    <p>The bug did not get caught. It got deleted. You cannot fix a bug that the shape of your data does not let you write.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>Transitions you did not allow cannot happen</h2>
+    <p>The states are half of it. The arrows are the other half, and they carry the same protection. In the order example, the only way out of <strong>cart</strong> is to <strong>paid</strong>. There is no arrow from cart straight to shipped. So "we shipped an order nobody paid for" is not a bug you have to remember to guard against. It is a transition the machine does not offer.</p>
+    <p>When your code is a pile of flags and <code>if</code> statements, every function is free to set any flag at any time, and the allowed order of events lives only in your head and your hope. A state machine writes that order down. The current state decides which transitions are even on the table; ask for one that is not, and the machine refuses instead of quietly doing something wrong.</p>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>How to notice one hiding in your code</h2>
+    <p>You rarely set out to build a state machine. More often you find one already tangled up in your code, asking to be pulled out. A few smells give it away.</p>
+    <p>Several booleans that describe the same one thing, where only some combinations make sense. A comment like <code>// note: never true while loading</code>. A cluster of <code>if</code> checks that keep testing the same flags in different orders. A status field that is really a word from a fixed list, <code>"pending"</code>, <code>"active"</code>, <code>"closed"</code>, guarded by scattered rules about what may follow what.</p>
+    <p>When you see that, try the swap. Write down the handful of states the thing can actually be in. Draw the arrows. If the drawing is small and closed, you found a state machine, and folding those booleans into one state variable will usually delete code and bugs at the same time.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>The same idea runs much deeper (optional)</h2>
+    <p>You do not need this section to use state machines in your own code; it is here only to show how far the idea reaches. The same shape sits under things you use every day. The <a href="how-a-cpu-works.html">CPU itself</a> is a state machine: fetch, decode, execute is a cycle of states, and every tick takes the whole machine from one arrangement to the next. The little machines you draw for a form are the same idea, shrunk to a size you can hold in your head on purpose.</p>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2><span class="num">7</span>Make it a habit</h2>
+    <p>Most techniques catch bad states after the fact: a test that fails, a check that throws, a log you read at 2 a.m. A state machine works earlier, changing the shape of the data so the bad states cannot be written at all, for the price of a napkin sketch and one variable instead of five.</p>
+    <p>So here is the trigger to watch for: when you have several booleans tracking the same thing, and only some combinations make sense, try replacing them with a single state variable.</p>
+  </section>
+
+  <footer>
+    Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>

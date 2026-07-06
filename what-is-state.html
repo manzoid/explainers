@@ -55,7 +55,7 @@
   <section>
     <h2><span class="num">2</span>A snapshot means nothing on its own</h2>
     <p>Freeze the program at a single instant and look at memory. You see one arrangement of bits. By itself it is just a pattern, no more meaningful than a page of random digits.</p>
-    <p>It becomes state only under the program's interpretation: this region is the counter, that region is the list, this one is where we are in the loop. The same bits could mean anything; the program is what decides what they represent. State is always bits plus a reading of them.</p>
+    <p>It becomes state only under the program's interpretation: this region is the counter, that region is the list, this one is where we are in the loop. The same bits could mean anything. Two bytes holding <code>01001000 01101001</code> could be the letters <code>Hi</code>, or the single number 18537, or the first half of a larger number. Nothing in the bits says which; the program is what decides. State is always bits plus a reading of them.</p>
   </section>
 
   <!-- 3 -->
@@ -64,21 +64,21 @@
     <p>Take a snapshot at every instant and play them in order, and you have the whole run. Each step, the machine reads the current arrangement and writes a slightly changed one. Fetch, decode, execute, from the CPU page, is exactly the rule for how one snapshot becomes the next.</p>
 
     <figure>
-      <svg viewBox="0 0 620 150" role="img" aria-label="Three snapshots of two memory cells, total and i, as a program adds up a list. From start with total 0 and i 0, to a tick with total 3 and i 1, to a tick with total 4 and i 2, with the changed cells highlighted.">
+      <svg viewBox="0 0 620 150" role="img" aria-label="Three snapshots of two memory cells, total and i, as a program adds up the list 2 then 3. From start with total 0 and i 0, to one step later with total 2 and i 1, to one step later with total 5 and i 2, with the changed cells highlighted.">
         <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
           <text x="98"  y="30">start</text>
-          <text x="310" y="30">after a tick</text>
-          <text x="522" y="30">after a tick</text>
+          <text x="310" y="30">one step later</text>
+          <text x="522" y="30">one step later</text>
         </g>
 
         <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="20" fill="#2c3038" text-anchor="middle">
           <rect x="32"  y="46" width="60" height="46" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="62"  y="76">0</text>
           <rect x="104" y="46" width="60" height="46" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="134" y="76">0</text>
 
-          <rect x="244" y="46" width="60" height="46" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="274" y="76">3</text>
+          <rect x="244" y="46" width="60" height="46" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="274" y="76">2</text>
           <rect x="316" y="46" width="60" height="46" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="346" y="76">1</text>
 
-          <rect x="456" y="46" width="60" height="46" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="486" y="76">4</text>
+          <rect x="456" y="46" width="60" height="46" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="486" y="76">5</text>
           <rect x="528" y="46" width="60" height="46" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="558" y="76">2</text>
         </g>
 
@@ -97,17 +97,17 @@
           <path d="M446,63 L458,69 L446,75 Z"/>
         </g>
       </svg>
-      <figcaption>Three snapshots of the same two cells while a program adds up a list. Each tick overwrites a cell; play them in order and you have the run.</figcaption>
+      <figcaption>Three snapshots of the same two cells while a program adds up the list 2 then 3. Each step adds the next number to <code>total</code> and moves <code>i</code> along; play them in order and you have the run.</figcaption>
     </figure>
 
-    <p>Wall-clock time and the CPU's clock ticks are the same axis at two zoom levels: the second you wait is billions of tiny steps, each one nudging the state a little further along.</p>
+    <p>The second you wait is made of billions of these tiny steps, each one moving the state a little further along. Same time, just seen up close.</p>
   </section>
 
   <!-- 4 -->
   <section>
     <h2><span class="num">4</span>A running program is a state machine</h2>
     <p>Put the snapshot and the film together and you have a state machine: at any moment the program is in one state, one whole arrangement, and each step takes it to the next. The CPU is the part that takes the step; the program, the instructions, decides which step to take.</p>
-    <p>This is the state machine you cannot avoid: every running program is one, whether you planned it or not. There is also a sharper, deliberate version, choosing to model a problem as a small set of named states on purpose, which is its own idea and gets its own page.</p>
+    <p>This is the state machine you cannot avoid: every running program is one, whether you planned it or not. You can also use the idea on purpose, choosing to model a problem as a small set of states you name yourself. That deliberate version is a design tool you reach for, not a fact about the hardware.</p>
   </section>
 
   <!-- 5 -->
@@ -124,14 +124,19 @@
   <section>
     <h2><span class="num">6</span>Two things called state</h2>
     <p>The <strong>machine's state</strong> is every live bit: all of memory, every register, and the program counter that says which instruction is next. It changes on every single step; even a step that does no real work still moves the program counter.</p>
-    <p>The program's <strong>logical state</strong> is the part you actually reason about: the counter, the list, the cart, the balance. It changes on many steps, not all. Most of the time you think in the logical state and ignore the rest, until something breaks and you have to drop down to the machine's view.</p>
+    <p>The program's <strong>logical state</strong> is the part you actually reason about: the counter, the list, the cart, the balance. It changes on many steps, not all. Most of the time you think in the logical state and ignore the rest.</p>
+    <p>Then something breaks, and the logical view is no help, because your picture of it is exactly what is wrong. That is when you drop down to the machine's view and read the actual bits, register by register, to find where your idea of the state and the real state parted ways.</p>
   </section>
 
   <!-- 7 -->
   <section>
     <h2><span class="num">7</span>Why state is where the trouble lives</h2>
-    <p>State is the one thing in a program that does not hold still, and that is exactly what makes it hard. It is one of the reasons <a href="metacognition-for-problem-solving.html">hard problems are hard</a>: the parts will not sit still while you reason about them.</p>
-    <p>Most hard bugs are a wrong belief about the state, what it is right now, or what some step changed it into. The rest of this series is a slow, concrete look at exactly that: the memory state lives in, the shapes it takes, how names refer to it and how two names can share one piece of it, where a function's own state lives, and who is allowed to change it.</p>
+    <p>State is the one thing in a program that does not hold still, and that is exactly what makes it hard. The parts will not sit still while you reason about them.</p>
+
+    <div class="rule">Most hard bugs are a wrong belief about the state: what it is right now, or what some step changed it into.</div>
+
+    <p>That is one reason debugging is so hard, a reason it shares with hard problems in general. The page on <a href="metacognition-for-problem-solving.html">why hard problems are hard</a> goes into that: reasoning about something that keeps changing under you is difficult wherever it shows up, not only in code.</p>
+    <p>The rest of this series is a slow, concrete look at state: the memory it lives in, the shapes it takes, how names refer to it and how two names can share one piece of it, where a function's own state lives, and who is allowed to change it.</p>
   </section>
 
   <footer>

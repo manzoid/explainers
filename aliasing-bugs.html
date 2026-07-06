@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aliasing bugs</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--warn:#b5524a;--code-bg:#f4f3ef;--maxw:720px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 1rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3rem;}
+  h2{font-size:1.3rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+  .em{color:var(--accent);font-weight:600;}
+  .rule{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.6rem 0;color:#1f5b54;font-size:1.05rem;}
+  .rule .rt{display:block;font-weight:650;margin-bottom:.35rem;}
+  figure{margin:1.9rem 0;}
+  figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;}
+  figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem;}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;background:var(--code-bg);padding:.1rem .32rem;border-radius:4px;}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;overflow-x:auto;margin:1.1rem 0;line-height:1.5;}
+  pre code{background:none;padding:0;font-size:.86rem;}
+  .cmt{color:var(--muted);}
+  .bad{color:var(--warn);font-weight:650;}
+  .good{color:var(--accent);font-weight:650;}
+  ul.spots{list-style:none;margin:1.2rem 0;padding:0;}
+  ul.spots li{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:.7rem 1rem;margin:0 0 .6rem;}
+  ul.spots .s{font-weight:650;}
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Aliasing bugs</h1>
+    <p class="lede">When two or more names point at the same piece of state, changing it through one name changes it for all of them. That sharing is called <span class="em">aliasing</span>, and when you forget it is there, you get some of the most confusing bugs in everyday programming.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">This is the payoff page for a simple idea from earlier in the series. The <a href="what-is-a-pointer.html">pointer page</a> showed that a variable can hold the address of a value instead of the value itself, and the <a href="copy-vs-share.html">copy vs share page</a> showed what changes when two variables hold the same address. Here we spend that idea on real bugs: five surprises you will meet at work, each with its fix. The fix is almost always one of two things: <strong>make a real copy, or do not share the mutable object</strong>. You will see both, again and again.</p>
+
+  <p>The bugs below use Python, because it shares by default and makes the trap easy to hit. Most of them happen the same way in JavaScript, Java, C#, Ruby, and Go: any language where a variable can hold a reference to an object. One of the five is Python-only, and it is labeled where it appears.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>The surprise, in one picture</h2>
+    <p>Two names, <code>a</code> and <code>b</code>, both point at one list. You change the list through <code>a</code>. Then you read it through <code>b</code> and find it changed too, because there was never a second list to begin with.</p>
+
+    <figure>
+      <svg viewBox="0 0 640 240" role="img" aria-label="Before and after. Before: names a and b both point with arrows at one box holding 1, 2, 3. After: the same box now holds 1, 2, 3, 9, changed once through a, and b sees the change because it points at the same box.">
+        <g font-family="-apple-system, sans-serif" font-size="14" fill="#6b7280" text-anchor="middle">
+          <text x="150" y="26">before</text>
+          <text x="490" y="26">after a.append(9)</text>
+        </g>
+
+        <!-- before -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="16" fill="#2c3038">
+          <rect x="34" y="58" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="60" y="83" text-anchor="middle">a</text>
+          <rect x="34" y="150" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="60" y="175" text-anchor="middle">b</text>
+          <rect x="176" y="104" width="120" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="236" y="129" text-anchor="middle">[1, 2, 3]</text>
+        </g>
+        <g stroke="#2f7d75" stroke-width="2" fill="none">
+          <path d="M88,79 C130,86 140,112 174,120"/>
+          <path d="M88,167 C130,160 140,134 174,126"/>
+        </g>
+        <g fill="#2f7d75">
+          <path d="M170,116 L182,122 L169,127 Z"/>
+          <path d="M170,130 L182,124 L169,119 Z"/>
+        </g>
+
+        <!-- after -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="16" fill="#2c3038">
+          <rect x="374" y="58" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="400" y="83" text-anchor="middle">a</text>
+          <rect x="374" y="150" width="52" height="38" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="400" y="175" text-anchor="middle">b</text>
+          <rect x="500" y="104" width="128" height="38" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="564" y="129" text-anchor="middle">[1, 2, 3, 9]</text>
+        </g>
+        <g stroke="#2f7d75" stroke-width="2" fill="none">
+          <path d="M428,79 C466,86 472,112 498,120"/>
+          <path d="M428,167 C466,160 472,134 498,126"/>
+        </g>
+        <g fill="#2f7d75">
+          <path d="M494,116 L506,122 L493,127 Z"/>
+          <path d="M494,130 L506,124 L493,119 Z"/>
+        </g>
+      </svg>
+      <figcaption>One box, two names. The mutation happens once, through <code>a</code>, and <code>b</code> reads the same changed box. Nobody touched <code>b</code>, yet <code>b</code> changed.</figcaption>
+    </figure>
+
+    <p>Every bug on this page is this picture wearing a disguise. Carry one habit into all of them, the two questions in the box below, and the disguises stop working.</p>
+
+    <div class="rule"><span class="rt">Two questions catch almost every case.</span>Is the object <strong>mutable</strong>, something you can change in place, like a list, dict, or set? And will <strong>more than one name write to it</strong>? If both are yes, copy it, or make sure only one name ever writes. A number or a string is not mutable, so sharing one is always safe.</div>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>Two variables, one object: the base case</h2>
+    <p>Start with the plainest form, just assignment. You point one variable at another and think you now have two independent values. You have two names for one value.</p>
+
+    <pre><code>defaults = {"theme": "dark", "font": "sans"}
+settings = defaults           <span class="cmt"># not a copy, a second name</span>
+
+settings["theme"] = "light"
+<span class="cmt"># defaults["theme"] is now <span class="bad">"light"</span> as well</span></code></pre>
+
+    <p>Assignment copies the pointer, not the object. This is safe as long as nobody mutates the shared object, which is why it can hide for a long time: everything works until the day someone writes through one of the names. Then a change over here shows up over there, far from where you were looking. Every other bug on this page is this same base case in a disguise.</p>
+
+    <p><span class="good">Fix:</span> copy when you mean a separate thing. <code>settings = dict(defaults)</code>, or a deep copy if it nests.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>Appending to a list you thought was private</h2>
+    <p>You pass a list into a function or store it on an object, expecting the function to have its own copy. It does not. It has the same list, and when it appends, your list grows.</p>
+
+    <pre><code>def build_tags(base):
+    base.append("draft")      <span class="cmt"># meant to work on a local copy</span>
+    return base
+
+user_tags = ["python", "web"]
+build_tags(user_tags)
+<span class="cmt"># user_tags is now <span class="bad">["python", "web", "draft"]</span></span></code></pre>
+
+    <p>Passing a list to a function does not copy the list. It copies the pointer, so the parameter <code>base</code> and your <code>user_tags</code> are two names for one list. This is the same idea as the <a href="scope-and-globals.html">scope page</a>: a name being local does not make the object it points at local.</p>
+
+    <p><span class="good">Fix:</span> make a real copy at the boundary, right where the list comes in.</p>
+
+    <pre><code>def build_tags(base):
+    base = list(base)         <span class="cmt"># fresh list, same contents</span>
+    base.append("draft")
+    return base               <span class="cmt"># caller's list is untouched</span></code></pre>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>The shared mutable default argument</h2>
+    <p>This one is Python-specific. It catches almost everyone once. You give a function a list parameter with a default of the empty list, so callers can leave it out:</p>
+
+    <pre><code>def add_item(item, bucket=[]):     <span class="cmt"># looks harmless</span>
+    bucket.append(item)
+    return bucket
+
+add_item("a")   <span class="cmt"># ['a']</span>
+add_item("b")   <span class="cmt"># <span class="bad">['a', 'b']</span>  ... where did 'a' come from?</span></code></pre>
+
+    <p>The default value <code>[]</code> is built once, when the function is defined, not once per call. So every call that leaves out <code>bucket</code> shares that same one list. The disguise here is that you never wrote a second name for the list; the language did, quietly, by reusing the default.</p>
+
+    <p>Java, C#, JavaScript, and Go have no mutable default arguments, so this exact bug cannot happen there. It stays on the list because it is the purest example of the underlying trap: the language hands you a second name to one object, and you never see it get made.</p>
+
+    <p><span class="good">Fix:</span> do not share in the first place. Use <code>None</code> as the default and make a fresh list inside the call.</p>
+
+    <pre><code>def add_item(item, bucket=None):
+    if bucket is None:
+        bucket = []            <span class="cmt"># a new list every call</span>
+    bucket.append(item)
+    return bucket</code></pre>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>The shallow copy that still shares</h2>
+    <p>So you learned to copy. But a plain copy of a container copies only the top layer. If the container holds other containers, the copy still points at the same inner ones.</p>
+
+    <pre><code>original = {"name": "cart", "items": ["apple"]}
+clone = dict(original)         <span class="cmt"># a shallow copy</span>
+
+clone["items"].append("pear")
+<span class="cmt"># original["items"] is now <span class="bad">["apple", "pear"]</span> too</span></code></pre>
+
+    <p><code>dict(original)</code> gives you a new outer dictionary, but its <code>"items"</code> key still holds the same list the original does. You copied the box and left the inner box shared. The disguise is that the copy worked for the top level, so you stop worrying, and the sharing hides one layer down.</p>
+
+    <p><span class="good">Fix:</span> copy deeply when the contents are themselves mutable. Python has a tool for exactly this.</p>
+
+    <pre><code>import copy
+clone = copy.deepcopy(original)   <span class="cmt"># inner list is copied too</span></code></pre>
+
+    <p>A deep copy costs more, so reach for it only when you know the contents are shared and mutable. Often the cheaper answer is to not share at all, or to treat the data as read-only and never mutate it.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>Changing a collection while looping over it</h2>
+    <p>This is aliasing between your loop and your edit. The loop walks the collection while you remove from that same collection, so the loop loses its place and skips items.</p>
+
+    <pre><code>nums = [1, 2, 4, 5]
+for n in nums:
+    if n % 2 == 0:
+        nums.remove(n)        <span class="cmt"># editing the list we are walking</span>
+<span class="cmt"># nums is <span class="bad">[1, 4, 5]</span> here. 4 is even, so it should be gone,
+# but it survived.</span></code></pre>
+
+    <p>The loop tracks a position by index. It reads position 0 (<code>1</code>), then position 1 (<code>2</code>) and removes it. Now everything after shifts left by one, so <code>4</code> slides into position 1, the slot the loop already passed. The loop reads position 2 next, which is now <code>5</code>, and never looks at <code>4</code> at all. Any time two items to remove sit next to each other, the second one slips through.</p>
+
+    <p>On <code>[1, 2, 3, 4, 5, 6]</code> the evens are spread out, so the same bug happens to give <code>[1, 3, 5]</code>, which looks correct. That is the dangerous part: it passes on your test data and drops the wrong items in production. Some languages throw an error instead; Python's list quietly gives wrong output, which is worse.</p>
+
+    <p><span class="good">Fix:</span> loop over one thing and build a separate result, so the thing you read and the thing you change are not the same object.</p>
+
+    <pre><code>nums = [n for n in nums if n % 2 != 0]   <span class="cmt"># new list, old one untouched</span></code></pre>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2><span class="num">7</span>How to see aliasing coming</h2>
+    <p>You do not have to memorize five bugs. You need one habit: whenever a mutable object gets a second name, ask whether both names should see the change. Second names appear in more places than people notice. These are the spots to watch, and the one-line fix for each:</p>
+
+    <ul class="spots">
+      <li><span class="s">Assignment</span> (<code>b = a</code>). The plain assign makes a second name, not a second object. Fix: <code>b = list(a)</code> or <code>dict(a)</code>.</li>
+      <li><span class="s">Passing into a function</span> (<code>f(a)</code>). The parameter is a second name for your object. Fix: copy at the top of the function, <code>base = list(base)</code>.</li>
+      <li><span class="s">Returning and keeping</span>. The returned object is the same one the function held. Fix: return a copy, or agree to treat it as read-only.</li>
+      <li><span class="s">Storing on an object or in a list</span> (<code>self.items = a</code>). The field becomes a second name. Fix: <code>self.items = list(a)</code>.</li>
+      <li><span class="s">A default list or dict argument</span> (Python). The default is one shared object. Fix: default to <code>None</code>, build a fresh one inside.</li>
+    </ul>
+
+    <p>In every one, a plain assignment or pass makes a second name, not a second object. Then run the two questions from the top of the page: is it mutable, and will more than one name write to it? If both are yes, copy it, or arrange that only one name ever writes.</p>
+
+    <p>Aliasing turns the <a href="what-is-a-pointer.html">pointer</a> and <a href="copy-vs-share.html">copy vs share</a> model into a skill you use every week. The same reference thinking explains the failures on the <a href="null-and-dangling-pointers.html">null and dangling pointers page</a>: a name that points at nothing, or at something already gone. Names and the state they point at are where most hard bugs live, and now you can see one whole class of them coming.</p>
+  </section>
+
+  <footer>
+    Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>

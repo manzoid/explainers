@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The stack and frames</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--code-bg:#f4f3ef;--warn:#b5524a;--maxw:720px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 1rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3rem;}
+  h2{font-size:1.3rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+  .em{color:var(--accent);font-weight:600;}
+  .rule{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.6rem 0;color:#1f5b54;font-size:1.05rem;}
+  figure{margin:1.9rem 0;}
+  figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;}
+  figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem;}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;background:var(--code-bg);padding:.05rem .3rem;border-radius:4px;}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin:1.4rem 0;overflow-x:auto;line-height:1.55;}
+  pre code{background:none;padding:0;font-size:.86rem;color:#2c3038;}
+  .cmt{color:#8a8577;}
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>The stack and frames</h1>
+    <p class="lede">When a function runs, its own working state has to live somewhere. Each call gets a <span class="em">frame</span>: a small chunk of memory holding that call's parameters, its local variables, and where to go back when it finishes.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">The <a href="what-is-state.html">state page</a> said a running program holds information as it works, and the <a href="memory-bytes-and-addresses.html">memory page</a> said that information sits in numbered memory. This page is about one well-organized part of that memory: the part that answers "where do a function's locals live, and why are they gone the moment it returns?" Once you see it, recursion stops being magic and a whole class of bugs starts to make sense. It sits next to <a href="scope-and-globals.html">scope and globals</a>, which is about who can see a variable; this page is about how long it lives.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>Every call needs its own scratch space</h2>
+    <p>A function has parameters and local variables. Those are real values, and by the <a href="variables-values-and-addresses.html">variables page</a> every value sits at some address in memory. So when you call a function, the machine has to set aside a spot for that call's variables to live while it runs.</p>
+    <p>That spot is a <strong>frame</strong> (also called a stack frame or an activation record). One call, one frame. It holds three kinds of thing: the arguments passed in, the local variables the function declares, and a note saying where to return, the exact spot in the caller to resume once this call is done.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>Calls nest, so frames pile up</h2>
+    <p>Functions call other functions. <code>main</code> calls <code>cook</code>, <code>cook</code> calls <code>chop</code>. While <code>chop</code> runs, <code>cook</code> is not finished; it is paused, waiting. Its frame has to stay put, holding its variables, until <code>chop</code> returns.</p>
+    <p>So the frames pile up. Each new call puts a fresh frame on top of the one that called it. The caller's frame sits underneath, frozen, until the call above it finishes and hands control back.</p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>The pile is a stack: last in, first out</h2>
+    <p>The pile has a strict rule. The frame that went on last is the one that comes off first, because a function can only return after everything it called has returned. You never finish <code>cook</code> before <code>chop</code>; <code>chop</code> was last on, so it is first off. That last-in, first-out pile is the <strong>call stack</strong>.</p>
+
+    <figure>
+      <svg viewBox="0 0 640 300" role="img" aria-label="Frames growing and shrinking on the call stack. As main calls cook and cook calls chop, three frames stack up. When chop returns, its frame is removed, then cook is running again, leaving main and cook.">
+        <g font-family="-apple-system, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">
+          <text x="110" y="28">main calls cook</text>
+          <text x="320" y="28">cook calls chop</text>
+          <text x="530" y="28">chop returns</text>
+        </g>
+
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="14" text-anchor="middle">
+          <!-- column 1: main, cook -->
+          <rect x="40" y="200" width="140" height="46" rx="6" fill="#f4f3ef" stroke="#cfccc4"/><text x="110" y="228" fill="#2c3038">main</text>
+          <rect x="40" y="150" width="140" height="46" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="110" y="178" fill="#1f5b54">cook</text>
+
+          <!-- column 2: main, cook, chop -->
+          <rect x="250" y="200" width="140" height="46" rx="6" fill="#f4f3ef" stroke="#cfccc4"/><text x="320" y="228" fill="#2c3038">main</text>
+          <rect x="250" y="150" width="140" height="46" rx="6" fill="#f4f3ef" stroke="#cfccc4"/><text x="320" y="178" fill="#2c3038">cook</text>
+          <rect x="250" y="100" width="140" height="46" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="320" y="128" fill="#1f5b54">chop</text>
+
+          <!-- column 3: main, cook running again, chop gone -->
+          <rect x="460" y="200" width="140" height="46" rx="6" fill="#f4f3ef" stroke="#cfccc4"/><text x="530" y="228" fill="#2c3038">main</text>
+          <rect x="460" y="150" width="140" height="46" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="530" y="178" fill="#1f5b54">cook</text>
+          <rect x="460" y="100" width="140" height="46" rx="6" fill="none" stroke="#cfccc4" stroke-dasharray="4 4"/><text x="530" y="128" fill="#b5524a">chop gone</text>
+        </g>
+
+        <g font-family="-apple-system, sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">
+          <text x="110" y="272">2 frames</text>
+          <text x="320" y="272">3 frames</text>
+          <text x="530" y="272">back to 2</text>
+        </g>
+
+        <!-- arrows: push chop on, pop chop off -->
+        <g stroke="#2f7d75" stroke-width="2">
+          <line x1="196" y1="123" x2="236" y2="123"/>
+          <line x1="406" y1="123" x2="446" y2="123"/>
+        </g>
+        <g fill="#2f7d75">
+          <path d="M236,117 L248,123 L236,129 Z"/>
+          <path d="M446,117 L458,123 L446,129 Z"/>
+        </g>
+        <g font-family="-apple-system, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">
+          <text x="216" y="114">push chop</text>
+          <text x="426" y="114">pop chop</text>
+        </g>
+      </svg>
+      <figcaption>Frames go on top as calls nest and come off the top as calls return. The top frame is always the one running now; everything below it is paused, waiting. (We draw the stack growing upward for readability; in real memory a stack often grows toward lower addresses instead. The direction does not change the last-in, first-out rule.)</figcaption>
+    </figure>
+
+    <p>The word "stack" is not a loose picture. It is the same last-in, first-out shape you get stacking plates: you add and remove only at the top. That simple rule is what lets the machine track a deep chain of calls with almost no bookkeeping.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>A local lives and dies with its frame</h2>
+    <p>When a call returns, its frame comes off the stack. The memory it used is not carefully erased; it is simply handed back, free for the next call to overwrite. So every local variable in that frame is gone. Not hidden, not saved somewhere, gone.</p>
+
+    <div class="rule">A local variable lives exactly as long as its frame. It appears when the call starts and disappears when the call returns. That is why each fresh call starts with fresh locals, and why a value you want to keep has to be returned, not left behind in the frame.</div>
+
+    <p>In a language with raw pointers, like C or the unsafe parts of Swift, this bites in a sharp way: you can take the address of a local and hand it back, but the memory it points at is already freed the instant the call returns.</p>
+
+    <pre><code><span class="cmt"># C, roughly:</span>
+int* make() {
+    int n = 42;      <span class="cmt">// n lives in make's frame</span>
+    return &amp;n;       <span class="cmt">// hands back the address of n</span>
+}                    <span class="cmt">// frame gone; that address now points at freed memory</span></code></pre>
+
+    <p>Python and other managed languages do not let you do this: you hand back the value, and the runtime keeps whatever it points at alive for you. So you cannot trip on a freed frame the way C does. But the lifetime rule is the same underneath, which is why the plain "the local does not persist to the next call" surprise shows up everywhere.</p>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>Recursion is just frames of the same function</h2>
+    <p>Recursion looks mysterious until you see the stack. A function that calls itself is nothing special to the machine: each call gets its own frame, exactly like any other call.</p>
+
+    <pre><code>def factorial(n):
+    if n == 1:                 <span class="cmt"># base case</span>
+        return 1
+    return n * factorial(n - 1)
+
+factorial(3)                   <span class="cmt"># 3 frames stack up: (3), then (2), then (1)</span></code></pre>
+
+    <p>Call <code>factorial(3)</code> and it calls <code>factorial(2)</code>, which calls <code>factorial(1)</code>. That is three frames stacked up, all running the same code, each with its own <code>n</code>. Because each frame has its own copy of the parameters, the <code>n</code> in one call does not disturb the <code>n</code> in another. They are different variables at different addresses that happen to share a name.</p>
+    <p>The frames unwind in reverse: <code>factorial(1)</code> returns 1 first, then <code>factorial(2)</code> returns 2, then <code>factorial(3)</code> returns 6, each handing its result down to the call that was waiting for it. Run it under a debugger and pause inside <code>factorial(1)</code>: the call stack shows all three frames at once, one <code>n</code> per frame.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>The stack has a size limit: overflow</h2>
+    <p>The stack is a fixed region of memory, not endless. Every frame takes up some space, so a very deep chain of calls can fill it. When the machine tries to add one more frame past the limit, you get a <strong>stack overflow</strong>, and the program stops.</p>
+    <p>The usual cause is a recursion that never stops, a missing or wrong base case, so it calls itself forever, piling on frames until the stack runs out. In Python this shows up as a <code>RecursionError</code>, raised once you pass its default limit of about 1000 nested calls; many other languages crash with a message that literally says stack overflow. Either way the cause is the same: the pile of frames hit the ceiling. Very deep but correct recursion can overflow too, which is one reason some problems are rewritten as loops instead.</p>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2><span class="num">7</span>Reading the stack</h2>
+    <p>Keep the two ideas apart. The frame explains <strong>lifetime</strong>: how long a local lives, and why it vanishes the moment the call returns. <strong>Visibility</strong>, who is allowed to see a name in the first place, is a separate rule the language enforces, and that is the subject of <a href="scope-and-globals.html">scope and globals</a>.</p>
+    <p>When you next see a crash trace, that list of function names is a snapshot of the stack at the moment things went wrong: the frames that were live, top to bottom, the exact chain of who-called-whom. Reading it is reading the state, which is what <a href="what-is-state.html">this whole series</a> is about.</p>
+  </section>
+
+  <footer>
+    Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>

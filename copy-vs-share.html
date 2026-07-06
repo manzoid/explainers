@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copy vs share</title>
+<style>
+  :root{
+    --ink:#23272e;--muted:#6b7280;--bg:#fbfaf7;--card:#ffffff;
+    --line:#e9e7e1;--accent:#2f7d75;--accent-soft:#e7f1ef;--code-bg:#f4f3ef;--maxw:720px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:18px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:3.5rem 1.25rem 5rem;}
+  header h1{font-size:2.1rem;line-height:1.2;margin:0 0 1rem;letter-spacing:-.01em;}
+  .lede{font-size:1.18rem;margin:0;}
+  .lede .em{color:var(--accent);font-weight:600;}
+  section{margin-top:3rem;}
+  h2{font-size:1.3rem;line-height:1.3;margin:0 0 1rem;letter-spacing:-.01em;}
+  h2 .num{display:inline-block;color:var(--accent);font-weight:700;margin-right:.5rem;}
+  p{margin:0 0 1.1rem;}
+  strong{font-weight:650;}
+  a{color:var(--accent);}
+  .em{color:var(--accent);font-weight:600;}
+  .rule{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.6rem 0;color:#1f5b54;font-size:1.05rem;}
+  figure{margin:1.9rem 0;}
+  figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;}
+  figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem;}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;overflow-x:auto;margin:1.4rem 0;font-size:.9rem;line-height:1.6;}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;}
+  pre code{font-size:.9rem;}
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;}
+  @media (max-width:560px){body{font-size:17px;}header h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Copy vs share</h1>
+    <p class="lede">When you write <code>b = a</code>, or pass a value into a function, one of two things happens. Either <span class="em">b gets its own separate copy</span>, or <span class="em">b becomes a second name for the very same value</span>. Which one it is decides whether changing b also changes a.</p>
+  </header>
+
+  <p style="margin-top:1.6rem;">This is one of the most common sources of "wait, why did my original change?" bugs. It sits on top of two earlier pages: <a href="variables-values-and-addresses.html">variables, values, and addresses</a> (a name holds a value, or an address) and <a href="what-is-a-pointer.html">what is a pointer</a> (an address that points at a value somewhere else). Here we use those ideas to answer one practical question: when you assign or pass something, do you copy it or share it? The bug that comes from getting this wrong has its own page, <a href="aliasing-bugs.html">aliasing bugs</a>.</p>
+
+  <!-- 1 -->
+  <section>
+    <h2><span class="num">1</span>Two things assignment can mean</h2>
+    <p>Say you have a value in <code>a</code> and you write <code>b = a</code>. There are two ways a language can carry that out.</p>
+    <p><strong>Copy.</strong> The language makes a fresh, separate value for <code>b</code> that starts out equal to <code>a</code>. Now you have two values. Change one and the other does not move, because they are different things that just happened to be equal.</p>
+    <p><strong>Share.</strong> The language does not make a new value. It makes <code>b</code> a second name for the same value <code>a</code> already points at. Now two names, one value. Change the value through either name and both names see the change, because there is only one thing to change.</p>
+    <p>Sharing is not a flaw; it is often what you want. Hand the same list to three parts of a program and they all work on one list, not three copies that quietly drift apart. The trouble starts only when you share without meaning to.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2><span class="num">2</span>The picture</h2>
+    <figure>
+      <svg viewBox="0 0 620 260" role="img" aria-label="On the left, share: two names a and b both point with arrows at a single box holding a list. On the right, copy: names a and b each point at their own separate box, each holding its own list.">
+        <g font-family="-apple-system, sans-serif" font-size="14" fill="#6b7280" text-anchor="middle">
+          <text x="155" y="28">share: two names, one value</text>
+          <text x="465" y="28">copy: two names, two values</text>
+        </g>
+
+        <!-- SHARE side -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="16" fill="#2c3038" text-anchor="middle">
+          <rect x="40" y="70" width="56" height="40" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="68" y="96">a</text>
+          <rect x="40" y="150" width="56" height="40" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="68" y="176">b</text>
+          <rect x="200" y="110" width="70" height="40" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="235" y="136">[ 1, 2 ]</text>
+        </g>
+        <g stroke="#2f7d75" stroke-width="2" fill="none">
+          <path d="M96,90 C150,90 160,116 198,120"/>
+          <path d="M96,170 C150,170 160,144 198,140"/>
+        </g>
+        <g fill="#2f7d75">
+          <path d="M190,116 L200,120 L190,124 Z"/>
+          <path d="M190,136 L200,140 L190,144 Z"/>
+        </g>
+
+        <!-- divider -->
+        <line x1="310" y1="55" x2="310" y2="215" stroke="#e9e7e1" stroke-width="1.5"/>
+
+        <!-- COPY side -->
+        <g font-family="SF Mono, ui-monospace, Menlo, monospace" font-size="16" fill="#2c3038" text-anchor="middle">
+          <rect x="350" y="70" width="56" height="40" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="378" y="96">a</text>
+          <rect x="350" y="150" width="56" height="40" rx="6" fill="#ffffff" stroke="#cfccc4"/><text x="378" y="176">b</text>
+          <rect x="500" y="70" width="70" height="40" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="535" y="96">[ 1, 2 ]</text>
+          <rect x="500" y="150" width="70" height="40" rx="6" fill="#e7f1ef" stroke="#2f7d75" stroke-width="1.5"/><text x="535" y="176">[ 1, 2 ]</text>
+        </g>
+        <g stroke="#2f7d75" stroke-width="2" fill="none">
+          <line x1="406" y1="90" x2="496" y2="90"/>
+          <line x1="406" y1="170" x2="496" y2="170"/>
+        </g>
+        <g fill="#2f7d75">
+          <path d="M496,84 L508,90 L496,96 Z"/>
+          <path d="M496,164 L508,170 L496,176 Z"/>
+        </g>
+      </svg>
+      <figcaption>Left: share. Both names reach the same box, so a change through one shows up under the other. Right: copy. Each name has its own box, so changing one leaves the other alone.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2><span class="num">3</span>The usual rule: copy small, share big</h2>
+    <p>Most languages do not pick one model for everything. They copy small, simple values and share large ones. A number, a single character, a true/false flag is tiny and cheap to duplicate, so the language just copies it. A list, an array, a dictionary, a bigger object can be large, so instead of duplicating the whole thing, the language shares it: it hands you another name for the same one.</p>
+    <p>So the split usually falls along the same line as the <a href="what-is-a-pointer.html">pointer page</a>: values you hold directly get copied, values you hold through an address get shared, because copying the name copies only the address, not the thing it points at.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2><span class="num">4</span>The rule holds across languages</h2>
+    <p>You do not have to memorize this per language, because it is nearly the same everywhere. The same pattern holds in Python, JavaScript, Java, C#, and Go: built-in scalar types (numbers, booleans, a character) copy, and everything larger (lists, arrays, objects, dictionaries) shares a reference. The names differ, Java calls the small ones primitives, but the rule does not.</p>
+    <div class="rule">When in doubt, assume plain numbers and the like are copied, and lists, arrays, and objects are shared.</div>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2><span class="num">5</span>The classic surprise: a function changes your list</h2>
+    <p>Passing an argument follows the same rule as assignment. When you pass a shared value into a function, the parameter inside the function is just another name for your value. If the function changes it in place, your original changed too.</p>
+
+<pre><code>function addItem(items) {
+  items.push("new");        // changes the one array
+}
+
+const cart = ["a", "b"];
+addItem(cart);
+console.log(cart);          // ["a", "b", "new"]  &lt;-- yours changed</code></pre>
+
+    <p>The function never returned anything and you never reassigned <code>cart</code>, yet <code>cart</code> grew. That is because <code>items</code> and <code>cart</code> were two names for one array the whole time, and <code>push</code> changed that one array. The same thing happens in Java when you pass a list to a method that appends to it:</p>
+
+<pre><code>void addItem(List&lt;String&gt; items) {
+    items.add("new");       // changes the one list
+}
+
+List&lt;String&gt; cart = new ArrayList&lt;&gt;(List.of("a", "b"));
+addItem(cart);
+System.out.println(cart);   // [a, b, new]  &lt;-- yours changed</code></pre>
+
+    <p>Note the difference between changing the value in place and rebinding the name. <code>items.push(...)</code> changes the shared array, so the caller sees it. Writing <code>items = ["something", "else"]</code> only points the local name <code>items</code> at a new array; the caller's <code>cart</code> is untouched. Changing the thing is shared; repointing the name is local.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2><span class="num">6</span>Getting a copy on purpose</h2>
+    <p>When you want your own separate thing, you have to ask for a copy; the language will not do it for you. In JavaScript the two you will reach for are:</p>
+
+<pre><code>const b = [...arr];          // spread into a new array
+const b = Array.from(arr);   // same idea</code></pre>
+
+    <p>Python has its own: <code>list(x)</code>, <code>x[:]</code>, or <code>x.copy()</code>. Other languages have similar. One catch applies to all of them: these make a <strong>shallow</strong> copy, a new outer container whose slots still point at the same inner objects. If your list holds other lists, the outer one is now separate but the inner ones are still shared. For a fully independent copy all the way down, you need a <strong>deep</strong> copy (in Python, <code>copy.deepcopy</code>; in JavaScript, <code>structuredClone</code>). Which one you need depends on how deep the changes reach.</p>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2><span class="num">7</span>Checking whether two names share</h2>
+    <p>When you are not sure whether two names point at one object or two, ask the language directly instead of guessing. In Python, <code>a is b</code> is true only when they are the very same object. In JavaScript, <code>a === b</code> on two objects is true only when they are the same object, not merely equal-looking. If that check comes back true, a change through one name will show under the other, and that is your warning to make a copy if you did not want that.</p>
+    <p>The bug this whole question produces, and how to spot and avoid it, is the subject of the <a href="aliasing-bugs.html">aliasing bugs</a> page. The values most often caught by it, lists and arrays, get their own treatment on the <a href="arrays.html">arrays</a> page.</p>
+  </section>
+
+  <footer>
+    Reuse and share freely.
+  </footer>
+
+</div>
+</body>
+</html>
