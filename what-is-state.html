@@ -41,10 +41,10 @@
 
   <header>
     <h1>What is state?</h1>
-    <p class="lede">A running program is always holding information that changes as it runs, and most confusing bugs are moments when that information is not what you think it is. Take a common one: you compute a total from a list, save it, then later some code appends to the list. Now the saved total is quietly wrong, even though the line that set it never ran again and every line still looks correct. What changed underneath you is the program's <span class="em">state</span>.</p>
+    <p class="lede">A running program is always holding information that changes as it runs. That held, changing information is its <span class="em">state</span>, and most confusing bugs are moments when the state is not what you think it is.</p>
   </header>
 
-  <p style="margin-top:1.6rem;">State is the information a program holds right now: the values worked out so far, and where it is in the job. Running a program means changing that state step by step, from the input toward the answer. It is worth understanding on its own, and it is one of the first things an interviewer probes when they ask you to trace a piece of code.</p>
+  <p style="margin-top:1.6rem;">State is the values a program has worked out so far, and where it is in its job. Running a program means changing that state step by step, from the input toward the answer. It is worth understanding on its own, and it is one of the first things an interviewer probes when they ask you to trace a piece of code.</p>
 
   <!-- 1 -->
   <section>
